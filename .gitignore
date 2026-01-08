@@ -36,6 +36,13 @@ out/
 ### VS Code ###
 .vscode/
 
-*.properties
-*.yml
+# 환경 변수 파일
 .env
+
+
+# 실제 운영/개발 설정
+
+application-prod.yml
+application-dev.yml
+application-local.yml
+application-secret.yml
