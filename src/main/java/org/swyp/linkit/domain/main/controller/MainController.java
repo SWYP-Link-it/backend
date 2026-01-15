@@ -1,4 +1,4 @@
-package org.swyp.linkit.domain.main.contorller;
+package org.swyp.linkit.domain.main.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +14,18 @@ import org.swyp.linkit.global.common.dto.ApiResponse;
 public class MainController {
 
     @GetMapping("/")
-    public ResponseEntity<ApiResponse<?>> home1() {
+    public ResponseEntity<ApiResponse<String>> home1() {
         String responseData = "Hello World from /";
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("성공", responseData));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("성공", responseData));
     }
 
     @GetMapping("/home")
-    public ResponseEntity<ApiResponse<?>> home2() {
+    public ResponseEntity<ApiResponse<String>> home2() {
         String responseData = "Hello World from /home";
-        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success("성공", responseData));
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(ApiResponse.success("성공", responseData));
     }
 }
