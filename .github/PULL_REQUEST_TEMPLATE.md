@@ -1,9 +1,8 @@
-### 🔥 PR Title
-
-### 📒 Tasks
-1. [ ] 주요 변경 사항 1
-2. [ ] 주요 변경 사항 2
-3. [ ] 주요 변경 사항 3
-
-### ✏️ Reference
-- [백엔드 최종 컨벤션 LINK](https://amethyst-macaroni-f4b.notion.site/2e787a78a36880d1a0e9e8c05aaf2bc5)
+### 🔥ISSUE
+<!-- 해당 이슈의 목적을 작성해주세요 ex) Todo 생성 기능 -->
+### 📒TODO
+1. [ ] Job1
+2. [ ] Job2
+3. [ ] Job3
+### 📋REF
+<!-- 추가적인 정보, 참고 문서, 스크린샷 등 -->
