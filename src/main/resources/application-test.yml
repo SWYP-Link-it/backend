@@ -21,3 +21,8 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
+
+jwt:
+  secret: testSecretKeyForJwtTokenGenerationAndValidationPurposesOnly1234567890
+  access-token-expiration: 3600000
+  refresh-token-expiration: 604800000
