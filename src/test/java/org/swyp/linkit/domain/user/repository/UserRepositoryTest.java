@@ -29,13 +29,7 @@ class UserRepositoryTest {
     @DisplayName("사용자를 저장한다")
     void save() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
 
         // when
         User savedUser = userRepository.save(user);
@@ -51,13 +45,7 @@ class UserRepositoryTest {
     @DisplayName("OAuth 제공자와 OAuth ID로 사용자를 조회한다")
     void findByOauthProviderAndOauthId() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         userRepository.save(user);
 
         // when
@@ -88,13 +76,7 @@ class UserRepositoryTest {
     @DisplayName("탈퇴하지 않은 사용자만 조회한다")
     void findByOauthProviderAndOauthIdAndUserStatusNot() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         user.withdraw();
         userRepository.save(user);
 
@@ -113,13 +95,7 @@ class UserRepositoryTest {
     @DisplayName("활성 사용자는 정상 조회된다")
     void findByOauthProviderAndOauthIdAndUserStatusNot_active() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         userRepository.save(user);
 
         // when
@@ -138,13 +114,7 @@ class UserRepositoryTest {
     @DisplayName("닉네임으로 사용자를 조회한다")
     void findByNickname() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터123"
-        );
+        User user = createUser("테스터123");
         userRepository.save(user);
 
         // when
@@ -159,13 +129,7 @@ class UserRepositoryTest {
     @DisplayName("닉네임 존재 여부를 확인한다")
     void existsByNickname() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터123"
-        );
+        User user = createUser("테스터123");
         userRepository.save(user);
 
         // when
@@ -181,21 +145,8 @@ class UserRepositoryTest {
     @DisplayName("사용자 ID로 프로필을 포함하여 조회한다")
     void findByIdWithProfile() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
-        UserProfile profile = UserProfile.create(
-                user,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        User user = createDefaultUser();
+        UserProfile profile = createDefaultProfile(user);
         user.assignProfile(profile);
         User savedUser = userRepository.save(user);
 
@@ -212,13 +163,7 @@ class UserRepositoryTest {
     @DisplayName("프로필이 없는 사용자도 조회된다")
     void findByIdWithProfile_noProfile() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         User savedUser = userRepository.save(user);
 
         // when
@@ -233,21 +178,8 @@ class UserRepositoryTest {
     @DisplayName("OAuth 제공자와 OAuth ID로 프로필을 포함하여 조회한다")
     void findByOauthProviderAndOauthIdWithProfile() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
-        UserProfile profile = UserProfile.create(
-                user,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        User user = createDefaultUser();
+        UserProfile profile = createDefaultProfile(user);
         user.assignProfile(profile);
         userRepository.save(user);
 
@@ -261,5 +193,36 @@ class UserRepositoryTest {
         assertThat(foundUser).isPresent();
         assertThat(foundUser.get().getUserProfile()).isNotNull();
         assertThat(foundUser.get().getUserProfile().getIntroduction()).isEqualTo("안녕하세요");
+    }
+
+    private User createDefaultUser() {
+        return User.create(
+                OAuthProvider.KAKAO,
+                "kakao_12345",
+                "test@example.com",
+                "홍길동",
+                "테스터"
+        );
+    }
+
+    private User createUser(String nickname) {
+        return User.create(
+                OAuthProvider.KAKAO,
+                "kakao_12345",
+                "test@example.com",
+                "홍길동",
+                nickname
+        );
+    }
+
+    private UserProfile createDefaultProfile(User user) {
+        return UserProfile.create(
+                user,
+                "https://example.com/image.jpg",
+                "안녕하세요",
+                "경험 설명",
+                5,
+                true
+        );
     }
 }

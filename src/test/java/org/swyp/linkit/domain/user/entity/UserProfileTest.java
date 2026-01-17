@@ -12,13 +12,7 @@ class UserProfileTest {
     @DisplayName("사용자 프로필을 생성한다")
     void createUserProfile() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         String profileImageUrl = "https://example.com/image.jpg";
         String introduction = "안녕하세요";
         String experienceDescription = "경험 설명";
@@ -48,21 +42,8 @@ class UserProfileTest {
     @DisplayName("프로필 정보를 수정한다")
     void updateProfile() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
-        UserProfile profile = UserProfile.create(
-                user,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        User user = createDefaultUser();
+        UserProfile profile = createDefaultProfile(user);
 
         // when
         String newImageUrl = "https://example.com/new_image.jpg";
@@ -91,21 +72,8 @@ class UserProfileTest {
     @DisplayName("프로필 정보를 null로 수정할 수 있다")
     void updateProfile_withNull() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
-        UserProfile profile = UserProfile.create(
-                user,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        User user = createDefaultUser();
+        UserProfile profile = createDefaultProfile(user);
 
         // when
         profile.updateProfile(null, null, null, null, false);
@@ -116,5 +84,26 @@ class UserProfileTest {
         assertThat(profile.getExperienceDescription()).isNull();
         assertThat(profile.getTimesTaught()).isNull();
         assertThat(profile.getProfileIsPublic()).isFalse();
+    }
+
+    private User createDefaultUser() {
+        return User.create(
+                OAuthProvider.KAKAO,
+                "kakao_12345",
+                "test@example.com",
+                "홍길동",
+                "테스터"
+        );
+    }
+
+    private UserProfile createDefaultProfile(User user) {
+        return UserProfile.create(
+                user,
+                "https://example.com/image.jpg",
+                "안녕하세요",
+                "경험 설명",
+                5,
+                true
+        );
     }
 }

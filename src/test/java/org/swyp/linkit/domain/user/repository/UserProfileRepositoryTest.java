@@ -31,23 +31,10 @@ class UserProfileRepositoryTest {
     @DisplayName("프로필을 저장한다")
     void save() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         userRepository.save(user);
 
-        UserProfile profile = UserProfile.create(
-                user,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        UserProfile profile = createDefaultProfile(user);
 
         // when
         UserProfile savedProfile = userProfileRepository.save(profile);
@@ -62,23 +49,10 @@ class UserProfileRepositoryTest {
     @DisplayName("사용자 ID로 프로필을 조회한다")
     void findByUserId() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         User savedUser = userRepository.save(user);
 
-        UserProfile profile = UserProfile.create(
-                savedUser,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        UserProfile profile = createDefaultProfile(savedUser);
         userProfileRepository.save(profile);
 
         // when
@@ -103,23 +77,10 @@ class UserProfileRepositoryTest {
     @DisplayName("사용자 ID로 프로필 존재 여부를 확인한다")
     void existsByUserId() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         User savedUser = userRepository.save(user);
 
-        UserProfile profile = UserProfile.create(
-                savedUser,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        UserProfile profile = createDefaultProfile(savedUser);
         userProfileRepository.save(profile);
 
         // when
@@ -135,23 +96,10 @@ class UserProfileRepositoryTest {
     @DisplayName("사용자 ID로 프로필을 삭제한다")
     void deleteByUserId() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         User savedUser = userRepository.save(user);
 
-        UserProfile profile = UserProfile.create(
-                savedUser,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        UserProfile profile = createDefaultProfile(savedUser);
         userProfileRepository.save(profile);
 
         // when
@@ -166,23 +114,10 @@ class UserProfileRepositoryTest {
     @DisplayName("사용자 ID로 프로필과 사용자를 함께 조회한다")
     void findByUserIdWithUser() {
         // given
-        User user = User.create(
-                OAuthProvider.KAKAO,
-                "kakao_12345",
-                "test@example.com",
-                "홍길동",
-                "테스터"
-        );
+        User user = createDefaultUser();
         User savedUser = userRepository.save(user);
 
-        UserProfile profile = UserProfile.create(
-                savedUser,
-                "https://example.com/image.jpg",
-                "안녕하세요",
-                "경험 설명",
-                5,
-                true
-        );
+        UserProfile profile = createDefaultProfile(savedUser);
         userProfileRepository.save(profile);
 
         // when
@@ -192,5 +127,26 @@ class UserProfileRepositoryTest {
         assertThat(foundProfile).isPresent();
         assertThat(foundProfile.get().getUser()).isNotNull();
         assertThat(foundProfile.get().getUser().getName()).isEqualTo("홍길동");
+    }
+
+    private User createDefaultUser() {
+        return User.create(
+                OAuthProvider.KAKAO,
+                "kakao_12345",
+                "test@example.com",
+                "홍길동",
+                "테스터"
+        );
+    }
+
+    private UserProfile createDefaultProfile(User user) {
+        return UserProfile.create(
+                user,
+                "https://example.com/image.jpg",
+                "안녕하세요",
+                "경험 설명",
+                5,
+                true
+        );
     }
 }
