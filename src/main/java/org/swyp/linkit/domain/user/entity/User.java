@@ -74,6 +74,12 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
+    // OAuth 정보 업데이트 (이메일, 이름 변경 시)
+    public void updateOAuthInfo(String email, String name) {
+        this.email = email;
+        this.name = name;
+    }
+
     // 프로필 작성 완료 처리
     public void completeProfile() {
         if (this.userStatus == UserStatus.PROFILE_PENDING) {
