@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "user",
+        name = "users",
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"oauth_provider", "oauth_id"})
         }
@@ -47,7 +47,7 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user")
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile userProfile;
 
     @Builder(access = AccessLevel.PRIVATE)
