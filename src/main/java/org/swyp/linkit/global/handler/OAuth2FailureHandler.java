@@ -1,4 +1,4 @@
-package org.swyp.linkit.global.auth.handler;
+package org.swyp.linkit.global.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

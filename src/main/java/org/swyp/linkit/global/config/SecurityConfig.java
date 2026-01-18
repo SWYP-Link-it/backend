@@ -11,10 +11,10 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.swyp.linkit.domain.user.service.CustomOAuth2UserService;
-import org.swyp.linkit.global.auth.handler.JwtAccessDeniedHandler;
-import org.swyp.linkit.global.auth.handler.JwtAuthenticationEntryPoint;
-import org.swyp.linkit.global.auth.handler.OAuth2FailureHandler;
-import org.swyp.linkit.global.auth.handler.OAuth2SuccessHandler;
+import org.swyp.linkit.global.handler.JwtAccessDeniedHandler;
+import org.swyp.linkit.global.handler.JwtAuthenticationEntryPoint;
+import org.swyp.linkit.global.handler.OAuth2FailureHandler;
+import org.swyp.linkit.global.handler.OAuth2SuccessHandler;
 import org.swyp.linkit.global.auth.jwt.JwtAuthenticationFilter;
 
 @Configuration
