@@ -46,7 +46,6 @@ public class SecurityConfig {
 
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // 인증 없이 접근 가능
                         .requestMatchers(
                                 "/",
                                 "/error",
@@ -54,9 +53,7 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**"
                         ).permitAll()
-                        // API는 인증 필요
-                        .requestMatchers("/api/**").authenticated()
-                        // 그 외 모든 요청은 인증 필요
+                        .requestMatchers("/auth/**").authenticated()
                         .anyRequest().authenticated()
                 )
 

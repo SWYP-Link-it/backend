@@ -79,4 +79,6 @@ logging:
 
 app:
   oauth2:
-    authorized-redirect-uri: http://localhost:3000/oauth2/redirect
+    authorized-redirect-uri: ${FRONTEND_URL}/oauth2/redirect
+  cors:
+    allowed-origins: ${FRONTEND_URL}

@@ -8,22 +8,21 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Component;
+import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
+import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
+import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.exception.ExpiredTokenException;
 import org.swyp.linkit.global.error.exception.InvalidTokenException;
+import org.swyp.linkit.global.error.exception.base.BusinessException;
 
 import javax.crypto.SecretKey;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Component
 public class JwtTokenProvider {
@@ -31,15 +30,18 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
+    private final UserRepository userRepository;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
-            @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration) {
+            @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration,
+            UserRepository userRepository) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
+        this.userRepository = userRepository;
     }
 
     // JWT 토큰 생성
@@ -83,21 +85,28 @@ public class JwtTokenProvider {
         }
     }
 
-    // JWT 토큰에서 인증 정보 추출
+    // JWT 토큰에서 CustomOAuth2User 기반 인증 정보 추출
     public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
+        Long userId = getUserIdFromToken(token);
 
-        if (claims.get("auth") == null) {
-            throw new InvalidTokenException("권한 정보가 없는 토큰입니다.");
-        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        Collection<? extends GrantedAuthority> authorities =
-                Arrays.stream(claims.get("auth").toString().split(","))
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+        CustomOAuth2User oAuth2User = new CustomOAuth2User(
+                user,
+                Map.of(
+                        "id", user.getId(),
+                        "email", user.getEmail(),
+                        "name", user.getName(),
+                        "nickname", user.getNickname()
+                )
+        );
 
-        UserDetails principal = new User(claims.getSubject(), "", authorities);
-        return new UsernamePasswordAuthenticationToken(principal, "", authorities);
+        return new OAuth2AuthenticationToken(
+                oAuth2User,
+                oAuth2User.getAuthorities(),
+                user.getOauthProvider().toString().toLowerCase()
+        );
     }
 
     // JWT 토큰에서 사용자 ID 추출
