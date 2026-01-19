@@ -1,15 +1,12 @@
 package org.swyp.linkit.domain.credit.service;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.OngoingStubbing;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.swyp.linkit.domain.credit.dto.CreditHistoryDto;
 import org.swyp.linkit.domain.credit.entity.CreditHistory;
@@ -18,10 +15,7 @@ import org.swyp.linkit.domain.credit.repository.CreditHistoryRepository;
 import org.swyp.linkit.domain.user.entity.OAuthProvider;
 import org.swyp.linkit.domain.user.entity.User;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -52,7 +46,7 @@ class CreditHistoryServiceImplTest {
         when(historyRepository.save((any(CreditHistory.class)))).thenReturn(history);
 
         //when
-        CreditHistoryDto result = historyService.createCreditHistory(user, changeAmount, balanceAfter, historyType);
+        CreditHistoryDto result = historyService.createRewardHistory(user, changeAmount, balanceAfter, historyType);
 
         //then
         assertThat(result.getId()).isEqualTo(history.getId());

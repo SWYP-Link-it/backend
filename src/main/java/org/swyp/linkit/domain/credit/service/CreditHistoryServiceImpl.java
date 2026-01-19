@@ -17,7 +17,7 @@ public class CreditHistoryServiceImpl implements CreditHistoryService{
 
     @Transactional
     @Override
-    public CreditHistoryDto createCreditHistory(User user, int changeAmount,
+    public CreditHistoryDto createRewardHistory(User user, int changeAmount,
                                                 int balanceAfter, HistoryType historyType) {
         // creditHistory 생성, save
         CreditHistory creditHistory = historyRepository.save

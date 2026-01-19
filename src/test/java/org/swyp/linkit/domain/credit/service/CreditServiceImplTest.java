@@ -78,7 +78,7 @@ class CreditServiceImplTest {
 
         //then
         assertThat(result.getAmount()).isEqualTo(INITIAL_AMOUNT + SIGNUP_REWARD);
-        verify(historyService, times(1)).createCreditHistory(
+        verify(historyService, times(1)).createRewardHistory(
                 eq(user),
                 eq(SIGNUP_REWARD),
                 eq(INITIAL_AMOUNT + SIGNUP_REWARD),
@@ -115,7 +115,7 @@ class CreditServiceImplTest {
 
         //then
         assertThat(result.getAmount()).isEqualTo(INITIAL_AMOUNT + PROFILE_REWARD);
-        verify(historyService, times(1)).createCreditHistory(
+        verify(historyService, times(1)).createRewardHistory(
                 eq(user),
                 eq(PROFILE_REWARD),
                 eq(INITIAL_AMOUNT + PROFILE_REWARD),

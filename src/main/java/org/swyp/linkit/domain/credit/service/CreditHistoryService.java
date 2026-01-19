@@ -6,5 +6,5 @@ import org.swyp.linkit.domain.user.entity.User;
 
 public interface CreditHistoryService {
 
-    CreditHistoryDto createCreditHistory(User user, int changeAmount, int balanceAfter, HistoryType historyType);
+    CreditHistoryDto createRewardHistory(User user, int changeAmount, int balanceAfter, HistoryType historyType);
 }
