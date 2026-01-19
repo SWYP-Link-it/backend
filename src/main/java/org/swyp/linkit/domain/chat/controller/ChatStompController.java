@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.swyp.linkit.domain.chat.dto.request.ChatSendRequestDto;
 import org.swyp.linkit.domain.chat.entity.ChatMessage;
 import org.swyp.linkit.domain.chat.service.ChatService;
@@ -13,6 +14,7 @@ import java.security.Principal;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/chat")
 public class ChatStompController {
 
     private final ChatService chatService;
@@ -21,7 +23,7 @@ public class ChatStompController {
      * 클라이언트 발행: /app/chat/send
      * 메시지 전송 처리
      */
-    @MessageMapping("/chat/send")
+    @MessageMapping("/send")
     public void send(ChatSendRequestDto dto, Principal principal) {
         Long senderId = Long.parseLong(principal.getName());
         Long roomId = dto.getRoomId();

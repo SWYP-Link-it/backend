@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/chat")
+@RequestMapping("/chat")
 @Tag(name = "Chat", description = "채팅 API")
 public class ChatController {
 
