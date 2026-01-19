@@ -54,15 +54,11 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         // 2. 사용자 조회 또는 생성
         User user = userRepository.findByOauthProviderAndOauthIdAndUserStatusNot(
                         provider, oauthId, UserStatus.WITHDRAWN)
-                .orElse(null);
+                .orElseGet(() -> userRepository.save(
+                        User.create(provider, oauthId, email, name, profileImageUrl, email)
+                ));
 
-        // 3. 신규 사용자 또는 기존 사용자 처리
-        if (user == null) {
-            user = User.create(provider, oauthId, email, name, profileImageUrl, email);
-            user = userRepository.save(user);
-        } else {
-            user.updateOAuthInfo(email, name);
-        }
+        user.updateOAuthInfo(email, name);
 
         return new CustomOAuth2User(user, oAuth2User.getAttributes());
     }
