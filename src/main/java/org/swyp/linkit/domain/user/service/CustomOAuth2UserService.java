@@ -49,6 +49,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String oauthId = oAuth2UserInfo.getProviderId();
         String email = oAuth2UserInfo.getEmail();
         String name = oAuth2UserInfo.getName();
+        String profileImageUrl = oAuth2UserInfo.getProfileImageUrl();
 
         // 2. 사용자 조회 또는 생성
         User user = userRepository.findByOauthProviderAndOauthIdAndUserStatusNot(
@@ -57,7 +58,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
         // 3. 신규 사용자 또는 기존 사용자 처리
         if (user == null) {
-            user = User.create(provider, oauthId, email, name, email);
+            user = User.create(provider, oauthId, email, name, profileImageUrl, email);
             user = userRepository.save(user);
         } else {
             user.updateOAuthInfo(email, name);
