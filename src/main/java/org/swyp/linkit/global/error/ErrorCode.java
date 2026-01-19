@@ -24,7 +24,15 @@ public enum ErrorCode {
 
     // OAuth
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),
-    OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다.");
+    OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다."),
+
+    // 채팅
+    CHAT_ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CH001", "채팅방을 찾을 수 없습니다."),
+    CHAT_MESSAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "CH002", "메시지를 찾을 수 없습니다."),
+    CHAT_NOT_PARTICIPANT(HttpStatus.FORBIDDEN, "CH003", "채팅방 참여자가 아닙니다."),
+    CHAT_INVALID_MESSAGE(HttpStatus.BAD_REQUEST, "CH004", "해당 채팅방의 메시지가 아닙니다."),
+    CHAT_INVALID_USER(HttpStatus.BAD_REQUEST, "CH005", "유효하지 않은 사용자입니다."),
+    CHAT_SAME_USER(HttpStatus.BAD_REQUEST, "CH006", "멘토와 멘티는 서로 다른 사용자여야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
