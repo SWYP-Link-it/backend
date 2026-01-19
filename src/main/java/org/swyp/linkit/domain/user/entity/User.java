@@ -22,6 +22,7 @@ public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @Column(name = "oauth_provider", nullable = false, length = 50)
@@ -36,6 +37,9 @@ public class User extends BaseTimeEntity {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(name = "profile_image_url", length = 100)
+    private String profileImageUrl;
 
     @Column(nullable = false, unique = true, length = 100)
     private String nickname;
@@ -52,23 +56,25 @@ public class User extends BaseTimeEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private User(OAuthProvider oauthProvider, String oauthId, String email,
-                 String name, String nickname, UserStatus userStatus) {
+                 String name, String profileImageUrl, String nickname, UserStatus userStatus) {
         this.oauthProvider = oauthProvider;
         this.oauthId = oauthId;
         this.email = email;
         this.name = name;
+        this.profileImageUrl = profileImageUrl;
         this.nickname = nickname;
         this.userStatus = userStatus;
     }
 
     // OAuth 소셜 로그인으로 신규 사용자 생성
-    public static User create(OAuthProvider oauthProvider, String oauthId,
-                              String email, String name, String nickname) {
+    public static User create(OAuthProvider oauthProvider, String oauthId, String email,
+                              String name, String profileImageUrl, String nickname) {
         return User.builder()
                 .oauthProvider(oauthProvider)
                 .oauthId(oauthId)
                 .email(email)
                 .name(name)
+                .profileImageUrl(profileImageUrl)
                 .nickname(nickname)
                 .userStatus(UserStatus.PROFILE_PENDING)
                 .build();

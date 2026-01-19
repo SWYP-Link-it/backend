@@ -15,14 +15,12 @@ public class UserProfile extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_profile_id")
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @Column(name = "profile_image_url", length = 100)
-    private String profileImageUrl;
 
     @Column(length = 100)
     private String introduction;
@@ -37,10 +35,9 @@ public class UserProfile extends BaseTimeEntity {
     private Boolean profileIsPublic;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserProfile(User user, String profileImageUrl, String introduction,
-                        String experienceDescription, Integer timesTaught, Boolean profileIsPublic) {
+    private UserProfile(User user, String introduction, String experienceDescription,
+                        Integer timesTaught, Boolean profileIsPublic) {
         this.user = user;
-        this.profileImageUrl = profileImageUrl;
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
@@ -48,11 +45,10 @@ public class UserProfile extends BaseTimeEntity {
     }
 
     // 사용자 프로필 생성
-    public static UserProfile create(User user, String profileImageUrl, String introduction,
-                                     String experienceDescription, Integer timesTaught, Boolean profileIsPublic) {
+    public static UserProfile create(User user, String introduction, String experienceDescription,
+                                     Integer timesTaught, Boolean profileIsPublic) {
         return UserProfile.builder()
                 .user(user)
-                .profileImageUrl(profileImageUrl)
                 .introduction(introduction)
                 .experienceDescription(experienceDescription)
                 .timesTaught(timesTaught)
@@ -61,9 +57,8 @@ public class UserProfile extends BaseTimeEntity {
     }
 
     // 사용자 프로필 수정
-    public void updateProfile(String profileImageUrl, String introduction,
-                              String experienceDescription, Integer timesTaught, Boolean profileIsPublic) {
-        this.profileImageUrl = profileImageUrl;
+    public void updateProfile(String introduction, String experienceDescription,
+                              Integer timesTaught, Boolean profileIsPublic) {
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
