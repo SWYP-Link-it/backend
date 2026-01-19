@@ -8,5 +8,5 @@ import java.util.List;
 public interface AvailableScheduleRepository extends JpaRepository<AvailableSchedule, Long> {
 
     // 멘토의 주간 가능 일정 규칙 조회
-    List<AvailableSchedule> findAllByUserId(Long userId);
+    List<AvailableSchedule> findAllByUser_Id(Long userId);
 }
