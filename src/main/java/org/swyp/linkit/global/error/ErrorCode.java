@@ -2,6 +2,7 @@ package org.swyp.linkit.global.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -24,7 +25,12 @@ public enum ErrorCode {
 
     // OAuth
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),
-    OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다.");
+    OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다."),
+
+    // 크레딧
+    NOT_FOUND_CREDIT(HttpStatus.BAD_REQUEST, "CR001", "사용자의 크레딧이 존재하지 않습니다."),
+    NOT_ENOUGH_CREDIT(HttpStatus.BAD_REQUEST, "CR002", "크레딧 잔액이 부족합니다."),
+    INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "크레딧은 0보다 커야합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
