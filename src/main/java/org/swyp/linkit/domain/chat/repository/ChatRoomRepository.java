@@ -23,7 +23,7 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     /**
      * 특정 사용자가 참여한 모든 채팅방 조회 (멘토 또는 멘티)
      */
-    @Query("SELECT r FROM ChatRoom r WHERE r.mentorId = :userId OR r.menteeId = :userId ORDER BY r.lastMessageAt DESC NULLS LAST")
+    @Query("SELECT r FROM ChatRoom r WHERE r.mentorId = :userId OR r.menteeId = :userId ORDER BY COALESCE(r.lastMessageAt, r.createdAt) DESC")
     List<ChatRoom> findAllByUserId(@Param("userId") Long userId);
 
     /**
