@@ -1,7 +1,11 @@
 package org.swyp.linkit.domain.chat.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
 import java.time.LocalDateTime;
 
@@ -10,11 +14,8 @@ import java.time.LocalDateTime;
     @Index(name = "idx_user_deleted", columnList = "user_id, deleted_at")
 })
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ChatMessageDelete {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChatMessageDelete extends BaseTimeEntity {
 
     @EmbeddedId
     private ChatMessageDeleteId id;
@@ -27,8 +28,26 @@ public class ChatMessageDelete {
     @Column(name = "deleted_at", nullable = false)
     private LocalDateTime deletedAt;
 
+    @Builder(access = AccessLevel.PRIVATE)
+    private ChatMessageDelete(ChatMessageDeleteId id, ChatMessage chatMessage) {
+        this.id = id;
+        this.chatMessage = chatMessage;
+    }
+
     @PrePersist
     public void prePersist() {
-        if (deletedAt == null) deletedAt = LocalDateTime.now();
+        if (deletedAt == null) {
+            deletedAt = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 메시지 삭제 기록 생성
+     */
+    public static ChatMessageDelete create(ChatMessage chatMessage, Long userId) {
+        return ChatMessageDelete.builder()
+                .id(new ChatMessageDeleteId(chatMessage.getId(), userId))
+                .chatMessage(chatMessage)
+                .build();
     }
 }

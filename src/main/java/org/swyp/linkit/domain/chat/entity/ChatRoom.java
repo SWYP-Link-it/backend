@@ -1,18 +1,19 @@
 package org.swyp.linkit.domain.chat.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_room")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ChatRoom {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChatRoom extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,8 +27,7 @@ public class ChatRoom {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
-    private ChatRoomStatus status = ChatRoomStatus.OPEN;
+    private ChatRoomStatus status;
 
     @Column(name = "last_message_id")
     private Long lastMessageId;
@@ -36,29 +36,32 @@ public class ChatRoom {
     private LocalDateTime lastMessageAt;
 
     @Column(name = "unread_mentor_count", nullable = false)
-    @Builder.Default
-    private Integer unreadMentorCount = 0;
+    private Integer unreadMentorCount;
 
     @Column(name = "unread_mentee_count", nullable = false)
-    @Builder.Default
-    private Integer unreadMenteeCount = 0;
+    private Integer unreadMenteeCount;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "modified_at", nullable = false)
-    private LocalDateTime modifiedAt;
-
-    @PrePersist
-    public void prePersist() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) createdAt = now;
-        if (modifiedAt == null) modifiedAt = now;
+    @Builder(access = AccessLevel.PRIVATE)
+    private ChatRoom(Long mentorId, Long menteeId, ChatRoomStatus status,
+                     Integer unreadMentorCount, Integer unreadMenteeCount) {
+        this.mentorId = mentorId;
+        this.menteeId = menteeId;
+        this.status = status;
+        this.unreadMentorCount = unreadMentorCount;
+        this.unreadMenteeCount = unreadMenteeCount;
     }
 
-    @PreUpdate
-    public void preUpdate() {
-        modifiedAt = LocalDateTime.now();
+    /**
+     * 1:1 채팅방 생성 (멘토-멘티)
+     */
+    public static ChatRoom create(Long mentorId, Long menteeId) {
+        return ChatRoom.builder()
+                .mentorId(mentorId)
+                .menteeId(menteeId)
+                .status(ChatRoomStatus.OPEN)
+                .unreadMentorCount(0)
+                .unreadMenteeCount(0)
+                .build();
     }
 
     /**
@@ -67,6 +70,13 @@ public class ChatRoom {
     public void updateLastMessage(Long messageId, LocalDateTime messageAt) {
         this.lastMessageId = messageId;
         this.lastMessageAt = messageAt;
+    }
+
+    /**
+     * 채팅방 상태 변경
+     */
+    public void changeStatus(ChatRoomStatus status) {
+        this.status = status;
     }
 
     /**

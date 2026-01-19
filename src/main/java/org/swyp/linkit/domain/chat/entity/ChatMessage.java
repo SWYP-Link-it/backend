@@ -1,18 +1,19 @@
 package org.swyp.linkit.domain.chat.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_message")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ChatMessage {
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ChatMessage extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,8 +36,30 @@ public class ChatMessage {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @Builder(access = AccessLevel.PRIVATE)
+    private ChatMessage(ChatRoom chatRoom, Long senderId, SenderRole senderRole, String content) {
+        this.chatRoom = chatRoom;
+        this.senderId = senderId;
+        this.senderRole = senderRole;
+        this.content = content;
+    }
+
     @PrePersist
     public void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * 채팅 메시지 생성
+     */
+    public static ChatMessage create(ChatRoom chatRoom, Long senderId, SenderRole senderRole, String content) {
+        return ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .senderId(senderId)
+                .senderRole(senderRole)
+                .content(content)
+                .build();
     }
 }
