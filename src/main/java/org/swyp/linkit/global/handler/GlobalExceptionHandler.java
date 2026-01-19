@@ -1,4 +1,4 @@
-package org.swyp.linkit.global.error;
+package org.swyp.linkit.global.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.swyp.linkit.global.common.dto.ApiResponse;
+import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.dto.ValidationError;
 import org.swyp.linkit.global.error.exception.base.BusinessException;
 
