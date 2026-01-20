@@ -14,7 +14,7 @@ import org.swyp.linkit.domain.auth.dto.response.CurrentUserResponseDto;
 import org.swyp.linkit.domain.auth.service.AuthService;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
-import org.swyp.linkit.global.common.dto.ApiResponse;
+import org.swyp.linkit.global.common.dto.ApiResponseDto;
 
 @RestController
 @RequestMapping("/auth")
@@ -25,23 +25,23 @@ public class AuthController {
 
     // 토큰 갱신
     @PostMapping("/refresh")
-    public ResponseEntity<ApiResponse<JwtTokenDto>> refreshToken(
+    public ResponseEntity<ApiResponseDto<JwtTokenDto>> refreshToken(
             @Valid @RequestBody RefreshTokenRequestDto request) {
         JwtTokenDto tokenDto = authService.refreshToken(request.getRefreshToken());
 
         return ResponseEntity.ok(
-                ApiResponse.success("토큰이 갱신되었습니다.", tokenDto)
+                ApiResponseDto.success("토큰이 갱신되었습니다.", tokenDto)
         );
     }
 
     // 현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<CurrentUserResponseDto>> getCurrentUser(
+    public ResponseEntity<ApiResponseDto<CurrentUserResponseDto>> getCurrentUser(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
         CurrentUserResponseDto response = authService.getCurrentUser(oAuth2User.getUserId());
 
         return ResponseEntity.ok(
-                ApiResponse.success("사용자 정보 조회 성공", response)
+                ApiResponseDto.success("사용자 정보 조회 성공", response)
         );
     }
 }
