@@ -33,6 +33,10 @@ public enum ErrorCode {
     CHAT_INVALID_MESSAGE(HttpStatus.BAD_REQUEST, "CH004", "해당 채팅방의 메시지가 아닙니다."),
     CHAT_INVALID_USER(HttpStatus.BAD_REQUEST, "CH005", "유효하지 않은 사용자입니다."),
     CHAT_SAME_USER(HttpStatus.BAD_REQUEST, "CH006", "멘토와 멘티는 서로 다른 사용자여야 합니다.");
+    // 크레딧
+    NOT_FOUND_CREDIT(HttpStatus.BAD_REQUEST, "CR001", "사용자의 크레딧이 존재하지 않습니다."),
+    NOT_ENOUGH_CREDIT(HttpStatus.BAD_REQUEST, "CR002", "크레딧 잔액이 부족합니다."),
+    INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "크레딧은 0보다 커야합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
