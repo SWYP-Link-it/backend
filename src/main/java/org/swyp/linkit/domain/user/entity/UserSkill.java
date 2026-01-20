@@ -1,17 +1,6 @@
 package org.swyp.linkit.domain.user.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -66,10 +55,10 @@ public class UserSkill extends BaseTimeEntity {
         this.isVisible = isVisible;
     }
 
-    public static UserSkill create(User user, SkillCategory skillCategory, String skillName,
+    // 사용자 스킬 생성
+    public static UserSkill create(SkillCategory skillCategory, String skillName,
                                    SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
         return UserSkill.builder()
-                .user(user)
                 .skillCategory(skillCategory)
                 .skillName(skillName)
                 .skillLevel(skillLevel)
@@ -78,14 +67,21 @@ public class UserSkill extends BaseTimeEntity {
                 .build();
     }
 
+    // 사용자 스킬의 정보 수정
     public void update(String skillName, SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
-        this.skillName = skillName;
+        this.skillName = skillName.trim();
         this.skillLevel = skillLevel;
         this.skillDescription = skillDescription;
         this.isVisible = isVisible;
     }
 
+    // 사용자 스킬의 카테고리를 변경
     public void changeCategory(SkillCategory skillCategory) {
         this.skillCategory = skillCategory;
+    }
+
+    // 사용자 연관관계 설정
+    protected void assignUser(User user) {
+        this.user = user;
     }
 }

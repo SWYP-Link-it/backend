@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -53,6 +55,9 @@ public class User extends BaseTimeEntity {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile userProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private User(OAuthProvider oauthProvider, String oauthId, String email,
@@ -106,6 +111,36 @@ public class User extends BaseTimeEntity {
         this.userProfile = userProfile;
         if (userProfile != null && userProfile.getUser() != this) {
             userProfile.assignUser(this);
+        }
+    }
+
+    // 사용자에게 스킬을 추가
+    public void addUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        if (!this.userSkills.contains(userSkill)) {
+            this.userSkills.add(userSkill);
+        }
+
+        if (userSkill.getUser() != this) {
+            userSkill.assignUser(this);
+        }
+    }
+
+    // 사용자로부터 스킬을 제거
+    public void removeUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        this.userSkills.remove(userSkill);
+        if (userSkill.getUser() == this) {
+            userSkill.assignUser(null);
+        }
+    }
+
+    // 사용자가 보유한 모든 스킬을 제거한다
+    public void clearUserSkills() {
+        for (UserSkill us : new ArrayList<>(this.userSkills)) {
+            removeUserSkill(us);
         }
     }
 
