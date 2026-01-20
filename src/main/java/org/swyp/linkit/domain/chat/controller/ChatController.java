@@ -42,7 +42,7 @@ public class ChatController {
 
         // 요청자가 멘토 또는 멘티인지 확인
         if (!me.equals(mentorId) && !me.equals(menteeId)) {
-            throw new ChatNotParticipantException();
+            throw new ChatNotParticipantException(me, mentorId, menteeId);
         }
 
         ChatRoomDto roomDto = chatRoomService.createOrGetRoom(mentorId, menteeId);
