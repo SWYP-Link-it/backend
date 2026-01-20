@@ -23,20 +23,11 @@ public class ChatRoomDelete extends BaseTimeEntity {
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
 
-    @Column(name = "deleted_at", nullable = false)
-    private LocalDateTime deletedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
     private ChatRoomDelete(ChatRoomDeleteId id, ChatRoom chatRoom) {
         this.id = id;
         this.chatRoom = chatRoom;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (deletedAt == null) {
-            deletedAt = LocalDateTime.now();
-        }
     }
 
     /**

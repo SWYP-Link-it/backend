@@ -26,20 +26,11 @@ public class ChatRead extends BaseTimeEntity {
     @Column(name = "last_read_message_id", nullable = false)
     private Long lastReadMessageId;
 
-    @Column(name = "modified_at", nullable = false)
-    private LocalDateTime modifiedAt;
-
     @Builder(access = AccessLevel.PRIVATE)
     private ChatRead(ChatReadId id, ChatRoom chatRoom, Long lastReadMessageId) {
         this.id = id;
         this.chatRoom = chatRoom;
         this.lastReadMessageId = lastReadMessageId;
-    }
-
-    @PrePersist
-    @PreUpdate
-    public void prePersistAndUpdate() {
-        modifiedAt = LocalDateTime.now();
     }
 
     /**
@@ -58,6 +49,5 @@ public class ChatRead extends BaseTimeEntity {
      */
     public void updateLastReadMessage(Long messageId) {
         this.lastReadMessageId = messageId;
-        this.modifiedAt = LocalDateTime.now();
     }
 }

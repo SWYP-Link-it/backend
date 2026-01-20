@@ -17,6 +17,7 @@ public class ChatMessage extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "chat_message_id")
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -33,22 +34,12 @@ public class ChatMessage extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @Builder(access = AccessLevel.PRIVATE)
     private ChatMessage(ChatRoom chatRoom, Long senderId, SenderRole senderRole, String content) {
         this.chatRoom = chatRoom;
         this.senderId = senderId;
         this.senderRole = senderRole;
         this.content = content;
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
     }
 
     /**
