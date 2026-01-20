@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.swyp.linkit.global.common.dto.ApiResponse;
+import org.swyp.linkit.global.common.dto.ApiResponseDto;
 
 @RestController
 @RequiredArgsConstructor
@@ -14,18 +14,18 @@ import org.swyp.linkit.global.common.dto.ApiResponse;
 public class MainController {
 
     @GetMapping("/")
-    public ResponseEntity<ApiResponse<String>> home1() {
+    public ResponseEntity<ApiResponseDto<String>> home1() {
         String responseData = "Hello World from /";
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.success("성공", responseData));
+                .body(ApiResponseDto.success("성공", responseData));
     }
 
     @GetMapping("/home")
-    public ResponseEntity<ApiResponse<String>> home2() {
+    public ResponseEntity<ApiResponseDto<String>> home2() {
         String responseData = "Hello World from /home";
         return ResponseEntity
                 .status(HttpStatus.OK)
-                .body(ApiResponse.success("성공", responseData));
+                .body(ApiResponseDto.success("성공", responseData));
     }
 }

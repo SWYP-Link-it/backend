@@ -8,7 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
-import org.swyp.linkit.global.common.dto.ApiResponse;
+import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.error.ErrorCode;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setCharacterEncoding("UTF-8");
         response.setStatus(errorCode.getHttpStatus().value());
 
-        ApiResponse<?> errorResponse = ApiResponse.fail(
+        ApiResponseDto<?> errorResponse = ApiResponseDto.fail(
                 errorCode.getCode(),
                 errorCode.getMessage()
         );
