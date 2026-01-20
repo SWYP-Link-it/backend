@@ -51,7 +51,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/favicon.ico",
                                 "/oauth2/**",
-                                "/login/oauth2/**"
+                                "/login/oauth2/**",
+                                "/ws/**"
                         ).permitAll()
                         .requestMatchers("/auth/**").authenticated()
                         .anyRequest().authenticated()
