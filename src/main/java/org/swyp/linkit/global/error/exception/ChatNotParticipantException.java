@@ -12,4 +12,9 @@ public class ChatNotParticipantException extends BusinessException {
     public ChatNotParticipantException(Long roomId, Long userId) {
         super(ErrorCode.CHAT_NOT_PARTICIPANT, "채팅방 참여자가 아닙니다. roomId=" + roomId + ", userId=" + userId);
     }
+
+    public ChatNotParticipantException(Long userId, Long mentorId, Long menteeId) {
+        super(ErrorCode.CHAT_NOT_PARTICIPANT,
+                "요청자가 채팅방 참여자가 아닙니다. userId=" + userId + ", mentorId=" + mentorId + ", menteeId=" + menteeId);
+    }
 }
