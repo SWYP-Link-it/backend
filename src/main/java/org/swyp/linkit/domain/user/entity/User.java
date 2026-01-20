@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -22,6 +24,7 @@ public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @Column(name = "oauth_provider", nullable = false, length = 50)
@@ -37,6 +40,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(name = "profile_image_url", length = 100)
+    private String profileImageUrl;
+
     @Column(nullable = false, unique = true, length = 100)
     private String nickname;
 
@@ -50,25 +56,30 @@ public class User extends BaseTimeEntity {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserProfile userProfile;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSkill> userSkills = new ArrayList<>();
+
     @Builder(access = AccessLevel.PRIVATE)
     private User(OAuthProvider oauthProvider, String oauthId, String email,
-                 String name, String nickname, UserStatus userStatus) {
+                 String name, String profileImageUrl, String nickname, UserStatus userStatus) {
         this.oauthProvider = oauthProvider;
         this.oauthId = oauthId;
         this.email = email;
         this.name = name;
+        this.profileImageUrl = profileImageUrl;
         this.nickname = nickname;
         this.userStatus = userStatus;
     }
 
     // OAuth 소셜 로그인으로 신규 사용자 생성
-    public static User create(OAuthProvider oauthProvider, String oauthId,
-                              String email, String name, String nickname) {
+    public static User create(OAuthProvider oauthProvider, String oauthId, String email,
+                              String name, String profileImageUrl, String nickname) {
         return User.builder()
                 .oauthProvider(oauthProvider)
                 .oauthId(oauthId)
                 .email(email)
                 .name(name)
+                .profileImageUrl(profileImageUrl)
                 .nickname(nickname)
                 .userStatus(UserStatus.PROFILE_PENDING)
                 .build();
@@ -100,6 +111,36 @@ public class User extends BaseTimeEntity {
         this.userProfile = userProfile;
         if (userProfile != null && userProfile.getUser() != this) {
             userProfile.assignUser(this);
+        }
+    }
+
+    // 사용자에게 스킬을 추가
+    public void addUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        if (!this.userSkills.contains(userSkill)) {
+            this.userSkills.add(userSkill);
+        }
+
+        if (userSkill.getUser() != this) {
+            userSkill.assignUser(this);
+        }
+    }
+
+    // 사용자로부터 스킬을 제거
+    public void removeUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        this.userSkills.remove(userSkill);
+        if (userSkill.getUser() == this) {
+            userSkill.assignUser(null);
+        }
+    }
+
+    // 사용자가 보유한 모든 스킬을 제거한다
+    public void clearUserSkills() {
+        for (UserSkill us : new ArrayList<>(this.userSkills)) {
+            removeUserSkill(us);
         }
     }
 
