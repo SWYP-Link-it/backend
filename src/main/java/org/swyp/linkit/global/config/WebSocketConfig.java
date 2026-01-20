@@ -31,14 +31,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 연결 엔드포인트 (SockJS 지원)
+        // WebSocket 연결 엔드포인트 (SockJS fallback 포함)
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*")
                 .withSockJS();
-
-        // 순수 WebSocket 연결용
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*");
 
         // STOMP 에러 핸들러 등록
         registry.setErrorHandler(stompErrorHandler);
