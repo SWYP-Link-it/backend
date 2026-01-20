@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.swyp.linkit.domain.chat.dto.ChatMessageDto;
 import org.swyp.linkit.domain.chat.dto.ChatRoomDto;
@@ -13,10 +14,9 @@ import org.swyp.linkit.domain.chat.dto.response.ChatRoomResponseDto;
 import org.swyp.linkit.domain.chat.entity.ChatRoomStatus;
 import org.swyp.linkit.domain.chat.service.ChatRoomService;
 import org.swyp.linkit.domain.chat.service.ChatService;
+import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
-
-import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -37,8 +37,8 @@ public class ChatController {
     public ApiResponseDto<ChatRoomResponseDto> createOrGetRoom(
             @Parameter(description = "멘토 사용자 ID") @RequestParam Long mentorId,
             @Parameter(description = "멘티 사용자 ID") @RequestParam Long menteeId,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
 
         // 요청자가 멘토 또는 멘티인지 확인
         if (!me.equals(mentorId) && !me.equals(menteeId)) {
@@ -51,8 +51,9 @@ public class ChatController {
 
     @Operation(summary = "내 채팅방 목록 조회", description = "현재 사용자의 채팅방 목록을 조회합니다. 삭제된 채팅방은 제외되며, 마지막 메시지 기준 최신순으로 정렬됩니다.")
     @GetMapping("/rooms")
-    public ApiResponseDto<List<ChatRoomResponseDto>> getMyRooms(Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+    public ApiResponseDto<List<ChatRoomResponseDto>> getMyRooms(
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
         List<ChatRoomDto> roomDtos = chatRoomService.findRoomsByUserId(me);
         List<ChatRoomResponseDto> rooms = roomDtos.stream()
                 .map(ChatRoomResponseDto::from)
@@ -64,8 +65,8 @@ public class ChatController {
     @GetMapping("/rooms/{roomId}")
     public ApiResponseDto<ChatRoomResponseDto> getRoom(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
 
         // 참여자 확인
         if (!chatRoomService.isParticipant(roomId, me)) {
@@ -81,8 +82,8 @@ public class ChatController {
     public ApiResponseDto<Void> updateRoomStatus(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @Parameter(description = "변경할 상태 (ACTIVE, CLOSED 등)") @RequestParam ChatRoomStatus status,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
 
         // 참여자 확인
         if (!chatRoomService.isParticipant(roomId, me)) {
@@ -98,8 +99,8 @@ public class ChatController {
     public ApiResponseDto<Void> deleteRooms(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "삭제할 채팅방 ID 목록")
             @RequestBody List<Long> roomIds,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
         chatRoomService.deleteRooms(me, roomIds);
         return ApiResponseDto.success("채팅방 삭제 완료", null);
     }
@@ -110,8 +111,8 @@ public class ChatController {
     @GetMapping("/rooms/{roomId}/messages")
     public ApiResponseDto<List<ChatMessageResponseDto>> getMessages(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
         List<ChatMessageDto> messageDtos = chatService.getMessages(roomId, me);
         List<ChatMessageResponseDto> messages = messageDtos.stream()
                 .map(ChatMessageResponseDto::from)
@@ -123,8 +124,8 @@ public class ChatController {
     @PostMapping("/rooms/{roomId}/read")
     public ApiResponseDto<Void> markAsRead(
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
         chatService.markAsRead(roomId, me);
         return ApiResponseDto.success("읽음 처리 완료", null);
     }
@@ -135,8 +136,8 @@ public class ChatController {
             @Parameter(description = "채팅방 ID") @PathVariable Long roomId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "삭제할 메시지 ID 목록")
             @RequestBody List<Long> messageIds,
-            Principal principal) {
-        Long me = Long.parseLong(principal.getName());
+            @AuthenticationPrincipal CustomOAuth2User oAuthUser) {
+        Long me = oAuthUser.getUserId();
         chatService.deleteMessages(roomId, me, messageIds);
         return ApiResponseDto.success("메시지 삭제 완료", null);
     }
