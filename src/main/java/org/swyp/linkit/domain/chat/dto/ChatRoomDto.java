@@ -73,6 +73,10 @@ public class ChatRoomDto {
                 .build();
     }
 
+    /**
+     * LocalDateTime을 Unix epoch 밀리초로 변환합니다.
+     * 모든 시간은 UTC 기준으로 저장 및 처리되며, 클라이언트에서 로컬 시간대로 변환하여 표시합니다.
+     */
     private static Long toEpochMs(LocalDateTime dateTime) {
         return dateTime != null ? dateTime.toInstant(ZoneOffset.UTC).toEpochMilli() : null;
     }
