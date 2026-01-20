@@ -28,8 +28,10 @@ public class RedisChatSubscriber implements MessageListener {
             messagingTemplate.convertAndSend(dest, payload);
 
             log.info("Redis -> WebSocket 브로드캐스트: channel={}, roomId={}", channel, payload.getRoomId());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            log.error("Redis 메시지 역직렬화 실패", e);
         } catch (Exception e) {
-            log.error("Redis 메시지 처리 실패", e);
+            log.error("Redis 메시지 처리 중 알 수 없는 오류 발생", e);
         }
     }
 }
