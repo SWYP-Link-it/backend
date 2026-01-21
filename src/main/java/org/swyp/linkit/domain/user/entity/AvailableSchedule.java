@@ -20,9 +20,7 @@ import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 import java.time.LocalTime;
 
 @Entity
-@Table(
-        name = "available_schedule"
-)
+@Table(name = "available_schedule")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AvailableSchedule extends BaseTimeEntity {
