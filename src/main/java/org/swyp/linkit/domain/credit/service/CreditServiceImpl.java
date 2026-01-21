@@ -44,7 +44,7 @@ public class CreditServiceImpl implements CreditService{
         // 1. credit 조회
         Credit credit = getCreditByUserId(user.getId());
         // 2. credit 지급
-        credit.increaseAmount(amount);
+        credit.addCredit(amount);
         // 3. creditHistory 생성
         historyService.createRewardHistory(user, amount, credit.getBalance(), type);
         return CreditDto.from(credit);

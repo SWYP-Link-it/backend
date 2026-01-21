@@ -51,7 +51,7 @@ public class Credit extends BaseTimeEntity {
     // ====== 비즈니스 메서드 ======
 
     // 크레딧 차감
-    public void decreaseAmount(int amount) {
+    public void useCredit(int amount) {
         if (this.balance < amount) {
             throw new NotEnoughCreditException();
         }
@@ -59,7 +59,7 @@ public class Credit extends BaseTimeEntity {
     }
 
     // 크레딧 증가 (리워드, 충전)
-    public void increaseAmount(int amount) {
+    public void addCredit(int amount) {
         if (amount < 0) {
             throw new InvalidCreditAmountException();
         }
