@@ -33,7 +33,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         // WebSocket 연결 엔드포인트 (SockJS fallback 포함)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+                .setAllowedOriginPatterns(
+                        "{FRONTEND_URL}",      // 로컬 개발
+                        "{FRONTEND_PROD_URL}",       // Vercel 프리뷰/배포
+                        "{BACKEND_URL}",         // 운영 도메인
+                        "{BACKEND_PROD_URL}"        // 서브도메인
+                )
                 .withSockJS();
 
         // STOMP 에러 핸들러 등록
