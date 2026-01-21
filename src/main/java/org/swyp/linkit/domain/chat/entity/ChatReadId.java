@@ -1,0 +1,24 @@
+package org.swyp.linkit.domain.chat.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
+
+@Embeddable
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class ChatReadId implements Serializable {
+
+    @Column(name = "chat_room_id")
+    private Long chatRoomId;
+
+    @Column(name = "user_id")
+    private Long userId;
+}
