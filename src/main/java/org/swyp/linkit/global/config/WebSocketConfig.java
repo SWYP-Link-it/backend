@@ -18,13 +18,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
     private final StompErrorHandler stompErrorHandler;
 
-    @Value("${FRONTEND_URL}")
+    @Value("${frontend.url}")
     private String frontendUrl;
-    @Value("${FRONTEND_PROD_URL}")
+
+    @Value("${frontend.prod-url}")
     private String frontendProdUrl;
-    @Value("${BACKEND_URL}")
+
+    @Value("${backend.url}")
     private String backendUrl;
-    @Value("${BACKEND_PROD_URL}")
+
+    @Value("${backend.prod-url}")
     private String backendProdUrl;
 
     @Override

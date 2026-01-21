@@ -74,3 +74,10 @@ spring:
       authorized-redirect-uri: ${FRONTEND_URL:http://localhost:3000}/oauth2/redirect
     cors:
       allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
+    prod-url: ${FRONTEND_PROD_URL:https://your-production-frontend.com}
+
+  backend:
+    url: ${BACKEND_URL:http://localhost:8080}
+    prod-url: ${BACKEND_PROD_URL:https://your-production-backend.com}
