@@ -40,7 +40,7 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(name = "profile_image_url", length = 100)
+    @Column(name = "profile_image_url", length = 500)
     private String profileImageUrl;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -53,11 +53,11 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile userProfile;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserSkill> userSkills = new ArrayList<>();
+    private List<AvailableSchedule> availableSchedules = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private User(OAuthProvider oauthProvider, String oauthId, String email,
@@ -91,6 +91,16 @@ public class User extends BaseTimeEntity {
         this.name = name;
     }
 
+    // 닉네임 변경
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    // 프로필 이미지 변경
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
     // 프로필 작성 완료 처리
     public void completeProfile() {
         if (this.userStatus == UserStatus.PROFILE_PENDING) {
@@ -114,33 +124,33 @@ public class User extends BaseTimeEntity {
         }
     }
 
-    // 사용자에게 스킬을 추가
-    public void addUserSkill(UserSkill userSkill) {
-        if (userSkill == null) return;
+    // 가능 일정 추가
+    public void addAvailableSchedule(AvailableSchedule schedule) {
+        if (schedule == null) return;
 
-        if (!this.userSkills.contains(userSkill)) {
-            this.userSkills.add(userSkill);
+        if (!this.availableSchedules.contains(schedule)) {
+            this.availableSchedules.add(schedule);
         }
 
-        if (userSkill.getUser() != this) {
-            userSkill.assignUser(this);
-        }
-    }
-
-    // 사용자로부터 스킬을 제거
-    public void removeUserSkill(UserSkill userSkill) {
-        if (userSkill == null) return;
-
-        this.userSkills.remove(userSkill);
-        if (userSkill.getUser() == this) {
-            userSkill.assignUser(null);
+        if (schedule.getUser() != this) {
+            schedule.assignUser(this);
         }
     }
 
-    // 사용자가 보유한 모든 스킬을 제거한다
-    public void clearUserSkills() {
-        for (UserSkill us : new ArrayList<>(this.userSkills)) {
-            removeUserSkill(us);
+    // 가능 일정 제거
+    public void removeAvailableSchedule(AvailableSchedule schedule) {
+        if (schedule == null) return;
+
+        this.availableSchedules.remove(schedule);
+        if (schedule.getUser() == this) {
+            schedule.assignUser(null);
+        }
+    }
+
+    // 모든 가능 일정 제거
+    public void clearAvailableSchedules() {
+        for (AvailableSchedule schedule : new ArrayList<>(this.availableSchedules)) {
+            removeAvailableSchedule(schedule);
         }
     }
 
@@ -149,6 +159,7 @@ public class User extends BaseTimeEntity {
         if (this.userProfile != null) {
             this.removeProfile();
         }
+        this.clearAvailableSchedules();
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();
     }

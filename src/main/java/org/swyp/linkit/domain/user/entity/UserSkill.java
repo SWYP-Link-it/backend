@@ -11,7 +11,7 @@ import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 @Table(
         name = "user_skill",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = {"user_id", "skill_category_id", "skill_name"})
+                @UniqueConstraint(columnNames = {"user_profile_id", "skill_category_id", "skill_name"})
         }
 )
 @Getter
@@ -24,30 +24,30 @@ public class UserSkill extends BaseTimeEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name="user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "user_profile_id", nullable = false)
+    private UserProfile userProfile;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name="skill_category_id", nullable = false)
+    @JoinColumn(name = "skill_category_id", nullable = false)
     private SkillCategory skillCategory;
 
-    @Column(name="skill_name", nullable = false, length = 100)
+    @Column(name = "skill_name", nullable = false, length = 100)
     private String skillName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name="skill_level", nullable = false, length = 20)
+    @Column(name = "skill_level", nullable = false, length = 20)
     private SkillLevel skillLevel;
 
-    @Column(name="skill_description", columnDefinition = "TEXT")
+    @Column(name = "skill_description", length = 500)
     private String skillDescription;
 
-    @Column(name="is_visible", nullable = false)
+    @Column(name = "is_visible", nullable = false)
     private Boolean isVisible;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserSkill(User user, SkillCategory skillCategory, String skillName,
+    private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
                       SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
-        this.user = user;
+        this.userProfile = userProfile;
         this.skillCategory = skillCategory;
         this.skillName = skillName;
         this.skillLevel = skillLevel;
@@ -75,13 +75,13 @@ public class UserSkill extends BaseTimeEntity {
         this.isVisible = isVisible;
     }
 
-    // 사용자 스킬의 카테고리를 변경
+    // 사용자 스킬의 카테고리 변경
     public void changeCategory(SkillCategory skillCategory) {
         this.skillCategory = skillCategory;
     }
 
-    // 사용자 연관관계 설정
-    protected void assignUser(User user) {
-        this.user = user;
+    // 사용자 프로필 연관관계 설정
+    protected void assignUserProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
     }
 }

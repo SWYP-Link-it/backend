@@ -7,6 +7,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "user_profile")
 @Getter
@@ -19,7 +22,7 @@ public class UserProfile extends BaseTimeEntity {
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Column(length = 100)
@@ -28,41 +31,125 @@ public class UserProfile extends BaseTimeEntity {
     @Column(name = "experience_description", length = 100)
     private String experienceDescription;
 
-    @Column(name = "times_taught")
+    @Column(name = "times_taught", nullable = false)
     private Integer timesTaught;
 
-    @Column(name = "profile_is_public", nullable = false)
-    private Boolean profileIsPublic;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exchange_type", nullable = false, length = 20)
+    private ExchangeType exchangeType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preferred_region", nullable = false, length = 50)
+    private PreferredRegion preferredRegion;
+
+    @Column(name = "detailed_location", length = 100)
+    private String detailedLocation;
+
+    @Column(name = "exchange_duration", nullable = false)
+    private Integer exchangeDuration;
+
+    @Column(name = "view_count", nullable = false)
+    private Integer viewCount;
+
+    @Column(name = "is_public", nullable = false)
+    private Boolean isPublic;
+
+    @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserProfile(User user, String introduction, String experienceDescription,
-                        Integer timesTaught, Boolean profileIsPublic) {
+                        Integer timesTaught, ExchangeType exchangeType, PreferredRegion preferredRegion,
+                        String detailedLocation, Integer exchangeDuration,
+                        Integer viewCount, Boolean isPublic) {
         this.user = user;
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
-        this.profileIsPublic = profileIsPublic;
+        this.exchangeType = exchangeType;
+        this.preferredRegion = preferredRegion;
+        this.detailedLocation = detailedLocation;
+        this.exchangeDuration = exchangeDuration;
+        this.viewCount = viewCount;
+        this.isPublic = isPublic;
     }
 
     // 사용자 프로필 생성
     public static UserProfile create(User user, String introduction, String experienceDescription,
-                                     Integer timesTaught, Boolean profileIsPublic) {
+                                     ExchangeType exchangeType, PreferredRegion preferredRegion,
+                                     String detailedLocation, Integer exchangeDuration,
+                                     Boolean isPublic) {
         return UserProfile.builder()
                 .user(user)
                 .introduction(introduction)
                 .experienceDescription(experienceDescription)
-                .timesTaught(timesTaught)
-                .profileIsPublic(profileIsPublic)
+                .timesTaught(0)
+                .exchangeType(exchangeType)
+                .preferredRegion(preferredRegion)
+                .detailedLocation(detailedLocation)
+                .exchangeDuration(exchangeDuration)
+                .viewCount(0)
+                .isPublic(isPublic)
                 .build();
     }
 
     // 사용자 프로필 수정
     public void updateProfile(String introduction, String experienceDescription,
-                              Integer timesTaught, Boolean profileIsPublic) {
+                              ExchangeType exchangeType, PreferredRegion preferredRegion,
+                              String detailedLocation, Integer exchangeDuration,
+                              Boolean isPublic) {
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
-        this.timesTaught = timesTaught;
-        this.profileIsPublic = profileIsPublic;
+        this.exchangeType = exchangeType;
+        this.preferredRegion = preferredRegion;
+        this.detailedLocation = detailedLocation;
+        this.exchangeDuration = exchangeDuration;
+        this.isPublic = isPublic;
+    }
+
+    // 조회수 증가
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    // 가르친 횟수 증가
+    public void incrementTimesTaught() {
+        this.timesTaught++;
+    }
+
+    // 프로필 공개/비공개 전환
+    public void togglePublicStatus() {
+        this.isPublic = !this.isPublic;
+    }
+
+    // 사용자 스킬 추가
+    public void addUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        if (!this.userSkills.contains(userSkill)) {
+            this.userSkills.add(userSkill);
+        }
+
+        if (userSkill.getUserProfile() != this) {
+            userSkill.assignUserProfile(this);
+        }
+    }
+
+    // 사용자 스킬 제거
+    public void removeUserSkill(UserSkill userSkill) {
+        if (userSkill == null) return;
+
+        this.userSkills.remove(userSkill);
+        if (userSkill.getUserProfile() == this) {
+            userSkill.assignUserProfile(null);
+        }
+    }
+
+    // 모든 사용자 스킬 제거
+    public void clearUserSkills() {
+        for (UserSkill skill : new ArrayList<>(this.userSkills)) {
+            removeUserSkill(skill);
+        }
     }
 
     // 사용자 연관관계 설정
