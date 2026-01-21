@@ -8,4 +8,5 @@ public interface CreditService {
     CreditDto createCredit(User user);
     CreditDto rewardCreditOnSignupSetup(User user);
     CreditDto rewardCreditOnProfileSetup(User user);
+    CreditDto getCreditBalance(Long userId);
 }
