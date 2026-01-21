@@ -22,21 +22,21 @@ public class Credit extends BaseTimeEntity {
 
     // 크레딧 보유량
     @Column(nullable = false)
-    private int amount;
+    private int balance;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Credit(int amount) {
-        this.amount = amount;
+    private Credit(int balance) {
+        this.balance = balance;
     }
 
     // == 생성 메서드 ==
     public static Credit create(User user, int amount) {
         Credit credit = Credit.builder()
-                .amount(amount)
+                .balance(amount)
                 .build();
         // User 연관관계 주입
         credit.assignUser(user);
@@ -51,18 +51,18 @@ public class Credit extends BaseTimeEntity {
     // ====== 비즈니스 메서드 ======
 
     // 크레딧 차감
-    public void decreaseAmount(int amount) {
-        if (this.amount < amount) {
+    public void useCredit(int amount) {
+        if (this.balance < amount) {
             throw new NotEnoughCreditException();
         }
-        this.amount -= amount;
+        this.balance -= amount;
     }
 
     // 크레딧 증가 (리워드, 충전)
-    public void increaseAmount(int amount) {
+    public void addCredit(int amount) {
         if (amount < 0) {
             throw new InvalidCreditAmountException();
         }
-        this.amount += amount;
+        this.balance += amount;
     }
 }
