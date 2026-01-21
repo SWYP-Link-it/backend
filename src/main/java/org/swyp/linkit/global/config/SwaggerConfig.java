@@ -1,4 +1,4 @@
-package org.swyp.linkit.config;
+package org.swyp.linkit.global.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
