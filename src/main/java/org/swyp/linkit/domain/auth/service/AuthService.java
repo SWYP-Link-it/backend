@@ -22,9 +22,7 @@ public class AuthService {
     public JwtTokenDto refreshToken(String refreshToken) {
 
         // 1. Refresh Token 검증
-        if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new IllegalArgumentException("유효하지 않은 Refresh Token입니다.");
-        }
+        jwtTokenProvider.validateToken(refreshToken);
 
         // 2. Refresh Token에서 User ID 추출
         Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
