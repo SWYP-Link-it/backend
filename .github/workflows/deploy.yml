@@ -78,6 +78,9 @@ jobs:
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
             FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            FRONTEND_PROD_URL=${{ secrets.FRONTEND_PROD_URL }}
+            BACKEND_URL=${{ secrets.BACKEND_URL }}
+            BACKEND_PROD_URL=${{ secrets.BACKEND_PROD_URL }}
             EOF
 
             echo ${{ secrets.NCR_ACCESS_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \

@@ -78,3 +78,11 @@ app:
     authorized-redirect-uri: http://localhost:3000/oauth2/redirect
   cors:
     allowed-origins: http://localhost:3000
+
+frontend:
+  url: http://localhost:3000
+  prod-url: http://localhost:3000
+
+backend:
+  url: http://localhost:8080
+  prod-url: http://localhost:8080
