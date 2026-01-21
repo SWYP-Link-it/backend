@@ -1,6 +1,7 @@
 package org.swyp.linkit.global.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -16,6 +17,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
     private final StompErrorHandler stompErrorHandler;
+
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
+    @Value("${FRONTEND_PROD_URL}")
+    private String frontendProdUrl;
+    @Value("${BACKEND_URL}")
+    private String backendUrl;
+    @Value("${BACKEND_PROD_URL}")
+    private String backendProdUrl;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
@@ -34,10 +44,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         // WebSocket 연결 엔드포인트 (SockJS fallback 포함)
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns(
-                        "{FRONTEND_URL}",      // 로컬 개발
-                        "{FRONTEND_PROD_URL}",       // Vercel 프리뷰/배포
-                        "{BACKEND_URL}",         // 운영 도메인
-                        "{BACKEND_PROD_URL}"        // 서브도메인
+                        frontendUrl,      // 로컬 개발
+                        frontendProdUrl,       // Vercel 프리뷰/배포
+                        backendUrl,         // 운영 도메인
+                        backendProdUrl        // 서브도메인
                 )
                 .withSockJS();
 
