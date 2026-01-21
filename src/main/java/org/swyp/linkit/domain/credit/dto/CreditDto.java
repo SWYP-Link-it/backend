@@ -13,13 +13,13 @@ public class CreditDto {
 
     private Long id;
     private Long userId;
-    private int amount;
+    private int balance;
 
     public static CreditDto from(Credit credit) {
         return CreditDto.builder()
                 .id(credit.getId())
                 .userId(credit.getUser().getId())
-                .amount(credit.getAmount())
+                .balance(credit.getBalance())
                 .build();
     }
 }
