@@ -52,7 +52,13 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
-                                "/ws/**"
+                                "/ws/**",
+                                "/login/oauth2/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
                         .requestMatchers("/auth/**").authenticated()
                         .anyRequest().authenticated()

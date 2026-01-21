@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -22,6 +24,7 @@ public class User extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long id;
 
     @Column(name = "oauth_provider", nullable = false, length = 50)
@@ -37,6 +40,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @Column(nullable = false, unique = true, length = 100)
     private String nickname;
 
@@ -47,28 +53,33 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private UserProfile userProfile;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AvailableSchedule> availableSchedules = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private User(OAuthProvider oauthProvider, String oauthId, String email,
-                 String name, String nickname, UserStatus userStatus) {
+                 String name, String profileImageUrl, String nickname, UserStatus userStatus) {
         this.oauthProvider = oauthProvider;
         this.oauthId = oauthId;
         this.email = email;
         this.name = name;
+        this.profileImageUrl = profileImageUrl;
         this.nickname = nickname;
         this.userStatus = userStatus;
     }
 
     // OAuth 소셜 로그인으로 신규 사용자 생성
-    public static User create(OAuthProvider oauthProvider, String oauthId,
-                              String email, String name, String nickname) {
+    public static User create(OAuthProvider oauthProvider, String oauthId, String email,
+                              String name, String profileImageUrl, String nickname) {
         return User.builder()
                 .oauthProvider(oauthProvider)
                 .oauthId(oauthId)
                 .email(email)
                 .name(name)
+                .profileImageUrl(profileImageUrl)
                 .nickname(nickname)
                 .userStatus(UserStatus.PROFILE_PENDING)
                 .build();
@@ -78,6 +89,16 @@ public class User extends BaseTimeEntity {
     public void updateOAuthInfo(String email, String name) {
         this.email = email;
         this.name = name;
+    }
+
+    // 닉네임 변경
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    // 프로필 이미지 변경
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 
     // 프로필 작성 완료 처리
@@ -103,11 +124,42 @@ public class User extends BaseTimeEntity {
         }
     }
 
+    // 가능 일정 추가
+    public void addAvailableSchedule(AvailableSchedule schedule) {
+        if (schedule == null) return;
+
+        if (!this.availableSchedules.contains(schedule)) {
+            this.availableSchedules.add(schedule);
+        }
+
+        if (schedule.getUser() != this) {
+            schedule.assignUser(this);
+        }
+    }
+
+    // 가능 일정 제거
+    public void removeAvailableSchedule(AvailableSchedule schedule) {
+        if (schedule == null) return;
+
+        this.availableSchedules.remove(schedule);
+        if (schedule.getUser() == this) {
+            schedule.assignUser(null);
+        }
+    }
+
+    // 모든 가능 일정 제거
+    public void clearAvailableSchedules() {
+        for (AvailableSchedule schedule : new ArrayList<>(this.availableSchedules)) {
+            removeAvailableSchedule(schedule);
+        }
+    }
+
     // 회원 탈퇴 처리 (Soft Delete)
     public void withdraw() {
         if (this.userProfile != null) {
             this.removeProfile();
         }
+        this.clearAvailableSchedules();
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();
     }
