@@ -10,13 +10,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 @SpringBootTest
 @ActiveProfiles("test")
 class LinkItApplicationTests {
-
-    @MockitoBean
-    private StringRedisTemplate stringRedisTemplate;
-
-    @MockitoBean
-    private RedisMessageListenerContainer redisMessageListenerContainer;
-
     @Test
     void contextLoads() {
     }
