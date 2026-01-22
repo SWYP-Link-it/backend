@@ -53,7 +53,8 @@ public class JwtTokenProvider {
         String accessToken = createToken(userId, accessTokenExpiration, Map.of("auth", "ROLE_USER"));
         String refreshToken = createToken(userId, refreshTokenExpiration, null);
 
-        return JwtTokenDto.of(accessToken, refreshToken, accessTokenExpiration);
+        return JwtTokenDto.of(accessToken, refreshToken,
+                accessTokenExpiration, refreshTokenExpiration);
     }
 
     // 임시 토큰 생성 (회원가입 대기 중인 사용자용)

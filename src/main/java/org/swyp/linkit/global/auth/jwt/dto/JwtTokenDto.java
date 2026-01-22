@@ -15,13 +15,20 @@ public class JwtTokenDto {
     private String accessToken;
     private String refreshToken;
     private Long accessTokenExpiresIn;
+    private Long refreshTokenExpiresIn;
 
-    public static JwtTokenDto of(String accessToken, String refreshToken, Long accessTokenExpiresIn) {
+    public static JwtTokenDto of(String accessToken, String refreshToken,
+                                 Long accessTokenExpiresIn, Long refreshTokenExpiresIn) {
         return JwtTokenDto.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .accessTokenExpiresIn(accessTokenExpiresIn)
+                .refreshTokenExpiresIn(refreshTokenExpiresIn)
                 .build();
+    }
+
+    public int getRefreshTokenMaxAge() {
+        return (int) (refreshTokenExpiresIn / 1000);
     }
 }
