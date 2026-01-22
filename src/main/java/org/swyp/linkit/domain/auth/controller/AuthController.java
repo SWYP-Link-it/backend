@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,6 +65,24 @@ public class AuthController {
         // 4. accessToken JSON 반환
         return ResponseEntity.ok(
                 ApiResponseDto.success("회원가입이 완료되었습니다.", tokenDto)
+        );
+    }
+
+    @Operation(summary = "소셜 로그인 성공 후 토큰 발급", description = "기존 회원이 소셜 로그인 성공 후 accessToken을 발급받습니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "토큰 발급 성공"),
+            @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 refreshToken", content = @Content),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
+    })
+    @GetMapping("/success")
+    public ResponseEntity<ApiResponseDto<JwtTokenDto>> getAccessToken(
+            @CookieValue("refreshToken") String refreshToken) {
+
+        // refreshToken 검증 및 accessToken 발급
+        JwtTokenDto tokenDto = authService.refreshAccessToken(refreshToken);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("인증에 성공했습니다.", tokenDto)
         );
     }
 }

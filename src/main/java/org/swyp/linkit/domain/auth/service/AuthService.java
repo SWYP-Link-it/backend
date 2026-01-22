@@ -64,4 +64,26 @@ public class AuthService {
         // 9. 정식 JWT 토큰 발급
         return jwtTokenProvider.generateTokenByUserId(userId);
     }
+
+    // refreshToken으로 accessToken 재발급
+    @Transactional(readOnly = true)
+    public JwtTokenDto refreshAccessToken(String refreshToken) {
+        // 1. refreshToken 검증
+        jwtTokenProvider.validateToken(refreshToken);
+
+        // 2. userId 추출
+        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+
+        // 3. User 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 4. 상태 확인
+        if (user.getUserStatus() != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        }
+
+        // 5. 정식 JWT 토큰 발급
+        return jwtTokenProvider.generateTokenByUserId(userId);
+    }
 }
