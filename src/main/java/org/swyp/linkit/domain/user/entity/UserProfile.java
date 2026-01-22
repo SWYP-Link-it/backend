@@ -45,16 +45,13 @@ public class UserProfile extends BaseTimeEntity {
     @Column(name = "detailed_location", length = 100)
     private String detailedLocation;
 
-    @Column(name = "view_count", nullable = false)
-    private Integer viewCount;
-
     @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserProfile(User user, String introduction, String experienceDescription,
                         Integer timesTaught, ExchangeType exchangeType, PreferredRegion preferredRegion,
-                        String detailedLocation, Integer viewCount) {
+                        String detailedLocation) {
         this.user = user;
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
@@ -62,7 +59,6 @@ public class UserProfile extends BaseTimeEntity {
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
         this.detailedLocation = detailedLocation;
-        this.viewCount = viewCount;
     }
 
     // 사용자 프로필 생성
@@ -77,7 +73,6 @@ public class UserProfile extends BaseTimeEntity {
                 .exchangeType(exchangeType)
                 .preferredRegion(preferredRegion)
                 .detailedLocation(detailedLocation)
-                .viewCount(0)
                 .build();
     }
 
@@ -90,11 +85,6 @@ public class UserProfile extends BaseTimeEntity {
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
         this.detailedLocation = detailedLocation;
-    }
-
-    // 조회수 증가
-    public void incrementViewCount() {
-        this.viewCount++;
     }
 
     // 가르친 횟수 증가

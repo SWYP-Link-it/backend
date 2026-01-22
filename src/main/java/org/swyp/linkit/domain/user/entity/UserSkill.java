@@ -44,19 +44,23 @@ public class UserSkill extends BaseTimeEntity {
     @Column(name = "exchange_duration", nullable = false)
     private Integer exchangeDuration;
 
+    @Column(name = "view_count", nullable = false)
+    private Long viewCount;
+
     @Column(name = "is_visible", nullable = false)
     private Boolean isVisible;
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
                       SkillLevel skillLevel, String skillDescription, Integer exchangeDuration,
-                      Boolean isVisible) {
+                      Long viewCount, Boolean isVisible) {
         this.userProfile = userProfile;
         this.skillCategory = skillCategory;
         this.skillName = skillName;
         this.skillLevel = skillLevel;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
+        this.viewCount = viewCount;
         this.isVisible = isVisible;
     }
 
@@ -70,6 +74,7 @@ public class UserSkill extends BaseTimeEntity {
                 .skillLevel(skillLevel)
                 .skillDescription(skillDescription)
                 .exchangeDuration(exchangeDuration)
+                .viewCount(0L)
                 .isVisible(isVisible)
                 .build();
     }
@@ -82,6 +87,11 @@ public class UserSkill extends BaseTimeEntity {
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
         this.isVisible = isVisible;
+    }
+
+    // 조회수 증가
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 
     // 사용자 스킬의 카테고리 변경
