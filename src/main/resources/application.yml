@@ -68,6 +68,7 @@ jwt:
   secret: ${JWT_SECRET:dummy-secret}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
+  temp-token-expiration: ${JWT_TEMP_EXPIRATION:1200000}
 
 app:
   oauth2:
