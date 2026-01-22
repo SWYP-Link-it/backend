@@ -39,7 +39,7 @@ public class UserProfile extends BaseTimeEntity {
     private ExchangeType exchangeType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "preferred_region", nullable = false, length = 50)
+    @Column(name = "preferred_region", length = 50)
     private PreferredRegion preferredRegion;
 
     @Column(name = "detailed_location", length = 100)
