@@ -53,12 +53,12 @@ public class AuthController {
         deleteTempToken.setSecure(true);
         response.addCookie(deleteTempToken);
 
-        // 3. refreshToken 쿠키 설정 (7일)
+        // 3. refreshToken 쿠키 설정
         Cookie refreshTokenCookie = new Cookie("refreshToken", tokenDto.getRefreshToken());
         refreshTokenCookie.setHttpOnly(true);
         refreshTokenCookie.setSecure(true);
         refreshTokenCookie.setPath("/");
-        refreshTokenCookie.setMaxAge(tokenDto.getRefreshTokenMaxAge());
+        refreshTokenCookie.setMaxAge((int) (tokenDto.getRefreshTokenExpiresIn() / 1000));
         response.addCookie(refreshTokenCookie);
 
         // 4. accessToken JSON 반환

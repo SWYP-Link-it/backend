@@ -51,8 +51,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             // 신규 회원은 tempToken 발급
             String tempToken = jwtTokenProvider.generateTempToken(userId);
 
-            // tempToken을 HttpOnly 쿠키로 설정 (10분)
-            addCookie(response, "tempToken", tempToken, 10 * 60, "/auth/complete-registration");
+            // tempToken 쿠키 Max-Age 계산 (ms → seconds)
+            int tempTokenMaxAge = jwtTokenProvider.getTempTokenMaxAge();
+
+            // tempToken을 HttpOnly 쿠키로 설정
+            addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/auth/complete-registration");
 
             // 프론트로 리다이렉트 (status=PENDING)
             targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
@@ -65,8 +68,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             // 기존 회원은 JWT 토큰 발급
             JwtTokenDto tokenDto = jwtTokenProvider.generateTokenByUserId(userId);
 
-            // refreshToken을 HttpOnly 쿠키로 설정 (7일)
-            addCookie(response, "refreshToken", tokenDto.getRefreshToken(), 7 * 24 * 60 * 60, "/");
+            // refreshToken 쿠키 Max-Age 계산 (ms → seconds)
+            int refreshTokenMaxAge = (int) (tokenDto.getRefreshTokenExpiresIn() / 1000);
+
+            // refreshToken을 HttpOnly 쿠키로 설정
+            addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAge, "/");
 
             // 프론트로 리다이렉트 (status=ACTIVE)
             targetUrl = UriComponentsBuilder.fromUriString(redirectUri)

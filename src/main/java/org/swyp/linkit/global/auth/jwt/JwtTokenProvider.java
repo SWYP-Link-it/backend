@@ -155,4 +155,9 @@ public class JwtTokenProvider {
             return e.getClaims();
         }
     }
+
+    // tempToken 쿠키 Max-Age 반환 (초 단위)
+    public int getTempTokenMaxAge() {
+        return (int) (tempTokenExpiration / 1000);
+    }
 }

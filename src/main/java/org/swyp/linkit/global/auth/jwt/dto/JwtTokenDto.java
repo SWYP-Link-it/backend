@@ -27,8 +27,4 @@ public class JwtTokenDto {
                 .refreshTokenExpiresIn(refreshTokenExpiresIn)
                 .build();
     }
-
-    public int getRefreshTokenMaxAge() {
-        return (int) (refreshTokenExpiresIn / 1000);
-    }
 }
