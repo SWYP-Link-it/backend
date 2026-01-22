@@ -98,14 +98,12 @@ public class JwtTokenProvider {
     }
 
     // 임시 토큰 전용 검증
-    public boolean validateTempToken(String token) {
+    public void validateTempToken(String token) {
         validateToken(token);
 
         if (!isTempToken(token)) {
             throw new InvalidTokenException("임시 토큰이 아닙니다.");
         }
-
-        return true;
     }
 
     // 토큰이 임시 토큰인지 확인
