@@ -53,12 +53,12 @@ public class SecurityConfig {
                                 "/oauth2/**",
                                 "/login/oauth2/**",
                                 "/ws/**",
-                                "/login/oauth2/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
-                                "/webjars/**"
+                                "/webjars/**",
+                                "/auth/complete-registration"
                         ).permitAll()
                         .requestMatchers("/auth/**").authenticated()
                         .anyRequest().authenticated()
