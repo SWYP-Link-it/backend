@@ -22,6 +22,9 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 닉네임입니다."),
 
+    // 사용자 스킬
+    USER_SKILL_NOT_FOUND(HttpStatus.NOT_FOUND, "US001", "스킬을 찾을 수 없습니다."),
+
     // OAuth
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),
     OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다."),
