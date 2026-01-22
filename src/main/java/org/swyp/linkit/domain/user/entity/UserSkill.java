@@ -41,37 +41,46 @@ public class UserSkill extends BaseTimeEntity {
     @Column(name = "skill_description", length = 500)
     private String skillDescription;
 
+    @Column(name = "exchange_duration", nullable = false)
+    private Integer exchangeDuration;
+
     @Column(name = "is_visible", nullable = false)
     private Boolean isVisible;
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
-                      SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
+                      SkillLevel skillLevel, String skillDescription, Integer exchangeDuration,
+                      Boolean isVisible) {
         this.userProfile = userProfile;
         this.skillCategory = skillCategory;
         this.skillName = skillName;
         this.skillLevel = skillLevel;
         this.skillDescription = skillDescription;
+        this.exchangeDuration = exchangeDuration;
         this.isVisible = isVisible;
     }
 
     // 사용자 스킬 생성
     public static UserSkill create(SkillCategory skillCategory, String skillName,
-                                   SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
+                                   SkillLevel skillLevel, String skillDescription,
+                                   Integer exchangeDuration, Boolean isVisible) {
         return UserSkill.builder()
                 .skillCategory(skillCategory)
                 .skillName(skillName)
                 .skillLevel(skillLevel)
                 .skillDescription(skillDescription)
+                .exchangeDuration(exchangeDuration)
                 .isVisible(isVisible)
                 .build();
     }
 
     // 사용자 스킬의 정보 수정
-    public void update(String skillName, SkillLevel skillLevel, String skillDescription, Boolean isVisible) {
+    public void update(String skillName, SkillLevel skillLevel, String skillDescription,
+                       Integer exchangeDuration, Boolean isVisible) {
         this.skillName = skillName.trim();
         this.skillLevel = skillLevel;
         this.skillDescription = skillDescription;
+        this.exchangeDuration = exchangeDuration;
         this.isVisible = isVisible;
     }
 

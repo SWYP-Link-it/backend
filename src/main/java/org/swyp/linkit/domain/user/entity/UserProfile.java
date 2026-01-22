@@ -45,9 +45,6 @@ public class UserProfile extends BaseTimeEntity {
     @Column(name = "detailed_location", length = 100)
     private String detailedLocation;
 
-    @Column(name = "exchange_duration", nullable = false)
-    private Integer exchangeDuration;
-
     @Column(name = "view_count", nullable = false)
     private Integer viewCount;
 
@@ -57,7 +54,7 @@ public class UserProfile extends BaseTimeEntity {
     @Builder(access = AccessLevel.PRIVATE)
     private UserProfile(User user, String introduction, String experienceDescription,
                         Integer timesTaught, ExchangeType exchangeType, PreferredRegion preferredRegion,
-                        String detailedLocation, Integer exchangeDuration, Integer viewCount) {
+                        String detailedLocation, Integer viewCount) {
         this.user = user;
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
@@ -65,14 +62,13 @@ public class UserProfile extends BaseTimeEntity {
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
         this.detailedLocation = detailedLocation;
-        this.exchangeDuration = exchangeDuration;
         this.viewCount = viewCount;
     }
 
     // 사용자 프로필 생성
     public static UserProfile create(User user, String introduction, String experienceDescription,
                                      ExchangeType exchangeType, PreferredRegion preferredRegion,
-                                     String detailedLocation, Integer exchangeDuration) {
+                                     String detailedLocation) {
         return UserProfile.builder()
                 .user(user)
                 .introduction(introduction)
@@ -81,7 +77,6 @@ public class UserProfile extends BaseTimeEntity {
                 .exchangeType(exchangeType)
                 .preferredRegion(preferredRegion)
                 .detailedLocation(detailedLocation)
-                .exchangeDuration(exchangeDuration)
                 .viewCount(0)
                 .build();
     }
@@ -89,13 +84,12 @@ public class UserProfile extends BaseTimeEntity {
     // 사용자 프로필 수정
     public void updateProfile(String introduction, String experienceDescription,
                               ExchangeType exchangeType, PreferredRegion preferredRegion,
-                              String detailedLocation, Integer exchangeDuration) {
+                              String detailedLocation) {
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
         this.detailedLocation = detailedLocation;
-        this.exchangeDuration = exchangeDuration;
     }
 
     // 조회수 증가
