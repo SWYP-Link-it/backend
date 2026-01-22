@@ -51,17 +51,13 @@ public class UserProfile extends BaseTimeEntity {
     @Column(name = "view_count", nullable = false)
     private Integer viewCount;
 
-    @Column(name = "is_public", nullable = false)
-    private Boolean isPublic;
-
     @OneToMany(mappedBy = "userProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserProfile(User user, String introduction, String experienceDescription,
                         Integer timesTaught, ExchangeType exchangeType, PreferredRegion preferredRegion,
-                        String detailedLocation, Integer exchangeDuration,
-                        Integer viewCount, Boolean isPublic) {
+                        String detailedLocation, Integer exchangeDuration, Integer viewCount) {
         this.user = user;
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
@@ -71,14 +67,12 @@ public class UserProfile extends BaseTimeEntity {
         this.detailedLocation = detailedLocation;
         this.exchangeDuration = exchangeDuration;
         this.viewCount = viewCount;
-        this.isPublic = isPublic;
     }
 
     // 사용자 프로필 생성
     public static UserProfile create(User user, String introduction, String experienceDescription,
                                      ExchangeType exchangeType, PreferredRegion preferredRegion,
-                                     String detailedLocation, Integer exchangeDuration,
-                                     Boolean isPublic) {
+                                     String detailedLocation, Integer exchangeDuration) {
         return UserProfile.builder()
                 .user(user)
                 .introduction(introduction)
@@ -89,22 +83,19 @@ public class UserProfile extends BaseTimeEntity {
                 .detailedLocation(detailedLocation)
                 .exchangeDuration(exchangeDuration)
                 .viewCount(0)
-                .isPublic(isPublic)
                 .build();
     }
 
     // 사용자 프로필 수정
     public void updateProfile(String introduction, String experienceDescription,
                               ExchangeType exchangeType, PreferredRegion preferredRegion,
-                              String detailedLocation, Integer exchangeDuration,
-                              Boolean isPublic) {
+                              String detailedLocation, Integer exchangeDuration) {
         this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
         this.detailedLocation = detailedLocation;
         this.exchangeDuration = exchangeDuration;
-        this.isPublic = isPublic;
     }
 
     // 조회수 증가
@@ -115,11 +106,6 @@ public class UserProfile extends BaseTimeEntity {
     // 가르친 횟수 증가
     public void incrementTimesTaught() {
         this.timesTaught++;
-    }
-
-    // 프로필 공개/비공개 전환
-    public void togglePublicStatus() {
-        this.isPublic = !this.isPublic;
     }
 
     // 사용자 스킬 추가
