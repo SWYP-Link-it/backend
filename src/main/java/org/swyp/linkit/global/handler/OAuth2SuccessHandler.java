@@ -59,7 +59,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             // 프론트로 리다이렉트 (status=PENDING)
             targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .path("/callback")
+                    .path("/auth/callback")
                     .queryParam("status", "PENDING")
                     .build()
                     .toUriString();
@@ -76,7 +76,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             // 프론트로 리다이렉트 (status=ACTIVE)
             targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .path("/callback")
+                    .path("/auth/callback")
                     .queryParam("status", "ACTIVE")
                     .build()
                     .toUriString();
