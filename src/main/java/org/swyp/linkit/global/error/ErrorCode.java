@@ -22,6 +22,9 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 닉네임입니다."),
 
+    // 사용자 스킬
+    USER_SKILL_NOT_FOUND(HttpStatus.NOT_FOUND, "US001", "스킬을 찾을 수 없습니다."),
+
     // OAuth
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),
     OAUTH_AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "O002", "OAuth 인증에 실패했습니다."),
@@ -35,7 +38,7 @@ public enum ErrorCode {
     CHAT_SAME_USER(HttpStatus.BAD_REQUEST, "CH006", "멘토와 멘티는 서로 다른 사용자여야 합니다."),
 
     // 크레딧
-    NOT_FOUND_CREDIT(HttpStatus.BAD_REQUEST, "CR001", "사용자의 크레딧이 존재하지 않습니다."),
+    NOT_FOUND_CREDIT(HttpStatus.NOT_FOUND, "CR001", "크레딧 정보를 찾을 수 없습니다."),
     NOT_ENOUGH_CREDIT(HttpStatus.BAD_REQUEST, "CR002", "크레딧 잔액이 부족합니다."),
     INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "크레딧은 0보다 커야합니다.");
 
