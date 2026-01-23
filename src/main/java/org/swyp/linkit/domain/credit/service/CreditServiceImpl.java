@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.dto.CreditDto;
+import org.swyp.linkit.domain.credit.dto.CreditWithUserDetailsDto;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.repository.CreditRepository;
@@ -20,6 +21,9 @@ public class CreditServiceImpl implements CreditService{
     private final CreditRepository creditRepository;
     private final CreditHistoryService historyService;
 
+    /**
+     * 크레딧 생성
+     */
     @Transactional
     @Override
     public CreditDto createCredit(User user) {
@@ -28,25 +32,55 @@ public class CreditServiceImpl implements CreditService{
         return CreditDto.from(credit);
     }
 
+    /**
+     * 회원가입(닉네임 설정까지) 크레딧 지급
+     */
     @Transactional
     @Override
     public CreditDto rewardCreditOnSignupSetup(User user) {
         return applyReward(user, SIGNUP_REWARD, HistoryType.SIGNUP_REWARD);
     }
 
+    /**
+     * 프로필 설정 완료 크레딧 지급
+     */
     @Transactional
     @Override
     public CreditDto rewardCreditOnProfileSetup(User user) {
         return applyReward(user, PROFILE_REWARD, HistoryType.PROFILE_REWARD);
     }
 
+    /**
+     * 크레딧 잔액 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public CreditDto getCreditBalance(Long userId) {
+        // 1. credit 조회
+        Credit credit = getCreditByUserId(userId);
+        return CreditDto.from(credit);
+    }
+
+    /**
+     *  크레딧 잔액 및 유저 정보 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public CreditWithUserDetailsDto getCreditBalanceWithUserDetails(Long userId) {
+        // 1. credit 조회
+        Credit credit = getCreditByUserId(userId);
+        // 2. user 객체 접근 -> 조회 쿼리 1번 추가 발생
+        User user = credit.getUser();
+        return CreditWithUserDetailsDto.from(credit, user);
+    }
+
     private CreditDto applyReward(User user, int amount, HistoryType type) {
         // 1. credit 조회
         Credit credit = getCreditByUserId(user.getId());
         // 2. credit 지급
-        credit.increaseAmount(amount);
+        credit.addCredit(amount);
         // 3. creditHistory 생성
-        historyService.createRewardHistory(user, amount, credit.getAmount(), type);
+        historyService.createRewardHistory(user, amount, credit.getBalance(), type);
         return CreditDto.from(credit);
     }
 
