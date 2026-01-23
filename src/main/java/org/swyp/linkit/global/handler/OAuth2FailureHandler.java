@@ -32,6 +32,7 @@ public class OAuth2FailureHandler implements AuthenticationFailureHandler {
 
         // 프론트엔드로 리다이렉트
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
+                .path("/auth/callback")
                 .queryParam("error", errorMessage)
                 .build()
                 .toUriString();

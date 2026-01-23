@@ -68,12 +68,15 @@ jwt:
   secret: ${JWT_SECRET:dummy-secret}
   access-token-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-token-expiration: ${JWT_REFRESH_EXPIRATION:1209600000}
+  temp-token-expiration: ${JWT_TEMP_EXPIRATION:1200000}
 
 app:
+  default-profile-image: ${DEFAULT_PROFILE_IMAGE_URL:https://your-bucket.kr.object.ncloudstorage.com/default-profile.png}
   oauth2:
-    authorized-redirect-uri: ${FRONTEND_URL:http://localhost:3000}/oauth2/redirect
+    authorized-redirect-uri: ${FRONTEND_URL:http://localhost:3000}
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
   prod-url: ${FRONTEND_PROD_URL:https://your-production-frontend.com}
