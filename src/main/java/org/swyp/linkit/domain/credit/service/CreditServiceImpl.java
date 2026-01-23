@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.dto.CreditDto;
+import org.swyp.linkit.domain.credit.dto.CreditWithUserDetailsDto;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.repository.CreditRepository;
@@ -58,6 +59,19 @@ public class CreditServiceImpl implements CreditService{
         // 1. credit 조회
         Credit credit = getCreditByUserId(userId);
         return CreditDto.from(credit);
+    }
+
+    /**
+     *  크레딧 잔액 및 유저 정보 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public CreditWithUserDetailsDto getCreditBalanceWithUserDetails(Long userId) {
+        // 1. credit 조회
+        Credit credit = getCreditByUserId(userId);
+        // 2. user 객체 접근 -> 조회 쿼리 1번 추가 발생
+        User user = credit.getUser();
+        return CreditWithUserDetailsDto.from(credit, user);
     }
 
     private CreditDto applyReward(User user, int amount, HistoryType type) {
