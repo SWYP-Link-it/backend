@@ -78,7 +78,7 @@ jobs:
             JWT_ACCESS_EXPIRATION=${{ secrets.JWT_ACCESS_EXPIRATION }}
             JWT_REFRESH_EXPIRATION=${{ secrets.JWT_REFRESH_EXPIRATION }}
             JWT_TEMP_EXPIRATION=${{ secrets.JWT_TEMP_EXPIRATION }}
-            DEFAULT_PROFILE_IMAGE_URL: ${{ secrets.DEFAULT_PROFILE_IMAGE_URL }}
+            DEFAULT_PROFILE_IMAGE_URL= ${{ secrets.DEFAULT_PROFILE_IMAGE_URL }}
             FRONTEND_URL=${{ secrets.FRONTEND_URL }}
             FRONTEND_PROD_URL=${{ secrets.FRONTEND_PROD_URL }}
             BACKEND_URL=${{ secrets.BACKEND_URL }}
