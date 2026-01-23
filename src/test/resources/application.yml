@@ -67,6 +67,7 @@ jwt:
   secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RpbmctcHVycG9zZXMtb25seS1tdXN0LWJlLWxvbmctZW5vdWdoLXRvLXdvcms=
   access-token-expiration: 3600000
   refresh-token-expiration: 86400000
+  temp-token-expiration: 1200000
 
 logging:
   level:
@@ -74,8 +75,9 @@ logging:
     org.hibernate.SQL: DEBUG
 
 app:
+  default-profile-image: https://your-bucket.kr.object.ncloudstorage.com/default-profile.png
   oauth2:
-    authorized-redirect-uri: http://localhost:3000/oauth2/redirect
+    authorized-redirect-uri: http://localhost:3000
   cors:
     allowed-origins: http://localhost:3000
 

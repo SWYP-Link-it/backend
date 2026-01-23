@@ -2,6 +2,7 @@ package org.swyp.linkit.global.auth.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -30,40 +31,52 @@ public class JwtTokenProvider {
     private final SecretKey key;
     private final long accessTokenExpiration;
     private final long refreshTokenExpiration;
+    private final long tempTokenExpiration;
     private final UserRepository userRepository;
 
     public JwtTokenProvider(
             @Value("${jwt.secret}") String secretKey,
             @Value("${jwt.access-token-expiration}") long accessTokenExpiration,
             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpiration,
+            @Value("${jwt.temp-token-expiration}") long tempTokenExpiration,
             UserRepository userRepository) {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.accessTokenExpiration = accessTokenExpiration;
         this.refreshTokenExpiration = refreshTokenExpiration;
+        this.tempTokenExpiration = tempTokenExpiration;
         this.userRepository = userRepository;
     }
 
-    // JWT 토큰 생성
+    // JWT 토큰 생성 (Access Token + Refresh Token)
     public JwtTokenDto generateTokenByUserId(Long userId) {
+        String accessToken = createToken(userId, accessTokenExpiration, Map.of("auth", "ROLE_USER"));
+        String refreshToken = createToken(userId, refreshTokenExpiration, null);
+
+        return JwtTokenDto.of(accessToken, refreshToken,
+                accessTokenExpiration, refreshTokenExpiration);
+    }
+
+    // 임시 토큰 생성 (회원가입 대기 중인 사용자용)
+    public String generateTempToken(Long userId) {
+        return createToken(userId, tempTokenExpiration, Map.of("type", "TEMP"));
+    }
+
+    // 공통 토큰 생성 로직
+    private String createToken(Long userId, long expirationTime, Map<String, Object> claims) {
         long now = System.currentTimeMillis();
 
-        String accessToken = Jwts.builder()
-                .subject(String.valueOf(userId))
-                .claim("auth", "ROLE_USER")
-                .issuedAt(new Date(now))
-                .expiration(new Date(now + accessTokenExpiration))
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
-
-        String refreshToken = Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
                 .subject(String.valueOf(userId))
                 .issuedAt(new Date(now))
-                .expiration(new Date(now + refreshTokenExpiration))
-                .signWith(key, Jwts.SIG.HS256)
-                .compact();
+                .expiration(new Date(now + expirationTime))
+                .signWith(key, Jwts.SIG.HS256);
 
-        return JwtTokenDto.of(accessToken, refreshToken, accessTokenExpiration);
+        if (claims != null) {
+            claims.forEach(builder::claim);
+        }
+
+        return builder.compact();
     }
 
     // JWT 토큰 검증
@@ -83,6 +96,27 @@ public class JwtTokenProvider {
         } catch (IllegalArgumentException e) {
             throw new InvalidTokenException("토큰이 비어있습니다.");
         }
+    }
+
+    // 임시 토큰 전용 검증
+    public void validateTempToken(String token) {
+        validateToken(token);
+
+        if (!isTempToken(token)) {
+            throw new InvalidTokenException("임시 토큰이 아닙니다.");
+        }
+    }
+
+    // 토큰이 임시 토큰인지 확인
+    public boolean isTempToken(String token) {
+        Claims claims = parseClaims(token);
+        return "TEMP".equals(claims.get("type"));
+    }
+
+    // JWT 토큰에서 사용자 ID 추출
+    public Long getUserIdFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return Long.parseLong(claims.getSubject());
     }
 
     // JWT 토큰에서 CustomOAuth2User 기반 인증 정보 추출
@@ -109,12 +143,6 @@ public class JwtTokenProvider {
         );
     }
 
-    // JWT 토큰에서 사용자 ID 추출
-    public Long getUserIdFromToken(String token) {
-        Claims claims = parseClaims(token);
-        return Long.parseLong(claims.getSubject());
-    }
-
     // JWT 토큰 파싱
     private Claims parseClaims(String token) {
         try {
@@ -126,5 +154,10 @@ public class JwtTokenProvider {
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }
+    }
+
+    // tempToken 쿠키 Max-Age 반환 (초 단위)
+    public int getTempTokenMaxAge() {
+        return (int) (tempTokenExpiration / 1000);
     }
 }
