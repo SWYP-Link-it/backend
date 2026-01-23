@@ -14,7 +14,7 @@ public class CreditBalanceResponseDto {
     private Long userId;
 
     @Schema(description = "현재 보유 크레딧 잔액", example = "5")
-    private int balance;
+    private int creditBalance;
 
     public static CreditBalanceResponseDto from(CreditDto creditDto){
         return new CreditBalanceResponseDto(creditDto.getUserId(), creditDto.getBalance());

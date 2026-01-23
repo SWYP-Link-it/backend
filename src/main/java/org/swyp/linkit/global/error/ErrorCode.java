@@ -17,10 +17,14 @@ public enum ErrorCode {
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "A002", "만료된 토큰입니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "A003", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "A004", "접근 권한이 없습니다."),
+    INVALID_USER_STATUS(HttpStatus.BAD_REQUEST, "A005", "유효하지 않은 사용자 상태입니다."),
 
     // 사용자
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 닉네임입니다."),
+
+    // 사용자 스킬
+    USER_SKILL_NOT_FOUND(HttpStatus.NOT_FOUND, "US001", "스킬을 찾을 수 없습니다."),
 
     // OAuth
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),
