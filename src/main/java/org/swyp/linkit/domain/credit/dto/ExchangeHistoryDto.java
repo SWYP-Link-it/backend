@@ -6,31 +6,33 @@ import lombok.Builder;
 import lombok.Getter;
 import org.swyp.linkit.domain.credit.entity.CreditHistory;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.credit.entity.SupplyType;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-public class CreditHistoryDto {
+public class ExchangeHistoryDto {
 
-    private Long id;
+    private Long historyId;
     private Long userId;
+    private Long targetUserId;
+    private Long exchangeId;
+    private String contentName;
+    private SupplyType supplyType;
     private int changeAmount;
     private int balanceAfter;
     private HistoryType historyType;
-    // 크레딧 변동이 스킬 교환일 경우만 유효
-    private Long skillExchangeId;
-    // 크레딧 변동이 스킬 교환일 경우만 유효
-    private Long targetUserId;
 
-    public static CreditHistoryDto from(CreditHistory creditHistory) {
-        return CreditHistoryDto.builder()
-                .id(creditHistory.getId())
+    public static ExchangeHistoryDto from(CreditHistory creditHistory) {
+        return ExchangeHistoryDto.builder()
+                .historyId(creditHistory.getId())
                 .userId(creditHistory.getUser().getId())
+                .targetUserId(creditHistory.getTargetUser().getId())
+                .exchangeId(creditHistory.getSkillExchange().getId())
+                .contentName(creditHistory.getContentName())
+                .supplyType(creditHistory.getSupplyType())
                 .changeAmount(creditHistory.getChangeAmount())
                 .balanceAfter(creditHistory.getBalanceAfter())
-                .skillExchangeId(creditHistory.getSkillExchangeId())
-                .targetUserId(creditHistory.getTargetUserId())
                 .historyType(creditHistory.getHistoryType()).build();
     }
-
 }
