@@ -52,7 +52,7 @@ public class CreditController {
             @ApiResponse(responseCode = "200", description = "조회 성공", useReturnTypeSchema = true),
             @ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
             @ApiResponse(responseCode = "404", description = "크레딧 정보를 찾을 수 없습니다.")})
-    @GetMapping(value = "/balance-UserDetails", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/balance-userdetails", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditBalanceWithUserDetailsResponseDto>> getCreditBalanceWithUserDetails(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 
