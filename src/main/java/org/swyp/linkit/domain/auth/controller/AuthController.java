@@ -1,9 +1,6 @@
 package org.swyp.linkit.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +17,8 @@ import org.swyp.linkit.domain.auth.dto.request.CompleteRegistrationRequestDto;
 import org.swyp.linkit.domain.auth.service.AuthService;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
+import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
+import org.swyp.linkit.global.swagger.docs.AuthExceptionDocs;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
@@ -30,13 +29,7 @@ public class AuthController {
     private final AuthService authService;
 
     @Operation(summary = "회원가입 완료", description = "소셜 로그인 후 프로필 정보를 입력하여 회원가입을 완료합니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "회원가입 완료 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 (닉네임 형식 오류, 이미 완료된 회원가입 등)", content = @Content),
-            @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 임시 토큰", content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content),
-            @ApiResponse(responseCode = "409", description = "닉네임 중복", content = @Content)
-    })
+    @ApiErrorExceptionsExample(AuthExceptionDocs.class)
     @PostMapping("/complete-registration")
     public ResponseEntity<ApiResponseDto<JwtTokenDto>> completeRegistration(
             @CookieValue("tempToken") String tempToken,
@@ -69,11 +62,7 @@ public class AuthController {
     }
 
     @Operation(summary = "소셜 로그인 성공 후 토큰 발급", description = "기존 회원이 소셜 로그인 성공 후 accessToken을 발급받습니다.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "토큰 발급 성공"),
-            @ApiResponse(responseCode = "401", description = "유효하지 않거나 만료된 refreshToken", content = @Content),
-            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음", content = @Content)
-    })
+    @ApiErrorExceptionsExample(AuthExceptionDocs.class)
     @GetMapping("/success")
     public ResponseEntity<ApiResponseDto<JwtTokenDto>> getAccessToken(
             @CookieValue("refreshToken") String refreshToken) {

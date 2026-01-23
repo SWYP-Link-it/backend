@@ -1,8 +1,6 @@
 package org.swyp.linkit.domain.credit.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -18,6 +16,8 @@ import org.swyp.linkit.domain.credit.dto.response.CreditBalanceWithUserDetailsRe
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
+import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
+import org.swyp.linkit.global.swagger.docs.CreditExceptionDocs;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,10 +31,7 @@ public class CreditController {
      *  크레딧 잔액 조회
      */
     @Operation(summary = "사용자의 크레딧 잔액 조회", description = "사용자의 크레딧 잔액만을 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @ApiResponse(responseCode = "404", description = "크레딧 정보를 찾을 수 없습니다.")})
+    @ApiErrorExceptionsExample(CreditExceptionDocs.class)
     @GetMapping(value = "/balance", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditBalanceResponseDto>> getCreditBalance(@AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 
@@ -48,10 +45,7 @@ public class CreditController {
      *  크레딧 잔액 및 유저 정보 조회
      */
     @Operation(summary = "사용자의 크레딧 잔액 및 유저 정보 조회", description = "사용자의 크레딧 잔액과 유저의 정보를 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공", useReturnTypeSchema = true),
-            @ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @ApiResponse(responseCode = "404", description = "크레딧 정보를 찾을 수 없습니다.")})
+    @ApiErrorExceptionsExample(CreditExceptionDocs.class)
     @GetMapping(value = "/balance-user-details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditBalanceWithUserDetailsResponseDto>> getCreditBalanceWithUserDetails(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
