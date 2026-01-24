@@ -20,6 +20,7 @@ public class ChatRoomDto {
     private Long mentorId;
     private Long menteeId;
     private ChatRoomStatus status;
+    private Boolean isMentor;          // 현재 사용자가 멘토인지 여부
     private Long partnerId;
     private String partnerNickname;
     private String partnerProfileImageUrl;
@@ -59,6 +60,7 @@ public class ChatRoomDto {
                 .mentorId(room.getMentorId())
                 .menteeId(room.getMenteeId())
                 .status(room.getStatus())
+                .isMentor(isMentor)
                 .partnerId(partnerId)
                 .partnerNickname(partnerNickname)
                 .partnerProfileImageUrl(partnerProfileImageUrl)
