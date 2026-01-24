@@ -7,15 +7,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.swyp.linkit.domain.auth.dto.UserResponseDto;
 import org.swyp.linkit.domain.auth.dto.request.CompleteRegistrationRequestDto;
 import org.swyp.linkit.domain.auth.service.AuthService;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
+import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
 import org.swyp.linkit.global.swagger.docs.AuthExceptionDocs;
@@ -42,7 +45,7 @@ public class AuthController {
         // 2. tempToken 쿠키 삭제
         Cookie deleteTempToken = new Cookie("tempToken", null);
         deleteTempToken.setMaxAge(0);
-        deleteTempToken.setPath("/auth/complete-registration");
+        deleteTempToken.setPath("/");
         deleteTempToken.setHttpOnly(true);
         deleteTempToken.setSecure(true);
         response.addCookie(deleteTempToken);
@@ -72,6 +75,45 @@ public class AuthController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("인증에 성공했습니다.", tokenDto)
+        );
+    }
+
+    @Operation(summary = "현재 로그인한 사용자 정보 조회", description = "JWT 토큰을 통해 현재 로그인한 사용자의 정보를 조회합니다.")
+    @ApiErrorExceptionsExample(AuthExceptionDocs.class)
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> getCurrentUser(
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
+
+        UserResponseDto userInfo = authService.getCurrentUser(oAuth2User.getUserId());
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("사용자 정보를 조회했습니다.", userInfo)
+        );
+    }
+
+    @Operation(summary = "로그아웃", description = "로그아웃하고 refreshToken 쿠키를 삭제합니다.")
+    @ApiErrorExceptionsExample(AuthExceptionDocs.class)
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponseDto<Void>> logout(HttpServletResponse response) {
+
+        // refreshToken 쿠키 삭제
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setMaxAge(0);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(true);
+        response.addCookie(refreshTokenCookie);
+
+        // tempToken 쿠키도 삭제 (혹시 남아있을 수 있으니)
+        Cookie tempTokenCookie = new Cookie("tempToken", null);
+        tempTokenCookie.setMaxAge(0);
+        tempTokenCookie.setPath("/");
+        tempTokenCookie.setHttpOnly(true);
+        tempTokenCookie.setSecure(true);
+        response.addCookie(tempTokenCookie);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("로그아웃되었습니다.", null)
         );
     }
 }
