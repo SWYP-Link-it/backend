@@ -27,6 +27,19 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
     List<ChatRoom> findAllByUserId(@Param("userId") Long userId);
 
     /**
+     * 특정 사용자가 참여한 모든 채팅방 조회 (멘토, 멘티, 마지막 메시지 함께 JOIN)
+     * 결과: [ChatRoom, User(mentor), User(mentee), ChatMessage(lastMessage)]
+     */
+    @Query("SELECT r, mentor, mentee, msg " +
+           "FROM ChatRoom r " +
+           "LEFT JOIN User mentor ON r.mentorId = mentor.id " +
+           "LEFT JOIN User mentee ON r.menteeId = mentee.id " +
+           "LEFT JOIN ChatMessage msg ON r.lastMessageId = msg.id " +
+           "WHERE r.mentorId = :userId OR r.menteeId = :userId " +
+           "ORDER BY COALESCE(r.lastMessageAt, r.createdAt) DESC")
+    List<Object[]> findAllByUserIdWithDetails(@Param("userId") Long userId);
+
+    /**
      * 특정 사용자가 멘토로 참여한 채팅방 조회
      */
     List<ChatRoom> findByMentorIdOrderByLastMessageAtDesc(Long mentorId);
