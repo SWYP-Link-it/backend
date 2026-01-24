@@ -42,7 +42,7 @@ public class AuthController {
         // 2. tempToken 쿠키 삭제
         Cookie deleteTempToken = new Cookie("tempToken", null);
         deleteTempToken.setMaxAge(0);
-        deleteTempToken.setPath("/auth/complete-registration");
+        deleteTempToken.setPath("/");
         deleteTempToken.setHttpOnly(true);
         deleteTempToken.setSecure(true);
         response.addCookie(deleteTempToken);

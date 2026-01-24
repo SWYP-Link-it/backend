@@ -55,7 +55,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             int tempTokenMaxAge = jwtTokenProvider.getTempTokenMaxAge();
 
             // tempToken을 HttpOnly 쿠키로 설정
-            addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/auth/complete-registration");
+            addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/");
 
             // 프론트로 리다이렉트 (status=PENDING)
             targetUrl = UriComponentsBuilder.fromUriString(redirectUri)

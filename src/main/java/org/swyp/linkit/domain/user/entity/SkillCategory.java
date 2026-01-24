@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
@@ -30,4 +31,17 @@ public class SkillCategory extends BaseTimeEntity {
 
     @Column(name = "category_name", nullable = false, length = 100)
     private String categoryName;
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private SkillCategory(SkillCategoryType categoryCode, String categoryName) {
+        this.categoryCode = categoryCode;
+        this.categoryName = categoryName;
+    }
+
+    public static SkillCategory create(SkillCategoryType categoryCode) {
+        return SkillCategory.builder()
+                .categoryCode(categoryCode)
+                .categoryName(categoryCode.getDisplayName())
+                .build();
+    }
 }
