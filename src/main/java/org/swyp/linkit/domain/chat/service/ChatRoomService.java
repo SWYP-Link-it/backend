@@ -20,6 +20,7 @@ import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
 import org.swyp.linkit.global.error.exception.ChatSameUserException;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -61,26 +62,29 @@ public class ChatRoomService {
     public List<ChatRoomDto> findRoomsByUserId(Long userId) {
         validateUserExists(userId);
 
-        // 삭제된 채팅방 ID 목록
-        List<Long> deletedRoomIds = chatRoomDeleteRepository.findDeletedRoomIdsByUserId(userId);
+        Set<Long> deletedRoomIds = Set.copyOf(chatRoomDeleteRepository.findDeletedRoomIdsByUserId(userId));
 
-        List<ChatRoom> rooms = chatRoomRepository.findAllByUserId(userId);
+        // JPQL JOIN으로 한 번에 조회 (N+1 해결)
+        // 결과: [ChatRoom, User(mentor), User(mentee), ChatMessage(lastMessage)]
+        List<Object[]> results = chatRoomRepository.findAllByUserIdWithDetails(userId);
 
-        return rooms.stream()
-                .filter(room -> !deletedRoomIds.contains(room.getId()))
-                .map(room -> {
-                    // 마지막 메시지 내용 조회
-                    String lastMessageContent = null;
-                    if (room.getLastMessageId() != null) {
-                        ChatMessage lastMessage = chatMessageRepository.findById(room.getLastMessageId()).orElse(null);
-                        if (lastMessage != null) {
-                            lastMessageContent = lastMessage.getContent();
-                        }
-                    }
+        return results.stream()
+                .filter(row -> {
+                    ChatRoom room = (ChatRoom) row[0];
+                    return !deletedRoomIds.contains(room.getId());
+                })
+                .map(row -> {
+                    ChatRoom room = (ChatRoom) row[0];
+                    User mentor = (User) row[1];
+                    User mentee = (User) row[2];
+                    ChatMessage lastMessage = (ChatMessage) row[3];
 
-                    // 상대방 정보 조회
-                    Long partnerId = room.getMentorId().equals(userId) ? room.getMenteeId() : room.getMentorId();
-                    User partner = userRepository.findById(partnerId).orElse(null);
+                    // 마지막 메시지 내용
+                    String lastMessageContent = lastMessage != null ? lastMessage.getContent() : null;
+
+                    // 상대방 정보
+                    boolean isMentor = room.getMentorId().equals(userId);
+                    User partner = isMentor ? mentee : mentor;
                     String partnerNickname = partner != null ? partner.getNickname() : "알 수 없음";
                     String partnerProfileImageUrl = partner != null ? partner.getProfileImageUrl() : null;
 
