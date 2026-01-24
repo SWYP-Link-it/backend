@@ -54,17 +54,9 @@ public class ChatStompController {
     @MessageMapping("/chat/room/{roomId}/enter")
     public void enterRoom(@DestinationVariable Long roomId, Principal principal) {
         Long userId = Long.parseLong(principal.getName());
-
         log.info("채팅방 입장 요청: roomId={}, userId={}", roomId, userId);
 
-        // 1. 권한 체크 (room 참여자 여부)
-        chatService.assertParticipant(userId, roomId);
-
-        // 2. 읽음 처리
-        chatService.markAsRead(roomId, userId);
-
-        // 3. 읽음 이벤트 Redis 발행 (상대방에게 알림)
-        chatService.publishReadEvent(roomId, userId, null);
+        processReadAndNotify(roomId, userId);
 
         log.info("채팅방 입장 완료: roomId={}, userId={}", roomId, userId);
     }
@@ -76,14 +68,12 @@ public class ChatStompController {
     @MessageMapping("/chat/room/{roomId}/exit")
     public void exitRoom(@DestinationVariable Long roomId, Principal principal) {
         Long userId = Long.parseLong(principal.getName());
-
         log.info("채팅방 퇴장 요청: roomId={}, userId={}", roomId, userId);
 
-        // 읽음 처리
         try {
             chatService.markAsRead(roomId, userId);
-        } catch (Exception e) {
-            log.warn("퇴장 시 읽음 처리 실패: roomId={}, userId={}", roomId, userId);
+        } catch (RuntimeException e) {
+            log.warn("퇴장 시 읽음 처리 실패: roomId={}, userId={}", roomId, userId, e);
         }
 
         log.info("채팅방 퇴장 완료: roomId={}, userId={}", roomId, userId);
@@ -96,18 +86,19 @@ public class ChatStompController {
     @MessageMapping("/chat/room/{roomId}/read")
     public void markAsRead(@DestinationVariable Long roomId, Principal principal) {
         Long userId = Long.parseLong(principal.getName());
-
         log.info("읽음 처리 요청: roomId={}, userId={}", roomId, userId);
 
-        // 1. 권한 체크
-        chatService.assertParticipant(userId, roomId);
-
-        // 2. 읽음 처리
-        chatService.markAsRead(roomId, userId);
-
-        // 3. 읽음 이벤트 Redis 발행
-        chatService.publishReadEvent(roomId, userId, null);
+        processReadAndNotify(roomId, userId);
 
         log.info("읽음 처리 완료: roomId={}, userId={}", roomId, userId);
+    }
+
+    /**
+     * 읽음 처리 공통 로직 (권한 체크 + 읽음 처리 + Redis 이벤트 발행)
+     */
+    private void processReadAndNotify(Long roomId, Long userId) {
+        chatService.assertParticipant(userId, roomId);
+        chatService.markAsRead(roomId, userId);
+        chatService.publishReadEvent(roomId, userId, null);
     }
 }
