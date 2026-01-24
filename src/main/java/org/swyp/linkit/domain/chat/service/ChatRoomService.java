@@ -12,6 +12,8 @@ import org.swyp.linkit.domain.chat.entity.ChatRoomStatus;
 import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
+import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.ChatInvalidUserException;
 import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
 import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
@@ -29,6 +31,7 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomDeleteRepository chatRoomDeleteRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final UserRepository userRepository;
 
     /**
      * 1:1 채팅방 생성 또는 조회 (멘토-멘티)
@@ -75,9 +78,11 @@ public class ChatRoomService {
                         }
                     }
 
-                    // TODO: UserService에서 상대방 정보 조회
-                    String partnerNickname = "user_" + (room.getMentorId().equals(userId) ? room.getMenteeId() : room.getMentorId());
-                    String partnerProfileImageUrl = null;
+                    // 상대방 정보 조회
+                    Long partnerId = room.getMentorId().equals(userId) ? room.getMenteeId() : room.getMentorId();
+                    User partner = userRepository.findById(partnerId).orElse(null);
+                    String partnerNickname = partner != null ? partner.getNickname() : "알 수 없음";
+                    String partnerProfileImageUrl = partner != null ? partner.getProfileImageUrl() : null;
 
                     return ChatRoomDto.fromWithPartner(room, userId, partnerNickname, partnerProfileImageUrl, lastMessageContent);
                 })
