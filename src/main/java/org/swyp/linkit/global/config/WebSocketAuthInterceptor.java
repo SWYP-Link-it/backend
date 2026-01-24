@@ -10,6 +10,7 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Component;
 import org.swyp.linkit.global.auth.jwt.JwtTokenProvider;
+import org.swyp.linkit.global.error.exception.ExpiredTokenException;
 import org.swyp.linkit.global.error.exception.InvalidTokenException;
 import org.swyp.linkit.global.error.exception.UnauthorizedException;
 
@@ -89,8 +90,11 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             accessor.setUser(principal);
 
             log.info("=== STOMP CONNECT 성공: userId={} ===", userId);
-        } catch (Exception e) {
-            log.error("토큰 검증 실패: {}", e.getMessage(), e);
+        } catch (InvalidTokenException | ExpiredTokenException e) {
+            log.error("토큰 검증 실패: {}", e.getMessage());
+            throw e;
+        } catch (RuntimeException e) {
+            log.error("토큰 처리 중 예상치 못한 오류 발생: {}", e.getMessage(), e);
             throw new InvalidTokenException();
         }
     }
