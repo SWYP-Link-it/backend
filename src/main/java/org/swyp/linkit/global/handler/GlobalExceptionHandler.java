@@ -3,6 +3,7 @@ package org.swyp.linkit.global.handler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.support.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -48,7 +49,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(responseDto);
     }
 
-    // 3. 그 외 예상치 못한 모든 예외 처리
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    protected ResponseEntity<ApiResponseDto<Void>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        log.error("MethodArgumentTypeMismatchException: {}", e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponseDto.fail(ErrorCode.INVALID_INPUT_VALUE.getCode(),
+                        ErrorCode.INVALID_INPUT_VALUE.getMessage()));
+    }
+
+    // 4. 그 외 예상치 못한 모든 예외 처리
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponseDto<?>> handleException(Exception e) {
         log.error("handleException: {}", e.getMessage());
