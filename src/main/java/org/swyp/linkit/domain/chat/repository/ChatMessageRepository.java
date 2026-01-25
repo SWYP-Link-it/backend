@@ -12,7 +12,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     /**
      * 채팅방의 최근 메시지 조회 (최신순 50개)
      */
-    @Query(value = "SELECT * FROM chat_message m WHERE m.chat_room_id = :roomId ORDER BY m.id DESC LIMIT 50", nativeQuery = true)
+    @Query(value = "SELECT * FROM chat_message m WHERE m.chat_room_id = :roomId ORDER BY m.chat_message_id DESC LIMIT 50", nativeQuery = true)
     List<ChatMessage> findTop50ByChatRoomIdOrderByIdDesc(@Param("roomId") Long roomId);
 
     /**
@@ -29,7 +29,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     /**
      * 채팅방의 마지막 메시지 조회
      */
-    @Query(value = "SELECT * FROM chat_message m WHERE m.chat_room_id = :roomId ORDER BY m.id DESC LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * FROM chat_message m WHERE m.chat_room_id = :roomId ORDER BY m.chat_message_id DESC LIMIT 1", nativeQuery = true)
     ChatMessage findLastMessageByChatRoomId(@Param("roomId") Long roomId);
 
     /**
