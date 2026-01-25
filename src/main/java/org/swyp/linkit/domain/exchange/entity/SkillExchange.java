@@ -63,9 +63,9 @@ public class SkillExchange extends BaseTimeEntity {
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
-    public SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
-                         LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
-                         int creditPrice, ExchangeStatus exchangeStatus, String message) {
+    private SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
+                          LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
+                          int creditPrice, ExchangeStatus exchangeStatus, String message) {
         this.skillName = skillName;
         this.exchangeDuration = exchangeDuration;
         this.scheduledDate = scheduledDate;
@@ -113,7 +113,7 @@ public class SkillExchange extends BaseTimeEntity {
     // 2.
 
     /**
-     *  연관관계 메서드
+     * 연관관계 메서드
      */
     // == requesterUser와 연관관계 설정 ==
     private void assignRequesterUser(User requesterUser) {
@@ -131,10 +131,10 @@ public class SkillExchange extends BaseTimeEntity {
     }
 
     /**
-     *  비즈니스 메서드
+     * 비즈니스 메서드
      */
     // == ExchangeStatus 변경 임시 메서드 ==
-    public void updateExchangeStatus(ExchangeStatus exchangeStatus){
+    public void updateExchangeStatus(ExchangeStatus exchangeStatus) {
         this.exchangeStatus = exchangeStatus;
     }
 
