@@ -38,7 +38,7 @@ public class CreditController {
      *  크레딧 잔액 조회
      */
     @Operation(summary = "사용자의 크레딧 잔액 조회", description = "사용자의 크레딧 잔액만을 조회합니다.")
-    @ApiErrorExceptionsExample(CreditExceptionDocs.class)
+    @ApiErrorExceptionsExample(CreditExceptionDocs.GetCreditBalance.class)
     @GetMapping(value = "/balance", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditBalanceResponseDto>> getCreditBalance(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
@@ -54,7 +54,7 @@ public class CreditController {
      *  크레딧 잔액 및 유저 정보 조회
      */
     @Operation(summary = "사용자의 크레딧 잔액 및 유저 정보 조회", description = "사용자의 크레딧 잔액과 유저의 정보를 조회합니다.")
-    @ApiErrorExceptionsExample(CreditExceptionDocs.class)
+    @ApiErrorExceptionsExample(CreditExceptionDocs.GetCreditBalanceWithUserDetails.class)
     @GetMapping(value = "/balance-user-details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditBalanceWithUserDetailsResponseDto>> getCreditBalanceWithUserDetails(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
@@ -70,7 +70,7 @@ public class CreditController {
      *  크레딧 내역 커서 기반 페이징 조회
      */
     @Operation(summary = "사용자의 크레딧 내역 조회", description = "사용자의 크레딧 내역을 조회합니다.")
-    @ApiErrorExceptionsExample(CreditExceptionDocs.class)
+    @ApiErrorExceptionsExample(CreditExceptionDocs.GetCreditHistories.class)
     @GetMapping(value = "/histories", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<CreditHistoryResponseDto>> getCreditHistories(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,

@@ -11,31 +11,68 @@ import org.swyp.linkit.global.swagger.exception.SwaggerExampleExceptions;
 @ExceptionDoc
 public class CreditExceptionDocs {
 
-    public static class UnauthorizedException implements SwaggerExampleExceptions {
-        @Override
-        public BaseErrorCode getErrorCode() {
-            return ErrorCode.UNAUTHORIZED;
+    /**
+     * GetCreditBalance
+     */
+    public static class GetCreditBalance{
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class NotFoundCreditException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.NOT_FOUND_CREDIT;
+            }
         }
     }
 
-    public static class NotFoundCreditException implements SwaggerExampleExceptions {
-        @Override
-        public BaseErrorCode getErrorCode() {
-            return ErrorCode.NOT_FOUND_CREDIT;
+    /**
+     * getCreditBalanceWithUserDetails
+     */
+    public static class GetCreditBalanceWithUserDetails{
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class NotFoundCreditException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.NOT_FOUND_CREDIT;
+            }
         }
     }
 
-    public static class NotEnoughCreditException implements SwaggerExampleExceptions {
-        @Override
-        public BaseErrorCode getErrorCode() {
-            return ErrorCode.NOT_ENOUGH_CREDIT;
+    /**
+     * getCreditHistories
+     */
+    public static class GetCreditHistories{
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class NotFoundCreditException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.NOT_FOUND_CREDIT;
+            }
+        }
+
+        public static class InvalidInputValue implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.INVALID_INPUT_VALUE;
+            }
         }
     }
 
-    public static class InvalidCreditAmountException implements SwaggerExampleExceptions {
-        @Override
-        public BaseErrorCode getErrorCode() {
-            return ErrorCode.INVALID_CREDIT_AMOUNT;
-        }
-    }
 }
