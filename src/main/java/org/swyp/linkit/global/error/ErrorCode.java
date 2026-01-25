@@ -34,6 +34,9 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("탈퇴했거나 정지된 사용자 등 유효하지 않은 사용자 상태인 경우 발생합니다.")
     INVALID_USER_STATUS(HttpStatus.BAD_REQUEST, "A005", "유효하지 않은 사용자 상태입니다."),
 
+    @ExplainError("회원가입 세션이 만료되었거나 존재하지 않는 경우 발생합니다.")
+    SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, "A006", "회원가입 세션이 만료되었습니다. 다시 로그인해주세요."),
+
     // 사용자
     @ExplainError("요청한 사용자 ID에 해당하는 사용자가 존재하지 않는 경우 발생합니다.")
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "U001", "사용자를 찾을 수 없습니다."),

@@ -101,8 +101,8 @@ public class User extends BaseTimeEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
-    // 프로필 작성 완료 처리
-    public void completeProfile() {
+    // 회원가입 완료 처리
+    public void activateAccount() {
         if (this.userStatus == UserStatus.PROFILE_PENDING) {
             this.userStatus = UserStatus.ACTIVE;
         }
