@@ -1,4 +1,4 @@
-package org.swyp.linkit.domain.user.service;
+package org.swyp.linkit.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
