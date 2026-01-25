@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -15,6 +16,7 @@ import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.auth.jwt.JwtTokenProvider;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
+import org.swyp.linkit.global.auth.oauth.PendingOAuth2UserInfo;
 import org.swyp.linkit.global.error.exception.InvalidUserStatusException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
@@ -23,6 +25,8 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
+
+    private static final int MILLISECONDS_TO_SECONDS = 1000;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
@@ -36,55 +40,69 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             HttpServletResponse response,
             Authentication authentication) throws IOException {
 
-        // 1. CustomOAuth2User에서 User 정보 추출
-        CustomOAuth2User oAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-        Long userId = oAuth2User.getUserId();
-
-        // 2. User 엔티티 조회
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
-
+        // OAuth2User 추출
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String targetUrl;
 
-        // 3. 사용자 상태에 따라 분기 처리
-        if (user.getUserStatus() == UserStatus.PROFILE_PENDING) {
-            // 신규 회원은 tempToken 발급
-            String tempToken = jwtTokenProvider.generateTempToken(userId);
-
-            // tempToken 쿠키 Max-Age 계산 (ms → seconds)
-            int tempTokenMaxAge = jwtTokenProvider.getTempTokenMaxAge();
-
-            // tempToken을 HttpOnly 쿠키로 설정
-            addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/");
-
-            // 프론트로 리다이렉트 (status=PENDING)
-            targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .path("/auth/callback")
-                    .queryParam("status", "PENDING")
-                    .build()
-                    .toUriString();
-
-        } else if (user.getUserStatus() == UserStatus.ACTIVE) {
-            // 기존 회원은 JWT 토큰 발급
-            JwtTokenDto tokenDto = jwtTokenProvider.generateTokenByUserId(userId);
-
-            // refreshToken 쿠키 Max-Age 계산 (ms → seconds)
-            int refreshTokenMaxAge = (int) (tokenDto.getRefreshTokenExpiresIn() / 1000);
-
-            // refreshToken을 HttpOnly 쿠키로 설정
-            addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAge, "/");
-
-            // 프론트로 리다이렉트 (status=ACTIVE)
-            targetUrl = UriComponentsBuilder.fromUriString(redirectUri)
-                    .path("/auth/callback")
-                    .queryParam("status", "ACTIVE")
-                    .build()
-                    .toUriString();
+        // 타입에 따라 분기 처리
+        if (oAuth2User instanceof PendingOAuth2UserInfo pendingUser) {
+            // 신규 회원은 이미지/닉네임 입력 페이지로 이동
+            targetUrl = handlePendingUser(pendingUser, response);
+        } else if (oAuth2User instanceof CustomOAuth2User customUser) {
+            // 기존 회원은 메인 페이지로 이동
+            targetUrl = handleExistingUser(customUser, response);
         } else {
-            throw new InvalidUserStatusException();
+            throw new InvalidUserStatusException("알 수 없는 사용자 타입입니다.");
         }
 
         response.sendRedirect(targetUrl);
+    }
+
+    // 신규 회원 시 tempToken 발급
+    private String handlePendingUser(PendingOAuth2UserInfo pendingUser, HttpServletResponse response) {
+        String sessionId = pendingUser.getSessionId();
+
+        // sessionId를 담은 tempToken 생성
+        String tempToken = jwtTokenProvider.generateTempToken(sessionId);
+
+        // tempToken 쿠키 설정
+        int tempTokenMaxAge = jwtTokenProvider.getTempTokenMaxAge();
+        addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/");
+
+        // 프론트로 리다이렉트 (status=PENDING)
+        return UriComponentsBuilder.fromUriString(redirectUri)
+                .path("/auth/callback")
+                .queryParam("status", "PENDING")
+                .build()
+                .toUriString();
+    }
+
+    // 기존 회원 처리 시 refreshToken 발급
+    private String handleExistingUser(CustomOAuth2User customUser, HttpServletResponse response) {
+        Long userId = customUser.getUserId();
+
+        // User 엔티티 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 상태 확인
+        if (user.getUserStatus() != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        }
+
+        // JWT 토큰 발급
+        JwtTokenDto tokenDto = jwtTokenProvider.generateTokenByUserId(userId);
+
+        // refreshToken 쿠키 설정
+        int refreshTokenMaxAge = (int) (tokenDto.getRefreshTokenExpiresIn() / MILLISECONDS_TO_SECONDS);
+        addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAge, "/");
+
+        // 프론트로 리다이렉트 (status=ACTIVE)
+        return UriComponentsBuilder.fromUriString(redirectUri)
+                .path("/auth/callback")
+                .queryParam("status", "ACTIVE")
+                .build()
+                .toUriString();
     }
 
     // 쿠키 생성
