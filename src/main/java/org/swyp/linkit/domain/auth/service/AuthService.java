@@ -68,20 +68,17 @@ public class AuthService {
                 request.getNickname()
         );
 
-        // 6. 회원가입 완료 처리 (PROFILE_PENDING → ACTIVE)
-        user.activateAccount();
-
-        // 7. DB에 저장
+        // 6. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 8. 크레딧 생성 및 회원가입 리워드 지급
+        // 7. 크레딧 생성 및 회원가입 리워드 지급
         creditService.createCredit(savedUser);
         creditService.rewardCreditOnSignupSetup(savedUser);
 
-        // 9. Redis에서 임시 데이터 삭제
+        // 8. Redis에서 임시 데이터 삭제
         pendingUserStorage.deletePendingUser(sessionId);
 
-        // 10. 정식 JWT 토큰 발급
+        // 9. 정식 JWT 토큰 발급
         return jwtTokenProvider.generateTokenByUserId(savedUser.getId());
     }
 
@@ -99,8 +96,8 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         // 4. 상태 확인
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
 
         // 5. 정식 JWT 토큰 발급
@@ -113,8 +110,8 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
 
         return UserResponseDto.from(user);
