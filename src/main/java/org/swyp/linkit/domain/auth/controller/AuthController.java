@@ -2,7 +2,6 @@ package org.swyp.linkit.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +21,7 @@ import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
 import org.swyp.linkit.global.swagger.docs.AuthExceptionDocs;
+import org.swyp.linkit.global.util.CookieUtil;
 
 @Tag(name = "Auth", description = "인증 관련 API")
 @RestController
@@ -32,6 +32,7 @@ public class AuthController {
     private static final int MILLISECONDS_TO_SECONDS = 1000;
 
     private final AuthService authService;
+    private final CookieUtil cookieUtil;
 
     @Operation(summary = "회원가입 완료", description = "소셜 로그인 후 프로필 정보를 입력하여 회원가입을 완료합니다.")
     @ApiErrorExceptionsExample(AuthExceptionDocs.class)
@@ -45,10 +46,11 @@ public class AuthController {
         JwtTokenDto tokenDto = authService.completeRegistration(tempToken, request);
 
         // 2. tempToken 쿠키 삭제
-        deleteCookie(response, "tempToken");
+        cookieUtil.deleteCookie(response, "tempToken");
 
         // 3. refreshToken 쿠키 설정
-        setRefreshTokenCookie(response, tokenDto.getRefreshToken(), tokenDto.getRefreshTokenExpiresIn());
+        long refreshTokenMaxAgeSeconds = tokenDto.getRefreshTokenExpiresIn() / MILLISECONDS_TO_SECONDS;
+        cookieUtil.addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAgeSeconds);
 
         // 4. accessToken JSON 반환
         return ResponseEntity.ok(
@@ -87,7 +89,8 @@ public class AuthController {
         JwtTokenDto tokenDto = authService.refreshAccessToken(refreshToken);
 
         // 2. 새로운 refreshToken 쿠키 설정
-        setRefreshTokenCookie(response, tokenDto.getRefreshToken(), tokenDto.getRefreshTokenExpiresIn());
+        long refreshTokenMaxAgeSeconds = tokenDto.getRefreshTokenExpiresIn() / MILLISECONDS_TO_SECONDS;
+        cookieUtil.addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAgeSeconds);
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("토큰이 재발급되었습니다.", tokenDto)
@@ -113,30 +116,10 @@ public class AuthController {
     public ResponseEntity<ApiResponseDto<Void>> logout(HttpServletResponse response) {
 
         // refreshToken 쿠키 삭제
-        deleteCookie(response, "refreshToken");
+        cookieUtil.deleteCookie(response, "refreshToken");
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("로그아웃되었습니다.", null)
         );
-    }
-
-    // refreshToken 쿠키 설정
-    private void setRefreshTokenCookie(HttpServletResponse response, String refreshToken, long expiresIn) {
-        Cookie cookie = new Cookie("refreshToken", refreshToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge((int) (expiresIn / MILLISECONDS_TO_SECONDS));
-        response.addCookie(cookie);
-    }
-
-    // 쿠키 삭제
-    private void deleteCookie(HttpServletResponse response, String cookieName) {
-        Cookie cookie = new Cookie(cookieName, null);
-        cookie.setMaxAge(0);
-        cookie.setPath("/");
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        response.addCookie(cookie);
     }
 }

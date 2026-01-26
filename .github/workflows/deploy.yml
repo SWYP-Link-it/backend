@@ -83,6 +83,8 @@ jobs:
             FRONTEND_PROD_URL=${{ secrets.FRONTEND_PROD_URL }}
             BACKEND_URL=${{ secrets.BACKEND_URL }}
             BACKEND_PROD_URL=${{ secrets.BACKEND_PROD_URL }}
+            COOKIE_SECURE=${{ secrets.COOKIE_SECURE }}
+            COOKIE_SAME_SITE=${{ secrets.COOKIE_SAME_SITE }}
             EOF
 
             echo ${{ secrets.NCR_ACCESS_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \
