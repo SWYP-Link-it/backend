@@ -18,6 +18,8 @@ import java.time.LocalTime;
 @Getter
 public class SkillExchange extends BaseTimeEntity {
 
+    private static final int MINUTES_PER_CREDIT = 30;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "skill_exchange_id")
@@ -63,9 +65,9 @@ public class SkillExchange extends BaseTimeEntity {
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
-    public SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
-                         LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
-                         int creditPrice, ExchangeStatus exchangeStatus, String message) {
+    private SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
+                          LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
+                          int creditPrice, ExchangeStatus exchangeStatus, String message) {
         this.skillName = skillName;
         this.exchangeDuration = exchangeDuration;
         this.scheduledDate = scheduledDate;
@@ -81,11 +83,10 @@ public class SkillExchange extends BaseTimeEntity {
     public static SkillExchange create(User requesterUser, User receiverUser, UserSkill receiverSkill,
                                        LocalDate scheduledDate, LocalTime startTime, LocalTime endTime,
                                        String message) {
-        // 0. 프런트에서 받을거 -> mentorId, skillId, scheduleDate, startTime, endTime
         // 요청 마감 계산
         LocalDateTime calculateDeadLine = scheduledDate.atStartOfDay();
         // 시간으로 크레딧 가격 계산
-        int price = receiverSkill.getExchangeDuration() / 30;
+        int price = receiverSkill.getExchangeDuration() / MINUTES_PER_CREDIT;
 
         SkillExchange skillExchange = SkillExchange.builder()
                 .skillName(receiverSkill.getSkillName())
@@ -105,15 +106,11 @@ public class SkillExchange extends BaseTimeEntity {
         skillExchange.assignReceiverUser(receiverUser);
         // == receiverSkill 연관관계 주입 ==
         skillExchange.assignReceiverSkill(receiverSkill);
-
         return skillExchange;
     }
-    // 0. 프런트에서 받을거 -> mentorId, skillId, scheduleDate, startTime, endTime
-    // 1. receiverId로 receiver 조회 및 검증 -> 1. 존재 하지않는 유저
-    // 2.
 
     /**
-     *  연관관계 메서드
+     * 연관관계 메서드
      */
     // == requesterUser와 연관관계 설정 ==
     private void assignRequesterUser(User requesterUser) {
@@ -131,10 +128,10 @@ public class SkillExchange extends BaseTimeEntity {
     }
 
     /**
-     *  비즈니스 메서드
+     * 비즈니스 메서드
      */
     // == ExchangeStatus 변경 임시 메서드 ==
-    public void updateExchangeStatus(ExchangeStatus exchangeStatus){
+    public void updateExchangeStatus(ExchangeStatus exchangeStatus) {
         this.exchangeStatus = exchangeStatus;
     }
 

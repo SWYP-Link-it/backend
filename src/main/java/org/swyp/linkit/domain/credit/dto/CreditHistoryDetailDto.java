@@ -1,5 +1,6 @@
 package org.swyp.linkit.domain.credit.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,25 +12,26 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
+@Schema(description = "크레딧 사용 내역")
 public class CreditHistoryDetailDto {
 
-    // CreditHistoryId
+    @Schema(description = "크레딧 사용 내역 식별자(ID)", example = "1")
     private Long id;
-    // 상대 User Id
+    @Schema(description = "스킬 거래 상대 유저 식별자(ID)", example = "2")
     private Long targetUserId;
-    // 거래한 UserSkill Id
+    @Schema(description = "상대 유저의 스킬 식별자(ID)", example = "1")
     private Long skillId;
-    // 상대 User imageUrl
+    @Schema(description = "상대 유저의 프로필 이미지 url", example = "https://example-image")
     private String targetProfileImageUrl;
-    // 상대 User nickName
+    @Schema(description = "상대 유저의 닉네임 (시스템 지급 크레딧일 경우 시스템)", example = "홍길동")
     private String targetNickname;
-    // 거래 명(스킬 교환일 경우 스킬명, 리워드일 경우 회원가입 혹은 프로필 작성)
+    @Schema(description = "거래 명 (스킬 교환 시 스킬명, 리워드일 경우 리워드 명)", example = "Java")
     private String contentName;
-    // 크레딧 내역 생성 날짜
+    @Schema(description = "크레딧 사용 내역 생성 날짜", example = "2024-01-20T12:00:00")
     private LocalDateTime createdAt;
-    // 구분(리워드, 요청, 취소, 거절, 만료, 정산)
+    @Schema(description = "크레딧 사용 내역의 상세 구분(리워드, 요청, 취소, 거절, 만료, 정산)", example = "요청")
     private String statusLabel;
-    // 크레딧 변동 금액
+    @Schema(description = "크레딧 변동 금액 (증가: 양수, 사용: 음수)", example = "-2")
     private int changeAmount;
 
     public static CreditHistoryDetailDto from(CreditHistory history, String defaultProfileImageUrl){

@@ -62,7 +62,7 @@ public class CreditHistory extends BaseTimeEntity {
     private HistoryType historyType;
 
     @Builder(access = AccessLevel.PRIVATE)
-    public CreditHistory(SupplyType supplyType, String contentName, int changeAmount,
+    private CreditHistory(SupplyType supplyType, String contentName, int changeAmount,
                          int balanceAfter, HistoryType historyType) {
         this.supplyType = supplyType;
         this.contentName = contentName;

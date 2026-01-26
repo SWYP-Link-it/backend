@@ -6,15 +6,15 @@ import org.swyp.linkit.global.swagger.annotation.ExceptionDoc;
 import org.swyp.linkit.global.swagger.exception.SwaggerExampleExceptions;
 
 /**
- * 크레딧(Credit) 도메인 API 예외 문서
+ * 교환(SkillExchange) 도메인 API 예외 문서
  */
 @ExceptionDoc
-public class CreditExceptionDocs {
+public class SkillExchangeExceptionDocs {
 
     /**
-     * GetCreditBalance
+     * getAvailableDates
      */
-    public static class GetCreditBalance{
+    public static class GetAvailableDates{
         public static class UnauthorizedException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
@@ -22,18 +22,25 @@ public class CreditExceptionDocs {
             }
         }
 
-        public static class NotFoundCreditException implements SwaggerExampleExceptions {
+        public static class MentorNotFoundException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
-                return ErrorCode.NOT_FOUND_CREDIT;
+                return ErrorCode.MENTOR_NOT_FOUND_EXCEPTION;
+            }
+        }
+
+        public static class ScheduleNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION;
             }
         }
     }
 
     /**
-     * getCreditBalanceWithUserDetails
+     * getAvailableSlots
      */
-    public static class GetCreditBalanceWithUserDetails{
+    public static class GetAvailableSlots{
         public static class UnauthorizedException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
@@ -41,38 +48,19 @@ public class CreditExceptionDocs {
             }
         }
 
-        public static class NotFoundCreditException implements SwaggerExampleExceptions {
+        public static class UserSkillNotFoundException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
-                return ErrorCode.NOT_FOUND_CREDIT;
+                return ErrorCode.USER_SKILL_NOT_FOUND;
             }
         }
+
+        public static class MentorNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.MENTOR_NOT_FOUND_EXCEPTION;
+            }
+        }
+
     }
-
-    /**
-     * getCreditHistories
-     */
-    public static class GetCreditHistories{
-        public static class UnauthorizedException implements SwaggerExampleExceptions {
-            @Override
-            public BaseErrorCode getErrorCode() {
-                return ErrorCode.UNAUTHORIZED;
-            }
-        }
-
-        public static class NotFoundCreditException implements SwaggerExampleExceptions {
-            @Override
-            public BaseErrorCode getErrorCode() {
-                return ErrorCode.NOT_FOUND_CREDIT;
-            }
-        }
-
-        public static class InvalidInputValue implements SwaggerExampleExceptions {
-            @Override
-            public BaseErrorCode getErrorCode() {
-                return ErrorCode.INVALID_INPUT_VALUE;
-            }
-        }
-    }
-
 }
