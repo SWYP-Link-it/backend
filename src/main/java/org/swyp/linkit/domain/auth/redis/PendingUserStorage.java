@@ -55,7 +55,7 @@ public class PendingUserStorage {
         String key = KEY_PREFIX + sessionId;
         Boolean deleted = stringRedisTemplate.delete(key);
 
-        if (deleted) {
+        if (Boolean.TRUE.equals(deleted)) {
             log.info("임시 사용자 정보 삭제 완료 - sessionId: {}", sessionId);
         } else {
             log.warn("임시 사용자 정보 삭제 실패 - sessionId: {} (이미 삭제되었거나 존재하지 않음)", sessionId);
