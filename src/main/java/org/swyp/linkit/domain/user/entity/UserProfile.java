@@ -121,9 +121,4 @@ public class UserProfile extends BaseTimeEntity {
             removeUserSkill(skill);
         }
     }
-
-    // 사용자 연관관계 설정
-    protected void assignUser(User user) {
-        this.user = user;
-    }
 }

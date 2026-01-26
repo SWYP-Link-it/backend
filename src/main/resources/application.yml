@@ -38,7 +38,7 @@ spring:
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
-            scope: profile_nickname, account_email
+            scope: profile_nickname, profile_image, account_email
 
           naver:
             client-name: naver
@@ -46,7 +46,7 @@ spring:
             client-secret: ${NAVER_CLIENT_SECRET:dummy}
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             authorization-grant-type: authorization_code
-            scope: name, email
+            scope: name, profile_image, email
 
         provider:
           kakao:

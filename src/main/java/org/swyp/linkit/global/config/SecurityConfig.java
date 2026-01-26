@@ -10,7 +10,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.swyp.linkit.domain.user.service.CustomOAuth2UserService;
+import org.swyp.linkit.domain.auth.service.CustomOAuth2UserService;
 import org.swyp.linkit.global.handler.JwtAccessDeniedHandler;
 import org.swyp.linkit.global.handler.JwtAuthenticationEntryPoint;
 import org.swyp.linkit.global.handler.OAuth2FailureHandler;
@@ -58,9 +58,11 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
-                                "/auth/complete-registration"
+                                "/auth/complete-registration",
+                                "/auth/success",
+                                "/auth/refresh",
+                                "/auth/logout"
                         ).permitAll()
-                        .requestMatchers("/auth/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
