@@ -84,11 +84,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 .toList();
 
 
-        AvailableSlotsResponseDto availableSlotsResponseDto = AvailableSlotsResponseDto.of(date.toString(), finalSlots);
-        log.info("finalSlots = {}", finalSlots);
-        log.info("result = {}", availableSlotsResponseDto);
-
-        return availableSlotsResponseDto;
+        return AvailableSlotsResponseDto.of(date.toString(), finalSlots);
     }
 
     // == private Methods ==
