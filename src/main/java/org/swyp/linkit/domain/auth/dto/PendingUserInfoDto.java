@@ -16,6 +16,8 @@ import org.swyp.linkit.global.error.exception.JsonSerializationException;
 @AllArgsConstructor
 public class PendingUserInfoDto {
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     private OAuthProvider oauthProvider;
     private String oauthId;
     private String email;
@@ -25,7 +27,7 @@ public class PendingUserInfoDto {
     // 객체를 JSON 문자열로 변환
     public String toJson() {
         try {
-            return new ObjectMapper().writeValueAsString(this);
+            return objectMapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             throw new JsonSerializationException(
                     "PendingUserInfo JSON 변환 실패: " + e.getMessage()
@@ -36,7 +38,7 @@ public class PendingUserInfoDto {
     // JSON 문자열을 객체로 변환
     public static PendingUserInfoDto fromJson(String json) {
         try {
-            return new ObjectMapper().readValue(json, PendingUserInfoDto.class);
+            return objectMapper.readValue(json, PendingUserInfoDto.class);
         } catch (JsonProcessingException e) {
             throw new JsonSerializationException(
                     "PendingUserInfo JSON 파싱 실패: " + e.getMessage()
