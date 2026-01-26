@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.auth.dto.PendingUserInfoDto;
+import org.swyp.linkit.domain.auth.dto.response.UserResponseDto;
 import org.swyp.linkit.domain.auth.dto.request.CompleteRegistrationRequestDto;
 import org.swyp.linkit.domain.auth.redis.PendingUserStorage;
 import org.swyp.linkit.domain.user.entity.User;
@@ -93,5 +94,18 @@ public class AuthService {
 
         // 5. 정식 JWT 토큰 발급
         return jwtTokenProvider.generateTokenByUserId(userId);
+    }
+
+    // 현재 로그인한 사용자 정보 조회
+    @Transactional(readOnly = true)
+    public UserResponseDto getCurrentUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        if (user.getUserStatus() != UserStatus.ACTIVE) {
+            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        }
+
+        return UserResponseDto.from(user);
     }
 }
