@@ -48,23 +48,26 @@ public class SecurityConfig {
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/error",
                                 "/favicon.ico",
                                 "/oauth2/**",
                                 "/login/oauth2/**",
-                                "/ws/**",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/webjars/**",
+                                "/ws/**",
                                 "/auth/complete-registration",
                                 "/auth/success",
                                 "/auth/refresh",
                                 "/auth/logout"
                         ).permitAll()
+
+                        .requestMatchers("/auth/me").authenticated()
                         .anyRequest().authenticated()
                 )
 
