@@ -1,16 +1,22 @@
 package org.swyp.linkit.global.common.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.swyp.linkit.global.error.ErrorCode;
 
 @Builder
 @Getter
 @AllArgsConstructor
+@Schema(description = "공통 응답 형식")
 public class ApiResponseDto<T> {
 
+    @Schema(description = "성공 여부", example = "true")
     private boolean success;
+    @Schema(description = "에러 코드 (성공 시 null)", example = "null")
     private String code;
+    @Schema(description = "응답 메시지", example = "요청이 정상적으로 처리되었습니다.")
     private String message;
+    @Schema(description = "응답 데이터")
     private T data;
 
     // 성공

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
@@ -13,6 +14,7 @@ import org.swyp.linkit.global.handler.StompErrorHandler;
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor
+@EnableWebSocket
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
@@ -44,14 +46,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // WebSocket 연결 엔드포인트 (SockJS fallback 포함)
+        // 순수 WebSocket 엔드포인트 (Postman, 웹소켓 테스트 도구용)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns(
-                        frontendUrl,      // 로컬 개발
-                        frontendProdUrl,       // Vercel 프리뷰/배포
-                        backendUrl,         // 운영 도메인
-                        backendProdUrl        // 서브도메인
-                )
+                .setAllowedOriginPatterns("*");
+
+        // SockJS fallback 포함 엔드포인트 (브라우저 호환성)
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
 
         // STOMP 에러 핸들러 등록

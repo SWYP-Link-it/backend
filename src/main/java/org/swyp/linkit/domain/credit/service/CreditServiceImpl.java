@@ -74,6 +74,7 @@ public class CreditServiceImpl implements CreditService{
         return CreditWithUserDetailsDto.from(credit, user);
     }
 
+    // Credit 조회 및 지급 + CreditHistory 생성 및 save 처리
     private CreditDto applyReward(User user, int amount, HistoryType type) {
         // 1. credit 조회
         Credit credit = getCreditByUserId(user.getId());

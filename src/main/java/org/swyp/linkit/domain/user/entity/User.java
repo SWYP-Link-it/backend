@@ -53,9 +53,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserProfile userProfile;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AvailableSchedule> availableSchedules = new ArrayList<>();
 
@@ -85,12 +82,6 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
-    // OAuth 정보 업데이트 (이메일, 이름 변경 시)
-    public void updateOAuthInfo(String email, String name) {
-        this.email = email;
-        this.name = name;
-    }
-
     // 닉네임 변경
     public void updateNickname(String nickname) {
         this.nickname = nickname;
@@ -101,26 +92,10 @@ public class User extends BaseTimeEntity {
         this.profileImageUrl = profileImageUrl;
     }
 
-    // 프로필 작성 완료 처리
-    public void completeProfile() {
+    // 회원가입 완료 처리
+    public void activateAccount() {
         if (this.userStatus == UserStatus.PROFILE_PENDING) {
             this.userStatus = UserStatus.ACTIVE;
-        }
-    }
-
-    // 프로필 삭제
-    public void removeProfile() {
-        if (this.userProfile != null) {
-            this.userProfile.assignUser(null);
-            this.userProfile = null;
-        }
-    }
-
-    // 사용자 프로필 연관관계 설정
-    public void assignProfile(UserProfile userProfile) {
-        this.userProfile = userProfile;
-        if (userProfile != null && userProfile.getUser() != this) {
-            userProfile.assignUser(this);
         }
     }
 
@@ -154,11 +129,8 @@ public class User extends BaseTimeEntity {
         }
     }
 
-    // 회원 탈퇴 처리 (Soft Delete)
+    // 회원 탈퇴 처리
     public void withdraw() {
-        if (this.userProfile != null) {
-            this.removeProfile();
-        }
         this.clearAvailableSchedules();
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();

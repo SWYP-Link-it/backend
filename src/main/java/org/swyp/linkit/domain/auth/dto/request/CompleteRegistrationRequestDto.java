@@ -23,6 +23,6 @@ public class CompleteRegistrationRequestDto {
     )
     private String nickname;
 
-    @Schema(description = "프로필 이미지 URL (선택사항)", example = "https://example.com/profile.jpg")
-    private String profileImageUrl;
+//    @Schema(description = "프로필 이미지 URL (선택사항)", example = "https://example.com/profile.jpg")
+//    private String profileImageUrl;
 }

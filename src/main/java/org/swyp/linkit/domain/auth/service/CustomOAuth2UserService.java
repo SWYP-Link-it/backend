@@ -1,4 +1,4 @@
-package org.swyp.linkit.domain.user.service;
+package org.swyp.linkit.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -7,6 +7,8 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.swyp.linkit.domain.auth.dto.PendingUserInfoDto;
+import org.swyp.linkit.domain.auth.redis.PendingUserStorage;
 import org.swyp.linkit.domain.user.entity.OAuthProvider;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserStatus;
@@ -15,15 +17,18 @@ import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.auth.oauth.KakaoOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.NaverOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.OAuth2UserInfo;
+import org.swyp.linkit.global.auth.oauth.PendingOAuth2UserInfo;
 import org.swyp.linkit.global.error.exception.UnsupportedOAuthProviderException;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final PendingUserStorage pendingUserStorage;
 
     @Override
     @Transactional
@@ -51,21 +56,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String name = oAuth2UserInfo.getName();
         String profileImageUrl = oAuth2UserInfo.getProfileImageUrl();
 
-        // 2. 사용자 조회 또는 생성
-        User user = userRepository.findByOauthProviderAndOauthIdAndUserStatusNot(
-                        provider, oauthId, UserStatus.WITHDRAWN)
-                .orElseGet(() -> {
-                    // 임시 닉네임 생성 (provider_oauthId)
-                    String tempNickname = provider.name().toLowerCase() + "_" + oauthId;
+        // 2. 기존 회원 조회
+        Optional<User> existingUser = userRepository.findByOauthProviderAndOauthIdAndUserStatusNot(
+                provider, oauthId, UserStatus.WITHDRAWN);
 
-                    return userRepository.save(
-                            User.create(provider, oauthId, email, name, profileImageUrl, tempNickname)
-                    );
-                });
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
 
-        user.updateOAuthInfo(email, name);
+            return CustomOAuth2User.from(user, oAuth2User.getAttributes());
+        } else {
+            // 신규 회원은 Redis에 임시 저장
+            PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()
+                    .oauthProvider(provider)
+                    .oauthId(oauthId)
+                    .email(email)
+                    .name(name)
+                    .profileImageUrl(profileImageUrl)
+                    .build();
 
-        return new CustomOAuth2User(user, oAuth2User.getAttributes());
+            // Redis에 JSON으로 저장하고 sessionId 받기
+            String sessionId = pendingUserStorage.savePendingUser(pendingUserInfo.toJson());
+
+            // PendingOAuth2UserInfo 반환
+            return new PendingOAuth2UserInfo(sessionId, pendingUserInfo, oAuth2User.getAttributes());
+        }
     }
 
     // OAuth 제공자에 따라 OAuth2UserInfo 반환
