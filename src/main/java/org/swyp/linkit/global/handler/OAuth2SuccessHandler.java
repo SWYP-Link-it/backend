@@ -1,6 +1,5 @@
 package org.swyp.linkit.global.handler;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,7 @@ import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.auth.oauth.PendingOAuth2UserInfo;
 import org.swyp.linkit.global.error.exception.InvalidUserStatusException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
+import org.swyp.linkit.global.util.CookieUtil;
 
 import java.io.IOException;
 
@@ -30,6 +30,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
+    private final CookieUtil cookieUtil;
 
     @Value("${app.oauth2.authorized-redirect-uri}")
     private String redirectUri;
@@ -66,8 +67,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String tempToken = jwtTokenProvider.generateTempToken(sessionId);
 
         // tempToken 쿠키 설정
-        int tempTokenMaxAge = jwtTokenProvider.getTempTokenMaxAge();
-        addCookie(response, "tempToken", tempToken, tempTokenMaxAge, "/");
+        cookieUtil.addCookie(response, "tempToken", tempToken, jwtTokenProvider.getTempTokenMaxAge());
 
         // 프론트로 리다이렉트 (status=PENDING)
         return UriComponentsBuilder.fromUriString(redirectUri)
@@ -94,8 +94,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         JwtTokenDto tokenDto = jwtTokenProvider.generateTokenByUserId(userId);
 
         // refreshToken 쿠키 설정
-        int refreshTokenMaxAge = (int) (tokenDto.getRefreshTokenExpiresIn() / MILLISECONDS_TO_SECONDS);
-        addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAge, "/");
+        long refreshTokenMaxAgeSeconds = tokenDto.getRefreshTokenExpiresIn() / MILLISECONDS_TO_SECONDS;
+        cookieUtil.addCookie(response, "refreshToken", tokenDto.getRefreshToken(), refreshTokenMaxAgeSeconds);
 
         // 프론트로 리다이렉트 (status=ACTIVE)
         return UriComponentsBuilder.fromUriString(redirectUri)
@@ -103,15 +103,5 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .queryParam("status", "ACTIVE")
                 .build()
                 .toUriString();
-    }
-
-    // 쿠키 생성
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge, String path) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath(path);
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
     }
 }

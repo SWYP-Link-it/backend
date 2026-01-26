@@ -77,6 +77,9 @@ app:
     authorized-redirect-uri: ${FRONTEND_URL:http://localhost:3000}
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+  cookie:
+    secure: ${COOKIE_SECURE:true}
+    same-site: ${COOKIE_SAME_SITE:None}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
