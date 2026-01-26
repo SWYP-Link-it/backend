@@ -81,6 +81,13 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("크레딧 금액이 0 이하인 경우 발생합니다.")
     INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "크레딧은 0보다 커야합니다."),
 
+    // 스킬 교환
+    @ExplainError("멘토의 스케줄이 존재하지 않는 경우 발생합니다.")
+    SCHEDULE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "EX001", "멘토의 스케줄 정보를 찾을 수 없습니다."),
+
+    @ExplainError("멘토의 정보가 존재하지 않는 경우 발생합니다.")
+    MENTOR_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "EX002", "멘토를 찾을 수 없습니다."),
+
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
