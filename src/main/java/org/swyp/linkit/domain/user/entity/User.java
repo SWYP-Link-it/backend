@@ -53,9 +53,6 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserProfile userProfile;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AvailableSchedule> availableSchedules = new ArrayList<>();
 
@@ -102,22 +99,6 @@ public class User extends BaseTimeEntity {
         }
     }
 
-    // 프로필 삭제
-    public void removeProfile() {
-        if (this.userProfile != null) {
-            this.userProfile.assignUser(null);
-            this.userProfile = null;
-        }
-    }
-
-    // 사용자 프로필 연관관계 설정
-    public void assignProfile(UserProfile userProfile) {
-        this.userProfile = userProfile;
-        if (userProfile != null && userProfile.getUser() != this) {
-            userProfile.assignUser(this);
-        }
-    }
-
     // 가능 일정 추가
     public void addAvailableSchedule(AvailableSchedule schedule) {
         if (schedule == null) return;
@@ -148,11 +129,8 @@ public class User extends BaseTimeEntity {
         }
     }
 
-    // 회원 탈퇴 처리 (Soft Delete)
+    // 회원 탈퇴 처리
     public void withdraw() {
-        if (this.userProfile != null) {
-            this.removeProfile();
-        }
         this.clearAvailableSchedules();
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();

@@ -63,7 +63,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (existingUser.isPresent()) {
             User user = existingUser.get();
 
-            return new CustomOAuth2User(user, oAuth2User.getAttributes());
+            return CustomOAuth2User.from(user, oAuth2User.getAttributes());
         } else {
             // 신규 회원은 Redis에 임시 저장
             PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()

@@ -150,7 +150,7 @@ public class JwtTokenProvider {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        CustomOAuth2User oAuth2User = new CustomOAuth2User(
+        CustomOAuth2User oAuth2User = CustomOAuth2User.from(
                 user,
                 Map.of(
                         "id", user.getId(),
