@@ -61,9 +61,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 provider, oauthId, UserStatus.WITHDRAWN);
 
         if (existingUser.isPresent()) {
-            // 기존 회원은 OAuth 정보 업데이트 후 반환
             User user = existingUser.get();
-            user.updateOAuthInfo(email, name);
 
             return new CustomOAuth2User(user, oAuth2User.getAttributes());
         } else {
