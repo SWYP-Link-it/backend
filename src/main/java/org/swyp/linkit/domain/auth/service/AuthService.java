@@ -52,12 +52,17 @@ public class AuthService {
         }
 
         // 5. User 엔티티 생성
+        String profileImageUrl = pendingUserInfo.getProfileImageUrl();
+        if (profileImageUrl == null || profileImageUrl.isBlank()) {
+            profileImageUrl = defaultProfileImageUrl;
+        }
+
         User user = User.create(
                 pendingUserInfo.getOauthProvider(),
                 pendingUserInfo.getOauthId(),
                 pendingUserInfo.getEmail(),
                 pendingUserInfo.getName(),
-                defaultProfileImageUrl,
+                profileImageUrl,
                 request.getNickname()
         );
 
