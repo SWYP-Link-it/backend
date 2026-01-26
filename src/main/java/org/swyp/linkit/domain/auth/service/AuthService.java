@@ -8,6 +8,7 @@ import org.swyp.linkit.domain.auth.dto.PendingUserInfoDto;
 import org.swyp.linkit.domain.auth.dto.response.UserResponseDto;
 import org.swyp.linkit.domain.auth.dto.request.CompleteRegistrationRequestDto;
 import org.swyp.linkit.domain.auth.redis.PendingUserStorage;
+import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserStatus;
 import org.swyp.linkit.domain.user.repository.UserRepository;
@@ -25,6 +26,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PendingUserStorage pendingUserStorage;
+    private final CreditService creditService;
 
     @Value("${app.default-profile-image}")
     private String defaultProfileImageUrl;
@@ -72,10 +74,14 @@ public class AuthService {
         // 7. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 8. Redis에서 임시 데이터 삭제
+        // 8. 크레딧 생성 및 회원가입 리워드 지급
+        creditService.createCredit(savedUser);
+        creditService.rewardCreditOnSignupSetup(savedUser);
+
+        // 9. Redis에서 임시 데이터 삭제
         pendingUserStorage.deletePendingUser(sessionId);
 
-        // 9. 정식 JWT 토큰 발급
+        // 10. 정식 JWT 토큰 발급
         return jwtTokenProvider.generateTokenByUserId(savedUser.getId());
     }
 
