@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
         log.error("HttpMessageNotReadableException: {}", e.getMessage());
         return ResponseEntity
                 .status(ErrorCode.HTTP_MESSAGE_NOT_READABLE.getHttpStatus())
-                .body(ApiResponseDto.fail(ErrorCode.METHOD_NOT_ALLOWED.getCode(),
+                .body(ApiResponseDto.fail(ErrorCode.HTTP_MESSAGE_NOT_READABLE.getCode(),
                         ErrorCode.HTTP_MESSAGE_NOT_READABLE.getMessage()));
     }
 
@@ -85,7 +85,7 @@ public class GlobalExceptionHandler {
 
     // 4. @RequestParam이 누락된 경우 예외 처리
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    protected ResponseEntity<ApiResponseDto<Void>> handleMethodArgumentTypeMismatchException(MissingServletRequestParameterException e) {
+    protected ResponseEntity<ApiResponseDto<Void>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
         log.error("MissingServletRequestParameterException: {}", e.getMessage());
         return ResponseEntity
                 .status(ErrorCode.MISSING_INPUT_VALUE.getHttpStatus())
