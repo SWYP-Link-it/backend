@@ -21,4 +21,12 @@ public class UserSkillService {
                         new UserSkillNotFoundException("존재하지 않는 스킬입니다")
                 );
     }
+
+    // UserSkill ID로 UserProfile, User 포함하여 조회, 비관적 락 적용
+    public UserSkill getUserSkillWithProfileAndUserAndLock(Long userSkillId) {
+        return userSkillRepository.findByIdWithProfileAndUserAndLock(userSkillId)
+                .orElseThrow(() ->
+                        new UserSkillNotFoundException("존재하지 않는 스킬입니다")
+                );
+    }
 }
