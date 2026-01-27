@@ -12,11 +12,26 @@ import org.swyp.linkit.global.error.dto.ErrorReason;
 public enum ErrorCode implements BaseErrorCode {
 
     // 공통
-    @ExplainError("요청 파라미터나 바디의 유효성 검증에 실패한 경우 발생합니다.")
-    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C001", "입력 값에 대한 검증을 실패했습니다."),
+    @ExplainError("지원하지 않는 HTTP 메서드 요청일 경우 발생합니다.")
+    METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "C001", "지원하지 않는 HTTP 메서드입니다."),
+
+    @ExplainError("JSON 형식이 잘못되었거나, 파싱에 실패한 경우 발생합니다.")
+    HTTP_MESSAGE_NOT_READABLE(HttpStatus.BAD_REQUEST, "C002", "요청 형식이 잘못되었습니다."),
+
+    @ExplainError("데이터 타입이 선언된 파라미터 타입과 일치하지 않는 경우 (예: 숫자에 문자 입력)")
+    TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "C003", "입력 값의 타입이 일치하지 않습니다."),
+
+    @ExplainError("필수 요청 파라미터나 바디 값이 누락된 경우")
+    MISSING_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C004", "필수 입력 값이 누락되었습니다."),
+
+    @ExplainError("요청한 URL 경로를 찾을 수 없는 경우 발생합니다.")
+    NOT_FOUND(HttpStatus.NOT_FOUND, "C005", "존재하지 않는 경로이거나 리소스입니다."),
+
+    @ExplainError("값의 형식이나 비즈니스 유효성 검증에 실패한 경우")
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "C006", "유효하지 않은 타입의 값입니다."),
 
     @ExplainError("예상치 못한 서버 내부 오류가 발생한 경우입니다.")
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C002", "서버 내부 오류입니다."),
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C007", "서버 내부 오류입니다."),
 
     // 인증/인가
     @ExplainError("토큰 형식이 잘못되었거나 서명 검증에 실패한 경우 발생합니다.")
@@ -90,6 +105,21 @@ public enum ErrorCode implements BaseErrorCode {
 
     @ExplainError("멘토의 정보가 존재하지 않는 경우 발생합니다.")
     MENTOR_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "EX002", "멘토를 찾을 수 없습니다."),
+
+    @ExplainError("자기 자신에게 스킬 거래 요청을 할 경우 발생합니다.")
+    SELF_REQUEST_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "EX003", "자기 자신의 스킬 거래 요청은 불가합니다."),
+
+    @ExplainError("비공개 설정된 스킬에 거래 요청을 할 경우 발생합니다.")
+    SKILL_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "EX004", "비공개 설정된 스킬에는 교환 신청을 할 수 없습니다."),
+
+    @ExplainError("멘토가 설정한 거래 가능 시간이 아닌 경우 발생합니다.")
+    INVALID_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "EX005", "멘토가 거래 가능한 시간이 아닙니다."),
+
+    @ExplainError("이미 예약된 거래 시간대가 존재하는 경우 발생합니다.")
+    ALREADY_RESERVED_TIME(HttpStatus.CONFLICT, "EX006", "이미 예약된 거래 시간대가 존재합니다."),
+
+    @ExplainError("스킬 거래 요청 시간이 선택한 날짜의 자정을 넘어가는 경우 발생합니다.")
+    EXCHANGE_TIME_OVER_MIDNIGHT(HttpStatus.BAD_REQUEST, "EX007", "스킬 거래 요청은 진행 날짜 자정이전까지 허용됩니다."),
 
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
