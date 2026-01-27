@@ -18,7 +18,7 @@ import java.time.LocalTime;
 @Getter
 public class SkillExchange extends BaseTimeEntity {
 
-    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
+    public static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

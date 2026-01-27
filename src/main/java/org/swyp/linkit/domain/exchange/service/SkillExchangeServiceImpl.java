@@ -27,16 +27,16 @@ import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.swyp.linkit.domain.exchange.entity.SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SkillExchangeServiceImpl implements SkillExchangeService {
-    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
 
     private final SkillExchangeRepository exchangeRepository;
     private final AvailableScheduleService availableScheduleService;
