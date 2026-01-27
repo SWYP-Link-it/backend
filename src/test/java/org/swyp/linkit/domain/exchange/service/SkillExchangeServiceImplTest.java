@@ -348,14 +348,14 @@ class SkillExchangeServiceImplTest {
             }
 
             @Test
-            @DisplayName("존재하지 않는 멘토의 스킬로 인한 SkillMentorMissMatchException")
+            @DisplayName("존재하지 않는 멘토의 스킬로 인한 UserSkillNotFoundException")
             public void fail_UserSkillNotFoundException() {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
 
                 // 멘토 스킬 조회 Mock 처리
-                doThrow(SkillMentorMissMatchException.class).when(userSkillService)
+                doThrow(UserSkillNotFoundException.class).when(userSkillService)
                         .getUserSkillWithProfileAndUserAndLock(mentorSkill.getId());
 
                 SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
@@ -363,7 +363,7 @@ class SkillExchangeServiceImplTest {
 
                 // when && then
                 assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
-                        .isInstanceOf(SkillMentorMissMatchException.class);
+                        .isInstanceOf(UserSkillNotFoundException.class);
             }
 
             @Test
