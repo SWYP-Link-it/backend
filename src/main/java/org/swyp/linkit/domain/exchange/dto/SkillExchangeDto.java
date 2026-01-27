@@ -19,9 +19,9 @@ public class SkillExchangeDto {
     private LocalTime startTime;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private SkillExchangeDto(Long mentorId, Long mentorSkillId, String message, LocalDate requestedDate, LocalTime startTime) {
-        this.receiverId = mentorId;
-        this.receiverSkillId = mentorSkillId;
+    private SkillExchangeDto(Long receiverId, Long receiverSkillId, String message, LocalDate requestedDate, LocalTime startTime) {
+        this.receiverId = receiverId;
+        this.receiverSkillId = receiverSkillId;
         this.message = message;
         this.requestedDate = requestedDate;
         this.startTime = startTime;
@@ -29,8 +29,8 @@ public class SkillExchangeDto {
 
     public static SkillExchangeDto from(SkillExchangeRequestDto requestDto){
         return SkillExchangeDto.builder()
-                .mentorId(requestDto.getMentorId())
-                .mentorSkillId(requestDto.getMentorSkillId())
+                .receiverId(requestDto.getMentorId())
+                .receiverSkillId(requestDto.getMentorSkillId())
                 .message(requestDto.getMessage())
                 .requestedDate(requestDto.getRequestedDate())
                 .startTime(requestDto.getStartTime())
