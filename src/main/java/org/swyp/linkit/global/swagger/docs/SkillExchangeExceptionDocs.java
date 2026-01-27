@@ -2,6 +2,7 @@ package org.swyp.linkit.global.swagger.docs;
 
 import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.code.BaseErrorCode;
+import org.swyp.linkit.global.error.exception.SkillMentorMissMatchException;
 import org.swyp.linkit.global.swagger.annotation.ExceptionDoc;
 import org.swyp.linkit.global.swagger.exception.SwaggerExampleExceptions;
 
@@ -109,6 +110,12 @@ public class SkillExchangeExceptionDocs {
                 return ErrorCode.SELF_REQUEST_NOT_ALLOWED;
             }
         }
+        public static class SkillMentorMissMatchException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_MENTOR_MISS_MATCH;
+            }
+        }
 
         public static class OverExchangeDurationMidnightException implements SwaggerExampleExceptions {
             @Override
@@ -121,6 +128,13 @@ public class SkillExchangeExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.INVALID_SCHEDULE_TIME;
+            }
+        }
+
+        public static class NotEnoughCreditException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.NOT_ENOUGH_CREDIT;
             }
         }
 
