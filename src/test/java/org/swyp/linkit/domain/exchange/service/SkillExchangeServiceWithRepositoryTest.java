@@ -205,19 +205,19 @@ public class SkillExchangeServiceWithRepositoryTest {
                 "skillTitle",
                 SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                true);
+                exchangeDuration);
     }
 
     private UserSkill createUnVisibleUserSkill(SkillCategory skillCategory, int exchangeDuration) {
-        return UserSkill.create(
+        UserSkill userSkill = UserSkill.create(
                 skillCategory,
                 "skillName",
                 "skillTitle",
                 SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                false);
+                exchangeDuration);
+        userSkill.toggleVisibility();
+        return userSkill;
     }
 
     private SkillCategory createSkillCategory() {

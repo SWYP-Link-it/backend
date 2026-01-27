@@ -602,8 +602,7 @@ class SkillExchangeServiceImplTest {
                 "skillTitle",
                 SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                true);
+                exchangeDuration);
         ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
         return userSkill;
     }
@@ -615,8 +614,8 @@ class SkillExchangeServiceImplTest {
                 "skillTitle",
                 SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                false);
+                exchangeDuration);
+        userSkill.toggleVisibility();
         ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
         return userSkill;
     }

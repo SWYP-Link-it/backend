@@ -71,8 +71,7 @@ public class UserSkill extends BaseTimeEntity {
     // 사용자 스킬 생성
     public static UserSkill create(SkillCategory skillCategory, String skillName,
                                    String skillTitle, SkillProficiency skillProficiency,
-                                   String skillDescription, Integer exchangeDuration,
-                                   Boolean isVisible) {
+                                   String skillDescription, Integer exchangeDuration) {
         return UserSkill.builder()
                 .skillCategory(skillCategory)
                 .skillName(skillName)
@@ -81,13 +80,15 @@ public class UserSkill extends BaseTimeEntity {
                 .skillDescription(skillDescription)
                 .exchangeDuration(exchangeDuration)
                 .viewCount(0L)
-                .isVisible(isVisible)
+                .isVisible(true)
                 .build();
     }
 
-    // 사용자 스킬의 정보 수정
-    public void update(String skillName, String skillTitle, SkillProficiency skillProficiency,
-                       String skillDescription, Integer exchangeDuration, Boolean isVisible) {
+    // 사용자 스킬 수정
+    public void update(SkillCategory skillCategory, String skillName, String skillTitle,
+                       SkillProficiency skillProficiency, String skillDescription,
+                       Integer exchangeDuration, Boolean isVisible) {
+        this.skillCategory = skillCategory;
         this.skillName = skillName.trim();
         this.skillTitle = skillTitle.trim();
         this.skillProficiency = skillProficiency;
@@ -101,9 +102,9 @@ public class UserSkill extends BaseTimeEntity {
         this.viewCount++;
     }
 
-    // 사용자 스킬의 카테고리 변경
-    public void changeCategory(SkillCategory skillCategory) {
-        this.skillCategory = skillCategory;
+    // 스킬 장터 노출 토글
+    public void toggleVisibility() {
+        this.isVisible = !this.isVisible;
     }
 
     // 사용자 프로필 연관관계 설정

@@ -127,8 +127,7 @@ class SkillExchangeRepositoryTest {
                 "skillTitle",
                 SkillProficiency.HIGH,
                 "description",
-                30,
-                true);
+                30);
     }
 
     private SkillExchange createExchange(User requester, User receiver, UserSkill receiverSkill,
