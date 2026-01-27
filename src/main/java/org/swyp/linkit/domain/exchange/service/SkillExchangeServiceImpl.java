@@ -117,7 +117,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         Set<LocalTime> bookedSlots = getBookedSlots(dto.getReceiverId(), dto.getRequestedDate());
 
         // 7. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
-        validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots);
+        validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots, mentorSkill.getExchangeDuration());
 
         // 8. SkillExchange 생성 및 save
         SkillExchange skillExchange = SkillExchange.create(
@@ -139,15 +139,17 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 신청한 시간대(startTime ~ endTime)가 유효한지 검증
      */
-    private void validateTimeSlotAvailability(LocalTime start, LocalTime end, List<LocalTime> operating, Set<LocalTime> booked) {
+    private void validateTimeSlotAvailability(LocalTime start, LocalTime end, List<LocalTime> operating,
+                                              Set<LocalTime> booked, int exchangeDuration) {
         // 스킬 교환은 선택한 날짜의 자정까지 완료되어야한다.
         if (start.isAfter(end) && !end.equals(LocalTime.MIDNIGHT)) {
             throw new OverExchangeDurationMidnightException();
         }
+
+        int slotsNeeded = exchangeDuration / 30;
         LocalTime checkSlot = start;
 
-        // startTime ~ endTime 까지 멘토의 가능 시간인지 예약된 시간인지 검증
-        while (checkSlot.isBefore(end)) {
+        for (int i = 0; i < slotsNeeded; i++) {
             // 멘토가 설정한 가능한 시간 충족 여부 검증
             if (!operating.contains(checkSlot)) {
                 throw new UnavailableExchangeTimeException();
