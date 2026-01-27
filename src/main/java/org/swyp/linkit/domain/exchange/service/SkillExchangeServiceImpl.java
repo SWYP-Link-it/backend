@@ -4,6 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
+import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.credit.entity.SupplyType;
+import org.swyp.linkit.domain.credit.service.CreditHistoryService;
+import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
@@ -15,26 +20,30 @@ import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
-import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
 import org.swyp.linkit.domain.user.service.UserService;
 import org.swyp.linkit.domain.user.service.UserSkillService;
-import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SkillExchangeServiceImpl implements SkillExchangeService {
+    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
 
     private final SkillExchangeRepository exchangeRepository;
     private final AvailableScheduleService availableScheduleService;
     private final UserService userService;
     private final UserSkillService userSkillService;
+    private final CreditService creditService;
+    private final CreditHistoryService historyService;
 
     /**
      * 멘토의 거래 가능 날짜 조회
@@ -119,7 +128,11 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 7. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
         validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots, mentorSkill.getExchangeDuration());
 
-        // 8. SkillExchange 생성 및 save
+        // 8. 멘티의 크레딧 차감 -> 크레딧 부족시 NotEnoughCreditException
+        int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
+        CreditBalanceUpdateDto creditDto = creditService.useCredit(mentee.getId(), amount);
+
+        // 9. SkillExchange 생성 및 save
         SkillExchange skillExchange = SkillExchange.create(
                 mentee,
                 mentor,
@@ -130,7 +143,19 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 dto.getMessage()
         );
         SkillExchange savedSkillExchange = exchangeRepository.save(skillExchange);
-        // 9. 응답 Dto 변환 및 return
+
+        // 10. 멘티의 CreditHistory 생성
+        historyService.createExchangeHistory(
+                mentee,
+                mentor,
+                savedSkillExchange,
+                SupplyType.USE,
+                creditDto.getAmount(),
+                creditDto.getAfterBalance(),
+                HistoryType.EXCHANGE_REQUEST
+        );
+
+        // 11. 응답 Dto 변환 및 return
         return SkillExchangeResponseDto.from(savedSkillExchange);
     }
 
