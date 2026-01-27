@@ -8,6 +8,7 @@ import org.swyp.linkit.domain.auth.dto.PendingUserInfoDto;
 import org.swyp.linkit.domain.auth.dto.response.UserResponseDto;
 import org.swyp.linkit.domain.auth.dto.request.CompleteRegistrationRequestDto;
 import org.swyp.linkit.domain.auth.redis.PendingUserStorage;
+import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserStatus;
 import org.swyp.linkit.domain.user.repository.UserRepository;
@@ -25,6 +26,7 @@ public class AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final PendingUserStorage pendingUserStorage;
+    private final CreditService creditService;
 
     @Value("${app.default-profile-image}")
     private String defaultProfileImageUrl;
@@ -66,11 +68,12 @@ public class AuthService {
                 request.getNickname()
         );
 
-        // 6. 회원가입 완료 처리 (PROFILE_PENDING → ACTIVE)
-        user.activateAccount();
-
-        // 7. DB에 저장
+        // 6. DB에 저장
         User savedUser = userRepository.save(user);
+
+        // 7. 크레딧 생성 및 회원가입 리워드 지급
+        creditService.createCredit(savedUser);
+        creditService.rewardCreditOnSignupSetup(savedUser);
 
         // 8. Redis에서 임시 데이터 삭제
         pendingUserStorage.deletePendingUser(sessionId);
@@ -81,7 +84,7 @@ public class AuthService {
 
     // refreshToken으로 accessToken 재발급
     @Transactional(readOnly = true)
-    public JwtTokenDto refreshAccessToken(String refreshToken) {
+    public JwtTokenDto issueTokensByRefreshToken(String refreshToken) {
         // 1. refreshToken 검증
         jwtTokenProvider.validateToken(refreshToken);
 
@@ -93,8 +96,8 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
 
         // 4. 상태 확인
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
 
         // 5. 정식 JWT 토큰 발급
@@ -103,12 +106,12 @@ public class AuthService {
 
     // 현재 로그인한 사용자 정보 조회
     @Transactional(readOnly = true)
-    public UserResponseDto getCurrentUser(Long userId) {
+    public UserResponseDto getUserInfo(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
 
         return UserResponseDto.from(user);
