@@ -202,6 +202,7 @@ public class SkillExchangeServiceWithRepositoryTest {
         return UserSkill.create(
                 skillCategory,
                 "skillName",
+                "skillTitle",
                 SkillProficiency.LOW,
                 "description",
                 exchangeDuration,
@@ -212,6 +213,7 @@ public class SkillExchangeServiceWithRepositoryTest {
         return UserSkill.create(
                 skillCategory,
                 "skillName",
+                "skillTitle",
                 SkillProficiency.LOW,
                 "description",
                 exchangeDuration,

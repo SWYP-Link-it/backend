@@ -124,6 +124,7 @@ class SkillExchangeRepositoryTest {
         return UserSkill.create(
                 type,
                 "skillName",
+                "skillTitle",
                 SkillProficiency.HIGH,
                 "description",
                 30,

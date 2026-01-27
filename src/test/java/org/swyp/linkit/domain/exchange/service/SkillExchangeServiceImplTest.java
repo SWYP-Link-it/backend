@@ -599,6 +599,7 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
+                "skillTitle",
                 SkillProficiency.LOW,
                 "description",
                 exchangeDuration,
@@ -611,6 +612,7 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
+                "skillTitle",
                 SkillProficiency.LOW,
                 "description",
                 exchangeDuration,
