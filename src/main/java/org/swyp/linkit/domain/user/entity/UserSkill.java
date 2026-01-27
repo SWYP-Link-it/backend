@@ -35,8 +35,8 @@ public class UserSkill extends BaseTimeEntity {
     private String skillName;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "skill_level", nullable = false, length = 20)
-    private SkillLevel skillLevel;
+    @Column(name = "skill_proficiency", nullable = false, length = 20)
+    private SkillProficiency skillProficiency;
 
     @Column(name = "skill_description", length = 500)
     private String skillDescription;
@@ -52,12 +52,12 @@ public class UserSkill extends BaseTimeEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
-                      SkillLevel skillLevel, String skillDescription, Integer exchangeDuration,
+                      SkillProficiency skillProficiency, String skillDescription, Integer exchangeDuration,
                       Long viewCount, Boolean isVisible) {
         this.userProfile = userProfile;
         this.skillCategory = skillCategory;
         this.skillName = skillName;
-        this.skillLevel = skillLevel;
+        this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
         this.viewCount = viewCount;
@@ -66,12 +66,12 @@ public class UserSkill extends BaseTimeEntity {
 
     // 사용자 스킬 생성
     public static UserSkill create(SkillCategory skillCategory, String skillName,
-                                   SkillLevel skillLevel, String skillDescription,
+                                   SkillProficiency skillProficiency, String skillDescription,
                                    Integer exchangeDuration, Boolean isVisible) {
         return UserSkill.builder()
                 .skillCategory(skillCategory)
                 .skillName(skillName)
-                .skillLevel(skillLevel)
+                .skillProficiency(skillProficiency)
                 .skillDescription(skillDescription)
                 .exchangeDuration(exchangeDuration)
                 .viewCount(0L)
@@ -80,10 +80,10 @@ public class UserSkill extends BaseTimeEntity {
     }
 
     // 사용자 스킬의 정보 수정
-    public void update(String skillName, SkillLevel skillLevel, String skillDescription,
+    public void update(String skillName, SkillProficiency skillProficiency, String skillDescription,
                        Integer exchangeDuration, Boolean isVisible) {
         this.skillName = skillName.trim();
-        this.skillLevel = skillLevel;
+        this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
         this.isVisible = isVisible;

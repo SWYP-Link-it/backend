@@ -599,7 +599,7 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
-                SkillLevel.LOW,
+                SkillProficiency.LOW,
                 "description",
                 exchangeDuration,
                 true);
@@ -611,7 +611,7 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
-                SkillLevel.LOW,
+                SkillProficiency.LOW,
                 "description",
                 exchangeDuration,
                 false);
