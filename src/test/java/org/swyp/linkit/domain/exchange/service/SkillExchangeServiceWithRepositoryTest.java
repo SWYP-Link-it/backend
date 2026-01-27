@@ -12,6 +12,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.swyp.linkit.TestRedisConfig;
+import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
@@ -46,7 +47,12 @@ public class SkillExchangeServiceWithRepositoryTest {
 
     private LocalTime startTime = LocalTime.of(10, 0);
     private LocalTime endTime = LocalTime.of(11, 0);
-    private User mentee;
+    private User mentee1;
+    private User mentee2;
+    private User mentee3;
+    private User mentee4;
+    private User mentee5;
+
     private User mentor;
     private UserSkill mentorSkill;
 
@@ -56,9 +62,29 @@ public class SkillExchangeServiceWithRepositoryTest {
 
         try {
             // 멘토, 멘티 생성
-            mentee = createUser();
+            mentee1 = createUser();
+            Credit credit1 = createCredit(mentee1);
+            mentee2 = createUser();
+            Credit credit2 = createCredit(mentee2);
+            mentee3 = createUser();
+            Credit credit3 = createCredit(mentee3);
+            mentee4 = createUser();
+            Credit credit4 = createCredit(mentee4);
+            mentee5 = createUser();
+            Credit credit5 = createCredit(mentee5);
+
+            em.persist(mentee1);
+            em.persist(credit1);
+            em.persist(mentee2);
+            em.persist(credit2);
+            em.persist(mentee3);
+            em.persist(credit3);
+            em.persist(mentee4);
+            em.persist(credit4);
+            em.persist(mentee5);
+            em.persist(credit5);
+
             mentor = createUser();
-            em.persist(mentee);
             em.persist(mentor);
 
             // 스킬 카테고리 생성
@@ -79,10 +105,6 @@ public class SkillExchangeServiceWithRepositoryTest {
                 em.persist(availableSchedule);
             }
 
-            // 스킬 교환 생성
-            SkillExchange exchange = createExchange(mentor, mentee, mentorSkill, startTime, endTime);
-            em.persist(exchange);
-
             em.flush();
             transactionManager.commit(status);
             em.clear();
@@ -97,7 +119,9 @@ public class SkillExchangeServiceWithRepositoryTest {
     @DisplayName("스킬 거래 요청 동시성 테스트")
     public void requestSkillExchange_concurrency() throws InterruptedException {
         // given
-        int threadCount = 5;
+        List<User> mentees = List.of(mentee1, mentee2, mentee3, mentee4, mentee5);
+        int threadCount = mentees.size();
+
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
@@ -110,9 +134,10 @@ public class SkillExchangeServiceWithRepositoryTest {
 
         // when
         for (int i = 0; i < threadCount; i++) {
+            final int index = i;
             executorService.submit(() -> {
                 try {
-                    exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto);
+                    exchangeService.requestSkillExchange(mentees.get(index).getId(), skillExchangeDto);
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
@@ -143,6 +168,10 @@ public class SkillExchangeServiceWithRepositoryTest {
                 AvailableSchedule.create(user, Weekday.SAT, start, end),
                 AvailableSchedule.create(user, Weekday.SUN, start, end)
         );
+    }
+
+    private Credit createCredit(User user){
+        return Credit.create(user, 2);
     }
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {

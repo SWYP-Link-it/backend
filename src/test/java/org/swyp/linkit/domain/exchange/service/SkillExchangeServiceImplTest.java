@@ -8,6 +8,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
+import org.swyp.linkit.domain.credit.entity.Credit;
+import org.swyp.linkit.domain.credit.entity.CreditHistory;
+import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.credit.entity.SupplyType;
+import org.swyp.linkit.domain.credit.service.CreditHistoryService;
+import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
@@ -48,13 +55,23 @@ class SkillExchangeServiceImplTest {
     @Mock
     UserSkillService userSkillService;
 
+    @Mock
+    CreditService creditService;
+
+    @Mock
+    CreditHistoryService historyService;
+
+
     @InjectMocks
     SkillExchangeServiceImpl exchangeService;
 
+    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
     private Long userId = 1L;
     private Long userSkillId = 1L;
     private Long exchangeId = 1L;
     private Long profileId = 1L;
+    private Long creditId = 1L;
+    private Long historyId = 1L;
 
     @Nested
     @DisplayName("멘토의 거래 가능 날짜 조회 (getAvailableDates)")
@@ -217,8 +234,8 @@ class SkillExchangeServiceImplTest {
             }
 
             @Test
-            @DisplayName("mentor의 정보와 userSkill이 일치하지 않아 MentorNotFoundException 발생")
-            public void fail_MentorNotFoundException() {
+            @DisplayName("mentor의 정보와 userSkill이 일치하지 않아 SkillMentorMissMatchException 발생")
+            public void fail_SkillMentorMissMatchException() {
                 // given
                 // 진짜 멘토와 가짜 멘토 생성
                 User realMentor = createUser();
@@ -233,8 +250,7 @@ class SkillExchangeServiceImplTest {
 
                 // when && then
                 assertThatThrownBy(() -> exchangeService.getAvailableSlots(realMentor.getId(), skill.getId(), date))
-                        .isInstanceOf(MentorNotFoundException.class)
-                        .hasMessageContaining("해당 멘토가 보유한 스킬이 아닙니다.");
+                        .isInstanceOf(SkillMentorMissMatchException.class);
             }
         }
     }
@@ -246,6 +262,7 @@ class SkillExchangeServiceImplTest {
         private User mentor = createUser();
         private UserSkill mentorSkill = createUserSkill(60);
         private UserProfile mentorProfile = createUserProfile(mentor, List.of(mentorSkill));
+        private Credit menteeCredit = createCredit(mentee, 2);
         private LocalDate date = LocalDate.of(2026, 1, 25);
         private LocalTime startTime = LocalTime.of(20, 0);
 
@@ -277,14 +294,33 @@ class SkillExchangeServiceImplTest {
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
 
+                // 멘티의 크레딧 차감 Mock 처리
+                int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
+                CreditBalanceUpdateDto creditDto = CreditBalanceUpdateDto.of(menteeCredit, amount);
+                when(creditService.useCredit(mentee.getId(), amount)).thenReturn(creditDto);
+
                 // 스킬 교환 저장 Mock 처리
                 SkillExchange exchange = createExchange(mentor, mentorSkill, startTime, startTime.plusMinutes(mentorSkill.getExchangeDuration()));
                 when(exchangeRepository.save(any(SkillExchange.class))).thenReturn(exchange);
 
+                // 크레딧 생성 Mock 처리
+                CreditHistory creditHistory = createExchangeRequestHistory(
+                        mentee, mentor, exchange, creditDto.getAmount(), creditDto.getAfterBalance());
+
+                when(historyService.createExchangeHistory(
+                        mentee,
+                        mentor,
+                        exchange,
+                        SupplyType.USE,
+                        creditDto.getAmount(),
+                        creditDto.getAfterBalance(),
+                        HistoryType.EXCHANGE_REQUEST)
+                ).thenReturn(creditHistory);
+
                 SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
                 SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
-                // when
 
+                // when
                 SkillExchangeResponseDto sut = exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto);
 
                 // then
@@ -331,8 +367,8 @@ class SkillExchangeServiceImplTest {
             }
 
             @Test
-            @DisplayName("멘토의 스킬과 멘토 정보가 불일치로 인한 MentorNotFoundException")
-            public void fail_MentorNotFoundException() {
+            @DisplayName("멘토의 스킬과 멘토 정보가 불일치로 인한 SkillMentorMissMatchException")
+            public void fail_SkillMentorMissMatchException() {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
@@ -348,7 +384,7 @@ class SkillExchangeServiceImplTest {
 
                 // when && then
                 assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
-                        .isInstanceOf(MentorNotFoundException.class);
+                        .isInstanceOf(SkillMentorMissMatchException.class);
             }
 
             @Test
@@ -493,6 +529,43 @@ class SkillExchangeServiceImplTest {
                 assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
                         .isInstanceOf(AlreadyBookedExchangeTimeException.class);
             }
+
+            @Test
+            @DisplayName("멘티의 크레딧 부족으로 인한 NotEnoughCreditException")
+            public void success() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [20:00 ~ 22:00]
+                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
+                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
+                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(20, 0), LocalTime.of(22, 0));
+                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
+
+                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
+                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                        .thenReturn(List.of(exchange1, exchange2));
+
+                // 멘티의 크레딧 차감 예외 처리 Mock
+                int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
+                doThrow(new NotEnoughCreditException()).when(creditService).useCredit(mentee.getId(), amount);
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(NotEnoughCreditException.class);
+            }
         }
     }
 
@@ -544,6 +617,27 @@ class SkillExchangeServiceImplTest {
                 false);
         ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
         return userSkill;
+    }
+
+    private Credit createCredit(User user, int amount){
+        Credit credit = Credit.create(user, amount);
+        ReflectionTestUtils.setField(credit, "id", creditId++);
+        return credit;
+    }
+
+    private CreditHistory createExchangeRequestHistory(User mentee, User mentor, SkillExchange exchange,
+                                                       int amount, int balanceAfter){
+        CreditHistory history = CreditHistory.createSkillExchange(
+                mentee,
+                mentor,
+                exchange,
+                SupplyType.USE,
+                amount,
+                balanceAfter,
+                HistoryType.EXCHANGE_REQUEST
+        );
+        ReflectionTestUtils.setField(history, "id", historyId++);
+        return history;
     }
 
     private SkillExchange createExchange(User receiverUser, UserSkill receiverSkill,
