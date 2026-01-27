@@ -121,6 +121,9 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("스킬 거래 요청 시간이 선택한 날짜의 자정을 넘어가는 경우 발생합니다.")
     EXCHANGE_TIME_OVER_MIDNIGHT(HttpStatus.BAD_REQUEST, "EX007", "스킬 거래 요청은 진행 날짜 자정이전까지 허용됩니다."),
 
+    @ExplainError("스킬이 멘토의 소유가 아닐 경우 발생합니다.")
+    SKILL_MENTOR_MISS_MATCH(HttpStatus.BAD_REQUEST, "EX008", "스킬이 멘토의 소유가 아닙니다."),
+
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),
