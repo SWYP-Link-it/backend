@@ -124,6 +124,13 @@ public class SkillExchangeExceptionDocs {
             }
         }
 
+        public static class NotEnoughCreditException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.NOT_ENOUGH_CREDIT;
+            }
+        }
+
         public static class AlreadyBookedExchangeTimeException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
