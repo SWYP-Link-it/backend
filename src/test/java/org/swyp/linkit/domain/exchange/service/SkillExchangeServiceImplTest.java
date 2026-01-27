@@ -8,8 +8,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
+import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.SlotDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
@@ -19,10 +22,7 @@ import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
 import org.swyp.linkit.domain.user.service.UserService;
 import org.swyp.linkit.domain.user.service.UserSkillService;
-import org.swyp.linkit.global.error.exception.MentorNotFoundException;
-import org.swyp.linkit.global.error.exception.ScheduleNotFoundException;
-import org.swyp.linkit.global.error.exception.UserNotFoundException;
-import org.swyp.linkit.global.error.exception.UserSkillNotFoundException;
+import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -59,7 +59,7 @@ class SkillExchangeServiceImplTest {
     @Nested
     @DisplayName("멘토의 거래 가능 날짜 조회 (getAvailableDates)")
     class GetAvailableDates {
-        private final User mentorUser = createUser();
+        private final User mentor = createUser();
         private final String month = "2026-02";
 
         @Nested
@@ -70,7 +70,7 @@ class SkillExchangeServiceImplTest {
             public void success() {
                 // given
                 // mentor 조회 Mock 처리
-                when(userService.getUserById(mentorUser.getId())).thenReturn(mentorUser);
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // mentor 의 3개월치 데이터 Mock 처리
                 AvailableScheduleDto schedule1 = new AvailableScheduleDto(
@@ -86,18 +86,18 @@ class SkillExchangeServiceImplTest {
                         "WED", LocalTime.of(10, 0),
                         LocalTime.of(12, 0));
 
-                when(availableScheduleService.getExpandedSchedules(mentorUser.getId()))
+                when(availableScheduleService.getExpandedSchedules(mentor.getId()))
                         .thenReturn(List.of(schedule1, schedule2, schedule3));
                 // when
-                AvailableDatesResponseDto response = exchangeService.getAvailableDates(mentorUser.getId(), month);
+                AvailableDatesResponseDto response = exchangeService.getAvailableDates(mentor.getId(), month);
 
                 // then
                 // 중복 제거로 인해 2
                 assertThat(response.getAvailableDates()).hasSize(2);
                 assertThat(response.getAvailableDates().stream().allMatch(date -> date.startsWith(month))).isTrue();
 
-                verify(userService).getUserById(mentorUser.getId());
-                verify(availableScheduleService).getExpandedSchedules(mentorUser.getId());
+                verify(userService).getUserById(mentor.getId());
+                verify(availableScheduleService).getExpandedSchedules(mentor.getId());
             }
         }
 
@@ -110,10 +110,10 @@ class SkillExchangeServiceImplTest {
             public void fail_MentorNotFoundException() {
                 // given
                 doThrow(new UserNotFoundException())
-                        .when(userService).getUserById(mentorUser.getId());
+                        .when(userService).getUserById(mentor.getId());
 
                 // when && then
-                assertThatThrownBy(() -> exchangeService.getAvailableDates(mentorUser.getId(), month))
+                assertThatThrownBy(() -> exchangeService.getAvailableDates(mentor.getId(), month))
                         .isInstanceOf(MentorNotFoundException.class);
             }
 
@@ -122,13 +122,13 @@ class SkillExchangeServiceImplTest {
             public void fail_ScheduleNotFoundException() {
                 // given
                 // mentor 조회 Mock 처리
-                when(userService.getUserById(mentorUser.getId())).thenReturn(mentorUser);
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
                 // 3개월치 데이터 빈 데이터 처리
-                when(availableScheduleService.getExpandedSchedules(mentorUser.getId()))
+                when(availableScheduleService.getExpandedSchedules(mentor.getId()))
                         .thenReturn(List.of());
 
                 // when && then
-                assertThatThrownBy(() -> exchangeService.getAvailableDates(mentorUser.getId(), month))
+                assertThatThrownBy(() -> exchangeService.getAvailableDates(mentor.getId(), month))
                         .isInstanceOf(ScheduleNotFoundException.class);
 
             }
@@ -190,10 +190,10 @@ class SkillExchangeServiceImplTest {
                         .filter(SlotDto::isAvailable).toList();
                 assertThat(result.getSlots().size()).isEqualTo(10);
                 assertThat(filteredDto.size()).isEqualTo(4);
-                assertThat(filteredDto.get(0).getTime()).isEqualTo("11:00");
-                assertThat(filteredDto.get(1).getTime()).isEqualTo("11:30");
-                assertThat(filteredDto.get(2).getTime()).isEqualTo("16:30");
-                assertThat(filteredDto.get(3).getTime()).isEqualTo("17:30");
+                assertThat(filteredDto.get(0).getTime()).isEqualTo(LocalTime.parse("11:00"));
+                assertThat(filteredDto.get(1).getTime()).isEqualTo(LocalTime.parse("11:30"));
+                assertThat(filteredDto.get(2).getTime()).isEqualTo(LocalTime.parse("16:30"));
+                assertThat(filteredDto.get(3).getTime()).isEqualTo(LocalTime.parse("17:30"));
 
                 verify(userSkillService).getUserSkillWithProfileAndUser(receiverSkill1.getId());
                 verify(exchangeRepository).findAllByReceiverIdAndDate(mentorUser.getId(), date, ExchangeStatus.CANCELED);
@@ -239,14 +239,271 @@ class SkillExchangeServiceImplTest {
         }
     }
 
-    private UserProfile createUserProfile(User user, List<UserSkill> userSkill){
+    @Nested
+    @DisplayName("스킬 거래 요청 (requestSkillExchange)")
+    class RequestSkillExchange {
+        private User mentee = createUser();
+        private User mentor = createUser();
+        private UserSkill mentorSkill = createUserSkill(60);
+        private UserProfile mentorProfile = createUserProfile(mentor, List.of(mentorSkill));
+        private LocalDate date = LocalDate.of(2026, 1, 25);
+        private LocalTime startTime = LocalTime.of(20, 0);
+
+        @Nested
+        @DisplayName("성공 케이스")
+        class SuccessCase {
+            @Test
+            @DisplayName("스킬 거래 요청 처리")
+            public void success() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [20:00 ~ 22:00]
+                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
+                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
+                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(20, 0), LocalTime.of(22, 0));
+                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
+
+                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
+                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                        .thenReturn(List.of(exchange1, exchange2));
+
+                // 스킬 교환 저장 Mock 처리
+                SkillExchange exchange = createExchange(mentor, mentorSkill, startTime, startTime.plusMinutes(mentorSkill.getExchangeDuration()));
+                when(exchangeRepository.save(any(SkillExchange.class))).thenReturn(exchange);
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+                // when
+
+                SkillExchangeResponseDto sut = exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto);
+
+                // then
+                assertThat(sut.getSkillExchangeId()).isEqualTo(exchange.getId());
+                assertThat(sut.getExchangeStatus()).isEqualTo(ExchangeStatus.PENDING.getDescription());
+            }
+        }
+
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+
+            @Test
+            @DisplayName("존재하지 않는 멘티로 인한 UserNotFoundException")
+            public void fail_UserNotFoundException() {
+                // given
+                doThrow(new UserNotFoundException()).when(userService).getUserById(mentee.getId());
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(UserNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 멘토의 스킬로 인한 UserSkillNotFoundException")
+            public void fail_UserSkillNotFoundException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                doThrow(UserSkillNotFoundException.class).when(userSkillService)
+                        .getUserSkillWithProfileAndUserAndLock(mentorSkill.getId());
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(UserSkillNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("멘토의 스킬과 멘토 정보가 불일치로 인한 MentorNotFoundException")
+            public void fail_MentorNotFoundException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 다른 유저의 skill로 Mock 처리
+                User otherUser = createUser();
+                UserSkill otherUserSkill = createUserSkill(60);
+                createUserProfile(otherUser, List.of(otherUserSkill));
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(otherUserSkill);
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(MentorNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("미공개 스킬로 인한 SkillNotAvailableException")
+            public void fail_SkillNotAvailableException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 미공개 skill로 Mock 처리
+                UserSkill unVisibleUserSkill = createUnVisibleUserSkill(60);
+                createUserProfile(mentor, List.of(unVisibleUserSkill));
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(unVisibleUserSkill);
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(SkillNotAvailableException.class);
+            }
+
+            @Test
+            @DisplayName("본인 스킬 거래 요청으로 인한 SelfExchangeNotAllowedException")
+            public void fail_SelfExchangeNotAllowedException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentor.getId(), skillExchangeDto))
+                        .isInstanceOf(SelfExchangeNotAllowedException.class);
+            }
+
+            @Test
+            @DisplayName("스킬 교환 신청의 종료 시간이 정오를 넘어 발생한 OverExchangeDurationMidnightException")
+            public void fail_OverExchangeDurationMidnightException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
+                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
+                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
+                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
+
+                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
+                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                        .thenReturn(List.of(exchange1, exchange2));
+
+                // 정오 넘어서까지 거래가 진행되도록 처리
+                LocalTime startTime = LocalTime.of(23, 30);
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(OverExchangeDurationMidnightException.class);
+            }
+
+            @Test
+            @DisplayName("멘토가 설정한 가능한 시간 미충족으로 인한 UnavailableExchangeTimeException")
+            public void fail_UnavailableExchangeTimeException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
+                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
+                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
+                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
+
+                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
+                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                        .thenReturn(List.of(exchange1, exchange2));
+
+                // 멘토가 설정한 가능한 시간 이외의 요청 처리
+                LocalTime startTime = LocalTime.of(12, 30);
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(UnavailableExchangeTimeException.class);
+            }
+
+            @Test
+            @DisplayName("이미 예약된 시간으로 인한 AlreadyBookedExchangeTimeException")
+            public void fail_AlreadyBookedExchangeTimeException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+
+                // 멘토 스킬 조회 Mock 처리
+                when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
+
+                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
+                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
+                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
+                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
+
+                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
+                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                        .thenReturn(List.of(exchange1, exchange2));
+
+                // 멘토가 설정한 가능한 시간 이외의 요청 처리
+                LocalTime startTime = LocalTime.of(10, 0);
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(AlreadyBookedExchangeTimeException.class);
+            }
+        }
+    }
+
+    private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
                 "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 PreferredRegion.CHUNGCHEONG,
                 "location");
-        for(UserSkill skill : userSkill){
+        for (UserSkill skill : userSkill) {
             userProfile.addUserSkill(skill);
         }
         ReflectionTestUtils.setField(userProfile, "id", profileId++);
@@ -277,12 +534,24 @@ class SkillExchangeServiceImplTest {
         return userSkill;
     }
 
+    private UserSkill createUnVisibleUserSkill(int exchangeDuration) {
+        UserSkill userSkill = UserSkill.create(
+                null,
+                "skillName",
+                SkillLevel.LOW,
+                "description",
+                exchangeDuration,
+                false);
+        ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
+        return userSkill;
+    }
+
     private SkillExchange createExchange(User receiverUser, UserSkill receiverSkill,
                                          LocalTime starTime, LocalTime endTime) {
 
         SkillExchange skillExchange = SkillExchange.create(
                 null, receiverUser, receiverSkill, LocalDate.of(2026, 2, 4),
-               starTime, endTime, "message");
+                starTime, endTime, "message");
         ReflectionTestUtils.setField(skillExchange, "id", exchangeId++);
         return skillExchange;
     }
