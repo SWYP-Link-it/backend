@@ -84,7 +84,7 @@ public class AuthService {
 
     // refreshToken으로 accessToken 재발급
     @Transactional(readOnly = true)
-    public JwtTokenDto refreshAccessToken(String refreshToken) {
+    public JwtTokenDto issueTokensByRefreshToken(String refreshToken) {
         // 1. refreshToken 검증
         jwtTokenProvider.validateToken(refreshToken);
 
@@ -106,7 +106,7 @@ public class AuthService {
 
     // 현재 로그인한 사용자 정보 조회
     @Transactional(readOnly = true)
-    public UserResponseDto getCurrentUser(Long userId) {
+    public UserResponseDto getUserInfo(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
