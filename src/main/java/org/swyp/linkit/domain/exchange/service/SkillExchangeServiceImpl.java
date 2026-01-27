@@ -77,7 +77,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Transactional(readOnly = true)
     @Override
     public AvailableSlotsResponseDto getAvailableSlots(Long mentorId, Long receiverSkillId, LocalDate date) {
-        // 1.멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, MentorNotFound Exception
+        // 1.멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, SkillMentorMissMatchException Exception
         UserSkill mentorSkill = getMentorSkillAndValidation(mentorId, receiverSkillId);
         int exchangeDuration = mentorSkill.getExchangeDuration();
 
@@ -101,7 +101,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 1. 멘티 조회 및 검증
         User mentee = userService.getUserById(requesterId);
 
-        // 2. 멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, MentorNotFound Exception
+        // 2. 멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, SkillMentorMissMatchException Exception
         UserSkill mentorSkill = getMentorSkillWithLockAndValidation(dto.getReceiverId(), dto.getReceiverSkillId());
         User mentor = mentorSkill.getUserProfile().getUser();
 
@@ -196,9 +196,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 멘토의 스킬 존재 여부 조회 및 검증 -> UserSkillNotFoundException
         // 비관적 락 적용
         UserSkill mentorSkill = userSkillService.getUserSkillWithProfileAndUserAndLock(receiverSkillId);
-        // 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> MentorNotFoundException
+        // 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
         if(!mentorSkill.getUserProfile().getUser().getId().equals(mentorId)){
-            throw new MentorNotFoundException("해당 멘토가 보유한 스킬이 아닙니다.");
+            throw new SkillMentorMissMatchException();
         }
         return mentorSkill;
     }
@@ -209,9 +209,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private UserSkill getMentorSkillAndValidation(Long mentorId, Long receiverSkillId) {
         // 멘토의 스킬 존재 여부 조회 및 검증 -> UserSkillNotFoundException
         UserSkill mentorSkill = userSkillService.getUserSkillWithProfileAndUser(receiverSkillId);
-        // 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> MentorNotFoundException
+        // 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
         if(!mentorSkill.getUserProfile().getUser().getId().equals(mentorId)){
-            throw new MentorNotFoundException("해당 멘토가 보유한 스킬이 아닙니다.");
+            throw new SkillMentorMissMatchException();
         }
         return mentorSkill;
     }
