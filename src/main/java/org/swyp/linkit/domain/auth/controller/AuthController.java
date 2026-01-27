@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.auth.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -37,12 +38,21 @@ public class AuthController {
     private final AuthService authService;
     private final CookieUtil cookieUtil;
 
-    @Operation(summary = "회원가입 완료", description = "소셜 로그인 후 프로필 정보를 입력하여 회원가입을 완료합니다.")
+    @Operation(
+            summary = "회원가입 완료",
+            description = "소셜 로그인 후 프로필 정보를 입력하여 회원가입을 완료합니다."
+    )
     @ApiErrorExceptionsExample(AuthExceptionDocs.CompleteRegistration.class)
     @PostMapping(value = "/complete-registration", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<JwtTokenDto>> completeRegistration(
+            @Parameter(description = "임시 토큰 (소셜 로그인 시 발급)", required = true)
             @CookieValue("tempToken") String tempToken,
+
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "회원가입 완료 정보 (닉네임, 프로필 이미지 등)"
+            )
             @Valid @RequestBody CompleteRegistrationRequestDto request,
+
             HttpServletResponse response) {
 
         log.info("[Auth] POST /auth/complete-registration : nickname={}", request.getNickname());
@@ -70,6 +80,7 @@ public class AuthController {
     @ApiErrorExceptionsExample(AuthExceptionDocs.IssueAccessTokenAfterOAuth.class)
     @GetMapping(value = "/success", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<JwtTokenDto>> issueAccessTokenAfterOAuth(
+            @Parameter(description = "리프레시 토큰 (쿠키)", required = true)
             @CookieValue("refreshToken") String refreshToken) {
 
         log.info("[Auth] GET /auth/success");
@@ -89,7 +100,9 @@ public class AuthController {
     @ApiErrorExceptionsExample(AuthExceptionDocs.reissueTokens.class)
     @PostMapping(value = "/refresh", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<JwtTokenDto>> reissueTokens(
+            @Parameter(description = "리프레시 토큰 (쿠키)", required = true)
             @CookieValue("refreshToken") String refreshToken,
+
             HttpServletResponse response) {
 
         log.info("[Auth] POST /auth/refresh");
@@ -106,10 +119,14 @@ public class AuthController {
         );
     }
 
-    @Operation(summary = "현재 로그인한 사용자 정보 조회", description = "JWT 토큰을 통해 현재 로그인한 사용자의 정보를 조회합니다.")
+    @Operation(
+            summary = "현재 로그인한 사용자 정보 조회",
+            description = "JWT 토큰을 통해 현재 로그인한 사용자의 정보를 조회합니다."
+    )
     @ApiErrorExceptionsExample(AuthExceptionDocs.GetMe.class)
     @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<UserResponseDto>> getMe(
+            @Parameter(hidden = true)
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 
         log.info("[Auth] GET /auth/me : userId={}", oAuth2User.getUserId());
@@ -121,7 +138,10 @@ public class AuthController {
         );
     }
 
-    @Operation(summary = "로그아웃", description = "로그아웃하고 refreshToken 쿠키를 삭제합니다.")
+    @Operation(
+            summary = "로그아웃",
+            description = "로그아웃하고 refreshToken 쿠키를 삭제합니다."
+    )
     @ApiErrorExceptionsExample(AuthExceptionDocs.Logout.class)
     @PostMapping(value = "/logout", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<Void>> logout(HttpServletResponse response) {
