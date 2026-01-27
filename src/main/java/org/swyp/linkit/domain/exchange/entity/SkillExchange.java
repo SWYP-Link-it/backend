@@ -18,7 +18,7 @@ import java.time.LocalTime;
 @Getter
 public class SkillExchange extends BaseTimeEntity {
 
-    private static final int MINUTES_PER_CREDIT = 30;
+    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -86,7 +86,7 @@ public class SkillExchange extends BaseTimeEntity {
         // 요청 마감 계산
         LocalDateTime calculateDeadLine = scheduledDate.atStartOfDay();
         // 시간으로 크레딧 가격 계산
-        int price = receiverSkill.getExchangeDuration() / MINUTES_PER_CREDIT;
+        int price = receiverSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
 
         SkillExchange skillExchange = SkillExchange.builder()
                 .skillName(receiverSkill.getSkillName())

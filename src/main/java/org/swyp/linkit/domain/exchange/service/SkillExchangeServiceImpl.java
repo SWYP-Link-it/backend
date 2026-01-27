@@ -4,6 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
+import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.credit.entity.SupplyType;
+import org.swyp.linkit.domain.credit.service.CreditHistoryService;
+import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
@@ -15,26 +20,30 @@ import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
-import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
 import org.swyp.linkit.domain.user.service.UserService;
 import org.swyp.linkit.domain.user.service.UserSkillService;
-import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SkillExchangeServiceImpl implements SkillExchangeService {
+    private static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
 
     private final SkillExchangeRepository exchangeRepository;
     private final AvailableScheduleService availableScheduleService;
     private final UserService userService;
     private final UserSkillService userSkillService;
+    private final CreditService creditService;
+    private final CreditHistoryService historyService;
 
     /**
      * 멘토의 거래 가능 날짜 조회
@@ -42,7 +51,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Transactional(readOnly = true)
     @Override
     public AvailableDatesResponseDto getAvailableDates(Long mentorId, String month) {
-        // 1. 멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, MentorNotFound Exception
+        // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
         getMentorAndValidation(mentorId);
 
         // 2. 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환) 및 월별 필터링
@@ -73,7 +82,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         int exchangeDuration = mentorSkill.getExchangeDuration();
 
         // 2. 멘토의 가능 시간 조회 및 date로 필터링, 30분 단위로 변환
-        List<LocalTime> operatingSlots = getOperatingSlots(mentorId, date);
+        Set<LocalTime> operatingSlots = getOperatingSlots(mentorId, date);
         // 3. date 기준 멘토의 예약 조회 및 30분 단위로 변환
         Set<LocalTime> bookedSlots = getBookedSlots(mentorId, date);
 
@@ -112,14 +121,18 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
         // 6. 신청한 시간(startTime ~ endTime)이 가능한지 검증
         // 멘토의 가능 시간 조회 및 date로 필터링, 30분 단위로 변환
-        List<LocalTime> operatingSlots = getOperatingSlots(dto.getReceiverId(), dto.getRequestedDate());
+        Set<LocalTime> operatingSlots = getOperatingSlots(dto.getReceiverId(), dto.getRequestedDate());
         // date 기준 멘토의 예약 조회 및 30분 단위로 변환
         Set<LocalTime> bookedSlots = getBookedSlots(dto.getReceiverId(), dto.getRequestedDate());
 
         // 7. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
         validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots, mentorSkill.getExchangeDuration());
 
-        // 8. SkillExchange 생성 및 save
+        // 8. 멘티의 크레딧 차감 -> 크레딧 부족시 NotEnoughCreditException
+        int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
+        CreditBalanceUpdateDto creditDto = creditService.useCredit(mentee.getId(), amount);
+
+        // 9. SkillExchange 생성 및 save
         SkillExchange skillExchange = SkillExchange.create(
                 mentee,
                 mentor,
@@ -130,7 +143,19 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 dto.getMessage()
         );
         SkillExchange savedSkillExchange = exchangeRepository.save(skillExchange);
-        // 9. 응답 Dto 변환 및 return
+
+        // 10. 멘티의 CreditHistory 생성
+        historyService.createExchangeHistory(
+                mentee,
+                mentor,
+                savedSkillExchange,
+                SupplyType.USE,
+                creditDto.getAmount(),
+                creditDto.getAfterBalance(),
+                HistoryType.EXCHANGE_REQUEST
+        );
+
+        // 11. 응답 Dto 변환 및 return
         return SkillExchangeResponseDto.from(savedSkillExchange);
     }
 
@@ -139,13 +164,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 신청한 시간대(startTime ~ endTime)가 유효한지 검증
      */
-    private void validateTimeSlotAvailability(LocalTime start, LocalTime end, List<LocalTime> operating,
+    private void validateTimeSlotAvailability(LocalTime start, LocalTime end, Set<LocalTime> operating,
                                               Set<LocalTime> booked, int exchangeDuration) {
         // 스킬 교환은 선택한 날짜의 자정까지 완료되어야한다.
         if (start.isAfter(end) && !end.equals(LocalTime.MIDNIGHT)) {
             throw new OverExchangeDurationMidnightException();
         }
 
+        // 30분 단위로 쪼개서 가능한 슬릇 확인
         int slotsNeeded = exchangeDuration / 30;
         LocalTime checkSlot = start;
 
@@ -163,7 +189,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     }
 
     /**
-     *  멘토의 스킬 존재 여부 검증 -> UserSkillNotFoundException
+     *  멘토의 스킬 존재 여부 검증
      *  비관적 락 적용
      */
     private UserSkill getMentorSkillWithLockAndValidation(Long mentorId, Long receiverSkillId) {
@@ -178,7 +204,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     }
 
     /**
-     *  멘토의 스킬 존재 여부 검증 -> UserSkillNotFoundException
+     *  멘토의 스킬 존재 여부 검증
      */
     private UserSkill getMentorSkillAndValidation(Long mentorId, Long receiverSkillId) {
         // 멘토의 스킬 존재 여부 조회 및 검증 -> UserSkillNotFoundException
@@ -214,6 +240,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         for (SkillExchange exchange : bookedExchanges) {
             LocalTime start = exchange.getStartTime();
             LocalTime end = exchange.getEndTime();
+
             while (start.isBefore(end)) {
                 bookedSlots.add(start);
                 start = start.plusMinutes(30);
@@ -225,15 +252,16 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      *  멘토의 특정 날짜의 가능 스케줄을 30분 단위로 변환
      */
-    private List<LocalTime> getOperatingSlots(Long mentorId, LocalDate date) {
+    private Set<LocalTime> getOperatingSlots(Long mentorId, LocalDate date) {
         // 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환), 멘토의 특정 날짜의 가능 스케줄 필터링
-        List<AvailableScheduleDto> selectedSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
+        List<AvailableScheduleDto> availableSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
                 .filter(dto -> dto.getDate().equals(date))
                 .toList();
-        List<LocalTime> totalOperatingSlots = new ArrayList<>();
-        for (AvailableScheduleDto dto : selectedSchedules) {
-            LocalTime start = dto.getStartTime();
-            LocalTime end = dto.getEndTime();
+        Set<LocalTime> totalOperatingSlots = new HashSet<>();
+        for (AvailableScheduleDto available : availableSchedules) {
+            LocalTime start = available.getStartTime();
+            LocalTime end = available.getEndTime();
+
             while (start.isBefore(end)) {
                 totalOperatingSlots.add(start);
                 start = start.plusMinutes(30);
@@ -245,7 +273,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      *  exchangeDuration 기준 예약 가능한 시간 처리
      */
-    private List<SlotDto> calculateAvailableSlots(List<LocalTime> operatingSlots, int exchangeDuration, Set<LocalTime> bookedSlots) {
+    private List<SlotDto> calculateAvailableSlots(Set<LocalTime> operatingSlots, int exchangeDuration, Set<LocalTime> bookedSlots) {
         return operatingSlots.stream()
                 .sorted()
                 .map(start -> SlotDto.of(start, isPossibleSlot(start, exchangeDuration, bookedSlots, operatingSlots)))
@@ -259,8 +287,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private boolean isPossibleSlot(LocalTime start,
                                    int exchangeDuration,
                                    Set<LocalTime> bookedSlots,
-                                   List<LocalTime> totalOperatingSlots) {
+                                   Set<LocalTime> totalOperatingSlots) {
+
         int slotsNeeded = exchangeDuration / 30;
+
         for (int i = 0; i < slotsNeeded; i++) {
             LocalTime current = start.plusMinutes(i * 30);
             if (bookedSlots.contains(current) || !totalOperatingSlots.contains(current)) {
