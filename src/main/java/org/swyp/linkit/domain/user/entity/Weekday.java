@@ -14,5 +14,5 @@ public enum Weekday {
     SAT("토"),
     SUN("일");
 
-    private final String ko;
+    private final String description;
 }

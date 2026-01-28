@@ -176,7 +176,6 @@ public class SkillExchangeServiceWithRepositoryTest {
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 PreferredRegion.CHUNGCHEONG,

@@ -108,7 +108,6 @@ class SkillExchangeRepositoryTest {
     private UserProfile createProfile(User user, UserSkill userSkill){
         UserProfile userProfile = UserProfile.create(
                 user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 null,

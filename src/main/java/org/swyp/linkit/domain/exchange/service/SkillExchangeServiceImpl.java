@@ -17,7 +17,7 @@ import org.swyp.linkit.domain.exchange.dto.response.SlotDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
-import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
+import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
@@ -254,13 +254,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     private Set<LocalTime> getOperatingSlots(Long mentorId, LocalDate date) {
         // 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환), 멘토의 특정 날짜의 가능 스케줄 필터링
-        List<AvailableScheduleDto> availableSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
+        List<ExpandedScheduleDto> expandedSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
                 .filter(dto -> dto.getDate().equals(date))
                 .toList();
+
         Set<LocalTime> totalOperatingSlots = new HashSet<>();
-        for (AvailableScheduleDto available : availableSchedules) {
-            LocalTime start = available.getStartTime();
-            LocalTime end = available.getEndTime();
+        for (ExpandedScheduleDto expanded : expandedSchedules) {
+            LocalTime start = expanded.getStartTime();
+            LocalTime end = expanded.getEndTime();
 
             while (start.isBefore(end)) {
                 totalOperatingSlots.add(start);

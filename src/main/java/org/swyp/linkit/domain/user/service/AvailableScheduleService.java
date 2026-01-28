@@ -3,7 +3,7 @@ package org.swyp.linkit.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
+import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.AvailableScheduleRepository;
@@ -24,7 +24,7 @@ public class AvailableScheduleService {
     private final AvailableScheduleRepository availableScheduleRepository;
 
     // 현재 날짜 기준 2일 후부터 ~ 3개월 후까지의 가능한 날짜 반환
-    public List<AvailableScheduleDto> getExpandedSchedules(Long mentorUserId) {
+    public List<ExpandedScheduleDto> getExpandedSchedules(Long mentorUserId) {
 
         LocalDate from = LocalDate.now().plusDays(2);
         LocalDate to = LocalDate.now().plusMonths(3);
@@ -40,7 +40,7 @@ public class AvailableScheduleService {
 
         long days = ChronoUnit.DAYS.between(from, to);
 
-        List<AvailableScheduleDto> result = new ArrayList<>();
+        List<ExpandedScheduleDto> result = new ArrayList<>();
 
         // to 날짜 포함
         for (long i = 0; i <= days; i++) {
@@ -49,9 +49,9 @@ public class AvailableScheduleService {
 
             List<AvailableSchedule> rules = byDay.getOrDefault(weekday, List.of());
             for (AvailableSchedule rule : rules) {
-                result.add(new AvailableScheduleDto(
+                result.add(ExpandedScheduleDto.of(
                         date,
-                        weekday.name(),
+                        weekday,
                         rule.getStartTime(),
                         rule.getEndTime()
                 ));
@@ -60,8 +60,8 @@ public class AvailableScheduleService {
 
         // 정렬: 날짜 -> 시작시간
         result.sort(Comparator
-                .comparing(AvailableScheduleDto::getDate)
-                .thenComparing(AvailableScheduleDto::getStartTime));
+                .comparing(ExpandedScheduleDto::getDate)
+                .thenComparing(ExpandedScheduleDto::getStartTime));
 
         return result;
     }
