@@ -52,6 +52,31 @@ public class UserSkillService {
         return UserSkillResponseDto.from(userSkill);
     }
 
+    // 사용자 스킬 수정
+    @Transactional
+    public UserSkillResponseDto updateUserSkill(Long userProfileId, Long userSkillId, UserSkillDto skillDto) {
+        // 1. 스킬 조회 및 권한 확인
+        UserSkill userSkill = userSkillRepository.findByIdAndUserProfileId(userSkillId, userProfileId)
+                .orElseThrow(() -> new UserSkillNotFoundException("수정할 스킬을 찾을 수 없거나 권한이 없습니다."));
+
+        // 2. 카테고리 조회 (카테고리 변경 가능)
+        SkillCategory category = skillCategoryRepository.findByCategoryType(skillDto.getSkillCategoryType())
+                .orElseThrow(SkillCategoryNotFoundException::new);
+
+        // 3. 스킬 정보 수정
+        userSkill.update(
+                category,
+                skillDto.getSkillName(),
+                skillDto.getSkillTitle(),
+                skillDto.getSkillProficiency(),
+                skillDto.getSkillDescription(),
+                skillDto.getExchangeDuration()
+        );
+
+        // 4. ResponseDto 변환 및 반환
+        return UserSkillResponseDto.from(userSkill);
+    }
+
     // UserSkill ID로 UserProfile, User 포함하여 조회
     public UserSkill getUserSkillWithProfileAndUser(Long userSkillId) {
         return userSkillRepository.findByIdWithProfileAndUser(userSkillId)

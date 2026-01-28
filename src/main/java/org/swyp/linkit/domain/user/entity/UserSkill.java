@@ -87,14 +87,13 @@ public class UserSkill extends BaseTimeEntity {
     // 사용자 스킬 수정
     public void update(SkillCategory skillCategory, String skillName, String skillTitle,
                        SkillProficiency skillProficiency, String skillDescription,
-                       Integer exchangeDuration, Boolean isVisible) {
+                       Integer exchangeDuration) {
         this.skillCategory = skillCategory;
         this.skillName = skillName.trim();
         this.skillTitle = skillTitle.trim();
         this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
-        this.isVisible = isVisible;
     }
 
     // 조회수 증가
