@@ -82,23 +82,6 @@ public class User extends BaseTimeEntity {
                 .build();
     }
 
-    // 닉네임 변경
-    public void updateNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    // 프로필 이미지 변경
-    public void updateProfileImage(String profileImageUrl) {
-        this.profileImageUrl = profileImageUrl;
-    }
-
-    // 회원가입 완료 처리
-    public void activateAccount() {
-        if (this.userStatus == UserStatus.PROFILE_PENDING) {
-            this.userStatus = UserStatus.ACTIVE;
-        }
-    }
-
     // 가능 일정 추가
     public void addAvailableSchedule(AvailableSchedule schedule) {
         if (schedule == null) return;
@@ -134,10 +117,5 @@ public class User extends BaseTimeEntity {
         this.clearAvailableSchedules();
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();
-    }
-
-    // 프로필 최초 작성 여부 확인
-    public boolean isFirstProfileCompletion() {
-        return this.userStatus == UserStatus.PROFILE_PENDING;
     }
 }

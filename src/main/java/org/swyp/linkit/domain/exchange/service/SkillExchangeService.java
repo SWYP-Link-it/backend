@@ -1,7 +1,9 @@
 package org.swyp.linkit.domain.exchange.service;
 
+import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
 
 import java.time.LocalDate;
 
@@ -15,6 +17,9 @@ public interface SkillExchangeService {
      *  멘토의 날짜 별 거래 가능 시간 조회
      */
     AvailableSlotsResponseDto getAvailableSlots(Long mentorId, Long receiverSkillId, LocalDate date);
-
+    /**
+     *  스킬 거래 신청
+     */
+    SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto);
 
 }

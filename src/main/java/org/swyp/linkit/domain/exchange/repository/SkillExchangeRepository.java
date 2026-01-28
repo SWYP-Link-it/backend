@@ -1,6 +1,8 @@
 package org.swyp.linkit.domain.exchange.repository;
 
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
@@ -13,7 +15,9 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
 
     /**
      *  receiverId, date, ExchangeStatus 로 SkillExchange, UserSkill Fetch Join
+     *  비관적 락 사용
      */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT se FROM SkillExchange se " +
             "JOIN FETCH se.receiverSkill " +
             "WHERE se.receiver.id = :receiverId " +
