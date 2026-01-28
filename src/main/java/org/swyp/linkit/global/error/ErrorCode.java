@@ -59,9 +59,17 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("이미 다른 사용자가 사용 중인 닉네임으로 변경하려는 경우 발생합니다.")
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 닉네임입니다."),
 
+    // 사용자 프로필
+    @ExplainError("요청한 프로필 ID에 해당하는 프로필이 존재하지 않는 경우 발생합니다.")
+    USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "UP001", "프로필을 찾을 수 없습니다."),
+
     // 사용자 스킬
     @ExplainError("요청한 스킬 ID에 해당하는 스킬이 존재하지 않는 경우 발생합니다.")
     USER_SKILL_NOT_FOUND(HttpStatus.NOT_FOUND, "US001", "스킬을 찾을 수 없습니다."),
+
+    // 사용자 스킬 카테고리
+    @ExplainError("요청한 스킬 카테고리가 존재하지 않는 경우 발생합니다.")
+    SKILL_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "SC001", "스킬 카테고리를 찾을 수 없습니다."),
 
     // OAuth
     @ExplainError("지원하지 않는 OAuth 제공자(카카오, 네이버 등)를 요청한 경우 발생합니다.")
