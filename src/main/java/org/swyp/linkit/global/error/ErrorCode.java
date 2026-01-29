@@ -96,33 +96,50 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("크레딧 잔액이 요청한 금액보다 부족한 경우 발생합니다.")
     NOT_ENOUGH_CREDIT(HttpStatus.BAD_REQUEST, "CR002", "크레딧 잔액이 부족합니다."),
 
-    @ExplainError("크레딧 금액이 0 이하인 경우 발생합니다.")
-    INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "크레딧은 0보다 커야합니다."),
+    @ExplainError("지급 하는 크레딧 금액이 0 이하인 경우 발생합니다.")
+    INVALID_CREDIT_AMOUNT(HttpStatus.BAD_REQUEST, "CR003", "지급 하는 크레딧은 0보다 커야합니다."),
 
     // 스킬 교환
     @ExplainError("멘토의 스케줄이 존재하지 않는 경우 발생합니다.")
-    SCHEDULE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "EX001", "멘토의 스케줄 정보를 찾을 수 없습니다."),
+    EXCHANGE_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "EX001", "멘토의 스케줄 정보를 찾을 수 없습니다."),
 
     @ExplainError("멘토의 정보가 존재하지 않는 경우 발생합니다.")
-    MENTOR_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, "EX002", "멘토를 찾을 수 없습니다."),
+    EXCHANGE_MENTOR_NOT_FOUND(HttpStatus.NOT_FOUND, "EX002", "멘토를 찾을 수 없습니다."),
 
     @ExplainError("자기 자신에게 스킬 거래 요청을 할 경우 발생합니다.")
-    SELF_REQUEST_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "EX003", "자기 자신의 스킬 거래 요청은 불가합니다."),
+    EXCHANGE_SELF_REQUEST_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "EX003", "자기 자신의 스킬 거래 요청은 불가합니다."),
 
     @ExplainError("비공개 설정된 스킬에 거래 요청을 할 경우 발생합니다.")
-    SKILL_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "EX004", "비공개 설정된 스킬에는 교환 신청을 할 수 없습니다."),
+    EXCHANGE_SKILL_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "EX004", "비공개 설정된 스킬에는 교환 신청을 할 수 없습니다."),
 
     @ExplainError("멘토가 설정한 거래 가능 시간이 아닌 경우 발생합니다.")
-    INVALID_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "EX005", "멘토가 거래 가능한 시간이 아닙니다."),
+    EXCHANGE_INVALID_SCHEDULE_TIME(HttpStatus.BAD_REQUEST, "EX005", "멘토가 거래 가능한 시간이 아닙니다."),
 
     @ExplainError("이미 예약된 거래 시간대가 존재하는 경우 발생합니다.")
-    ALREADY_RESERVED_TIME(HttpStatus.CONFLICT, "EX006", "이미 예약된 거래 시간대가 존재합니다."),
+    EXCHANGE_ALREADY_RESERVED_TIME(HttpStatus.CONFLICT, "EX006", "이미 예약된 거래 시간대가 존재합니다."),
 
     @ExplainError("스킬 거래 요청 시간이 선택한 날짜의 자정을 넘어가는 경우 발생합니다.")
     EXCHANGE_TIME_OVER_MIDNIGHT(HttpStatus.BAD_REQUEST, "EX007", "스킬 거래 요청은 진행 날짜 자정이전까지 허용됩니다."),
 
     @ExplainError("스킬이 멘토의 소유가 아닐 경우 발생합니다.")
-    SKILL_MENTOR_MISS_MATCH(HttpStatus.BAD_REQUEST, "EX008", "스킬이 멘토의 소유가 아닙니다."),
+    EXCHANGE_SKILL_MENTOR_MISS_MATCH(HttpStatus.BAD_REQUEST, "EX008", "스킬이 멘토의 소유가 아닙니다."),
+
+    //
+    @ExplainError("스킬 거래가 존재하지 않는 경우 발생합니다.")
+    EXCHANGE_NOT_FOUND(HttpStatus.NOT_FOUND, "EX009", "스킬 거래가 존재하지 않습니다."),
+
+    @ExplainError("스킬 거래에 대한 수락 또는 거절 권한이 없는 경우 발생합니다.")
+    EXCHANGE_ACCESS_DENIED_ACCEPT_REJECT(HttpStatus.FORBIDDEN, "EX010", "스킬 거래에 대한 수락 또는 거절 권한이 없습니다."),
+
+    @ExplainError("스킬 거래에 대한 취소 권한이 없는 경우 발생합니다.")
+    EXCHANGE_ACCESS_DENIED_CANCEL(HttpStatus.FORBIDDEN, "EX011", "스킬 거래에 대한 취소 권한이 없습니다."),
+
+    @ExplainError("스킬 거래 당일 혹은 이후에 취소를 시도할 경우 발생합니다.")
+    EXCHANGE_CANNOT_ALLOWED(HttpStatus.BAD_REQUEST, "EX012", "스킬 거래는 거래 당일 또는 이후에는 취소가 불가능합니다."),
+
+    @ExplainError("스킬 거래의 상태가 변경 가능한 상태가 아닐 때 발생합니다.")
+    EXCHANGE_INVALID_STATUS(HttpStatus.BAD_REQUEST, "EX013", "변경 할 수 없는 거래 상태입니다."),
+//
 
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
