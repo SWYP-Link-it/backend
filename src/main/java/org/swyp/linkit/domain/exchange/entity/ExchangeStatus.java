@@ -7,14 +7,15 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum ExchangeStatus {
 
-    PENDING("대기"),
-    ACCEPTED("수락"),
-    REJECTED("거절"),
-    PROCESSING("진행중"),
-    COMPLETED("완료"),
-    EXPIRED("만료"),
-    CANCELED("취소"),
-    SETTLED("정산 완료");
+    // 요청 관리 내역에는
+    // 표시만 가져간다.
+    PENDING("대기중"), //이녀석
+    ACCEPTED("수락됨"), //이녀석
+    REJECTED("거절됨"), //이녀석
+    CANCELED("취소됨"), //이녀석
+    EXPIRED("거절됨"), // 거절됨 처리 해야됨
+    COMPLETED("완료됨"),
+    SETTLED("정산 완료됨");
 
     private final String description;
 }
