@@ -10,6 +10,7 @@ import org.swyp.linkit.domain.user.entity.SkillProficiency;
 @Getter
 public class UserSkillDto {
 
+    private Long id;
     private SkillCategoryType skillCategoryType;
     private String skillName;
     private String skillTitle;
@@ -18,9 +19,11 @@ public class UserSkillDto {
     private Integer exchangeDuration;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserSkillDto(SkillCategoryType skillCategoryType, String skillName, String skillTitle,
-                         SkillProficiency skillProficiency, String skillDescription,
-                         Integer exchangeDuration) {
+    private UserSkillDto(Long id, SkillCategoryType skillCategoryType,
+                         String skillName, String skillTitle,
+                         SkillProficiency skillProficiency,
+                         String skillDescription, Integer exchangeDuration) {
+        this.id = id;
         this.skillCategoryType = skillCategoryType;
         this.skillName = skillName;
         this.skillTitle = skillTitle;
@@ -31,6 +34,7 @@ public class UserSkillDto {
 
     public static UserSkillDto from(UserSkillRequestDto requestDto) {
         return UserSkillDto.builder()
+                .id(requestDto.getId())
                 .skillCategoryType(requestDto.getSkillCategoryType())
                 .skillName(requestDto.getSkillName())
                 .skillTitle(requestDto.getSkillTitle())

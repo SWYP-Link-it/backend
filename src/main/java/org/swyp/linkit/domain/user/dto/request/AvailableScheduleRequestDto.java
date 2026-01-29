@@ -17,6 +17,9 @@ import java.time.LocalTime;
 @Schema(description = "교환 가능 시간 등록 요청")
 public class AvailableScheduleRequestDto {
 
+    @Schema(description = "스케줄 ID (수정 시 필수, 생성 시 null)", example = "1")
+    private Long id;
+
     @Schema(description = "요일 (MON, TUE, WED, THU, FRI, SAT, SUN)", example = "MON")
     @NotNull(message = "요일은 필수입니다.")
     private Weekday dayOfWeek;

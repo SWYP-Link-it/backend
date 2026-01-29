@@ -11,12 +11,15 @@ import java.time.LocalTime;
 @Getter
 public class AvailableScheduleDto {
 
+    private Long id;
     private Weekday dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private AvailableScheduleDto(Weekday dayOfWeek, LocalTime startTime, LocalTime endTime) {
+    private AvailableScheduleDto(Long id, Weekday dayOfWeek,
+                                 LocalTime startTime, LocalTime endTime) {
+        this.id = id;
         this.dayOfWeek = dayOfWeek;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -24,6 +27,7 @@ public class AvailableScheduleDto {
 
     public static AvailableScheduleDto from(AvailableScheduleRequestDto requestDto) {
         return AvailableScheduleDto.builder()
+                .id(requestDto.getId())
                 .dayOfWeek(requestDto.getDayOfWeek())
                 .startTime(requestDto.getStartTime())
                 .endTime(requestDto.getEndTime())

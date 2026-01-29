@@ -72,9 +72,8 @@ public class UserProfile extends BaseTimeEntity {
     }
 
     // 사용자 프로필 수정
-    public void updateProfile(String experienceDescription,
-                              ExchangeType exchangeType, PreferredRegion preferredRegion,
-                              String detailedLocation) {
+    public void update(String experienceDescription, ExchangeType exchangeType,
+                       PreferredRegion preferredRegion, String detailedLocation) {
         this.experienceDescription = experienceDescription;
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;

@@ -14,10 +14,13 @@ import org.swyp.linkit.domain.user.entity.SkillProficiency;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-@Schema(description = "사용자 스킬 등록 요청")
+@Schema(description = "사용자 스킬 등록/수정 요청")
 public class UserSkillRequestDto {
 
-    @Schema(description = "스킬 카테고리 타입 (DEVELOPMENT, DESIGN, EDITING, MARKETING, LANGUAGE, FINANCE, SPORTS, MUSIC, ETC)", example = "MUSIC")
+    @Schema(description = "스킬 ID (수정 시 필수, 생성 시 null)", example = "1")
+    private Long id;
+
+    @Schema(description = "스킬 카테고리 타입", example = "MUSIC")
     @NotNull(message = "스킬 카테고리는 필수입니다.")
     private SkillCategoryType skillCategoryType;
 
@@ -39,7 +42,7 @@ public class UserSkillRequestDto {
     @Size(max = 100, message = "스킬 소개는 100자 이하여야 합니다.")
     private String skillDescription;
 
-    @Schema(description = "스킬 거래 시간 (분 단위, 30/60/90/120/150/180)", example = "60")
+    @Schema(description = "스킬 거래 시간 (분 단위)", example = "60")
     @NotNull(message = "스킬 거래 시간은 필수입니다.")
     private Integer exchangeDuration;
 }

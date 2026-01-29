@@ -71,6 +71,10 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("요청한 스킬 카테고리가 존재하지 않는 경우 발생합니다.")
     SKILL_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "SC001", "스킬 카테고리를 찾을 수 없습니다."),
 
+    // 사용자 선호 시간대
+    @ExplainError("요청한 스케줄 ID에 해당하는 스케줄이 존재하지 않는 경우 발생합니다.")
+    AVAILABLE_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "AS001", "스케줄을 찾을 수 없습니다."),
+
     // OAuth
     @ExplainError("지원하지 않는 OAuth 제공자(카카오, 네이버 등)를 요청한 경우 발생합니다.")
     UNSUPPORTED_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "O001", "지원하지 않는 OAuth 제공자입니다."),

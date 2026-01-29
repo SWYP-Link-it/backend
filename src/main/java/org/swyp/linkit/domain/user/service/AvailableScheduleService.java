@@ -10,6 +10,7 @@ import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.AvailableScheduleRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.AvailableScheduleNotFoundException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDate;
@@ -45,6 +46,21 @@ public class AvailableScheduleService {
 
         // 3. 유저에 추가 (cascade로 자동 저장)
         user.addAvailableSchedule(schedule);
+    }
+
+    // 가능 시간 수정
+    @Transactional
+    public void updateSchedule(Long userId, Long scheduleId, AvailableScheduleDto scheduleDto) {
+        // 1. 스케줄 조회 및 권한 확인
+        AvailableSchedule schedule = availableScheduleRepository.findByIdAndUserId(scheduleId, userId)
+                .orElseThrow(() -> new AvailableScheduleNotFoundException("수정할 스케줄을 찾을 수 없거나 권한이 없습니다."));
+
+        // 2. 스케줄 정보 수정 (더티 체킹으로 자동 업데이트)
+        schedule.updateSchedule(
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getStartTime(),
+                scheduleDto.getEndTime()
+        );
     }
 
     // 현재 날짜 기준 2일 후부터 ~ 3개월 후까지의 가능한 날짜 반환
