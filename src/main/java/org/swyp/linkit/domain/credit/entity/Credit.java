@@ -15,6 +15,9 @@ import org.swyp.linkit.global.error.exception.NotEnoughCreditException;
 @Getter
 public class Credit extends BaseTimeEntity {
 
+    public static final int SIGNUP_REWARD = 2;
+    public static final int PROFILE_REWARD = 1;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "credit_id")
@@ -50,7 +53,7 @@ public class Credit extends BaseTimeEntity {
 
     // ====== 비즈니스 메서드 ======
 
-    // 크레딧 차감
+    // 크레딧 사용
     public void useCredit(int amount) {
         if (this.balance < amount) {
             throw new NotEnoughCreditException();
@@ -58,7 +61,7 @@ public class Credit extends BaseTimeEntity {
         this.balance -= amount;
     }
 
-    // 크레딧 증가 (리워드, 충전)
+    // 크레딧 지급 (리워드, 충전)
     public void addCredit(int amount) {
         if (amount < 0) {
             throw new InvalidCreditAmountException();
