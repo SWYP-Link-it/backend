@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.config.authentication.UserServiceBeanDefinitionParser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.swyp.linkit.domain.credit.dto.CreditDto;
 import org.swyp.linkit.domain.credit.dto.CreditWithUserDetailsDto;

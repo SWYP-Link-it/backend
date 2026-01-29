@@ -7,23 +7,23 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.credit.entity.CreditHistory;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.entity.SupplyType;
-import org.swyp.linkit.domain.credit.service.CreditHistoryService;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
-import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
-import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
-import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
-import org.swyp.linkit.domain.exchange.dto.response.SlotDto;
+import org.swyp.linkit.domain.exchange.dto.response.*;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
+import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
 import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
@@ -32,8 +32,10 @@ import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -57,10 +59,6 @@ class SkillExchangeServiceImplTest {
 
     @Mock
     CreditService creditService;
-
-    @Mock
-    CreditHistoryService historyService;
-
 
     @InjectMocks
     SkillExchangeServiceImpl exchangeService;
@@ -156,6 +154,7 @@ class SkillExchangeServiceImplTest {
     @DisplayName("멘토의 날짜 별 거래 가능 시간 조회 (getAvailableSlots)")
     class GetAvailableSlots {
         private final User mentorUser = createUser();
+        private final User menteeUser = createUser();
         private final UserSkill receiverSkill1 = createUserSkill(30);
         private final UserSkill receiverSkill2 = createUserSkill(60);
         private final UserProfile mentorProfile = createUserProfile(mentorUser, List.of(receiverSkill1, receiverSkill2));
@@ -192,9 +191,9 @@ class SkillExchangeServiceImplTest {
                         .thenReturn(List.of(schedule1, schedule2, schedule3, schedule4));
 
                 // 해당 날짜에 예약 조회 Mock 처리
-                SkillExchange exchange1 = createExchange(mentorUser, receiverSkill1,
+                SkillExchange exchange1 = createExchange(mentorUser, mentorUser, receiverSkill1,
                         LocalTime.of(10, 0), LocalTime.of(11, 0));
-                SkillExchange exchange2 = createExchange(mentorUser, receiverSkill2,
+                SkillExchange exchange2 = createExchange(menteeUser, mentorUser, receiverSkill2,
                         LocalTime.of(14, 0), LocalTime.of(16, 0));
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentorUser.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
@@ -289,33 +288,14 @@ class SkillExchangeServiceImplTest {
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
-                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
-                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
 
-                // 멘티의 크레딧 차감 Mock 처리
-                int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
-                CreditBalanceUpdateDto creditDto = CreditBalanceUpdateDto.of(menteeCredit, amount);
-                when(creditService.useCredit(mentee.getId(), amount)).thenReturn(creditDto);
-
                 // 스킬 교환 저장 Mock 처리
-                SkillExchange exchange = createExchange(mentor, mentorSkill, startTime, startTime.plusMinutes(mentorSkill.getExchangeDuration()));
+                SkillExchange exchange = createExchange(mentee, mentor, mentorSkill, startTime, startTime.plusMinutes(mentorSkill.getExchangeDuration()));
                 when(exchangeRepository.save(any(SkillExchange.class))).thenReturn(exchange);
-
-                // 크레딧 생성 Mock 처리
-                CreditHistory creditHistory = createExchangeRequestHistory(
-                        mentee, mentor, exchange, creditDto.getAmount(), creditDto.getAfterBalance());
-
-                when(historyService.createExchangeHistory(
-                        mentee,
-                        mentor,
-                        exchange,
-                        SupplyType.USE,
-                        creditDto.getAmount(),
-                        creditDto.getAfterBalance(),
-                        HistoryType.EXCHANGE_REQUEST)
-                ).thenReturn(creditHistory);
 
                 SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
                 SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
@@ -445,8 +425,8 @@ class SkillExchangeServiceImplTest {
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
-                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
-                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
 
@@ -480,8 +460,8 @@ class SkillExchangeServiceImplTest {
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
-                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
-                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
 
@@ -515,8 +495,8 @@ class SkillExchangeServiceImplTest {
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
-                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
-                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
+                SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
+                SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
                 when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
                         .thenReturn(List.of(exchange1, exchange2));
 
@@ -540,24 +520,10 @@ class SkillExchangeServiceImplTest {
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
 
-                // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [20:00 ~ 22:00]
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(20, 0), LocalTime.of(22, 0));
-                when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
-
-                // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
-                SkillExchange exchange1 = createExchange(mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
-                SkillExchange exchange2 = createExchange(mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
-                        .thenReturn(List.of(exchange1, exchange2));
-
-                // 멘티의 크레딧 차감 예외 처리 Mock
+                // 멘티의 크레딧 잔액이 요청 금액보다 부족 검증 Mock
                 int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
-                doThrow(new NotEnoughCreditException()).when(creditService).useCredit(mentee.getId(), amount);
+                doThrow(new NotEnoughCreditException()).when(creditService).validateAvailableBalance(mentee.getId(), amount);
+
 
                 SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
                 SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
@@ -565,6 +531,447 @@ class SkillExchangeServiceImplTest {
                 // when && then
                 assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
                         .isInstanceOf(NotEnoughCreditException.class);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("스킬 거래 요청 조회 - 보낸 요청")
+    public void getSentRequests() {
+        // given
+        Long userId = 1L;
+        Long cursorId = null;
+        int size = 10;
+        Pageable pageable = PageRequest.of(0, size);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate exchangeDate = LocalDate.of(2024, 1, 25);
+        LocalTime exchangeTime = LocalTime.of(12, 0);
+
+        // 테스트용 Query 데이터 생성 (isRead가 false인 데이터 포함)
+        SkillExchangeDetailQuery queryResult = new SkillExchangeDetailQuery(
+                10L, userId, 2L, 1L, 100L, "url", "상대방", "Java",
+                ExchangeStatus.PENDING, 2, "메시지", now,
+                exchangeDate, exchangeTime, 60, false
+        );
+
+        Slice<SkillExchangeDetailQuery> slice = new SliceImpl<>(List.of(queryResult), pageable, false);
+
+        // Mock 설정
+        when(exchangeRepository.findAllByRequesterIdWithReceiver(userId, cursorId, pageable))
+                .thenReturn(slice);
+
+        // when
+        SkillExchangeDetailsResponseDto result = exchangeService.getSentRequests(userId, cursorId, size);
+
+        // then
+        // 1. Repository의 조회 메서드가 호출되었는지 확인
+        verify(exchangeRepository).findAllByRequesterIdWithReceiver(userId, cursorId, pageable);
+
+        // 2. 벌크 업데이트 메서드가 호출되었는지 확인
+        verify(exchangeRepository).bulkUpdateRequesterReadStatus(userId);
+
+        // 3. 응답 데이터 검증
+        assertThat(result.getContents()).hasSize(1);
+
+        SkillExchangeDetailDto dto = result.getContents().get(0);
+        assertThat(dto.getSkillExchangeId()).isEqualTo(queryResult.skillExchangeId());
+        assertThat(dto.getTargetUserId()).isEqualTo(queryResult.targetUserId());
+        assertThat(dto.getSkillId()).isEqualTo(queryResult.skillId());
+        assertThat(dto.getChatRoomId()).isEqualTo(queryResult.chatRoomId());
+        assertThat(dto.getTargetProfileImageUrl()).isEqualTo(queryResult.targetProfileImageUrl());
+        assertThat(dto.getTargetNickname()).isEqualTo(queryResult.targetNickname());
+        assertThat(dto.getSkillName()).isEqualTo(queryResult.skillName());
+
+        assertThat(dto.getExchangeStatus()).isEqualTo(queryResult.exchangeStatus().getDescription());
+        assertThat(dto.getCreditPrice()).isEqualTo(queryResult.creditPrice());
+        assertThat(dto.getMessage()).isEqualTo(queryResult.message());
+
+        // LocalDateTime 변환 검증 (createdAt)
+        assertThat(dto.getRequestedDate()).isEqualTo(now.toLocalDate());
+
+        // LocalDate + LocalTime 결합 검증 (atTime 로직 확인)
+        assertThat(dto.getExchangeDateTime()).isEqualTo(exchangeDate.atTime(exchangeTime));
+        assertThat(dto.getExchangeDuration()).isEqualTo(queryResult.exchangeDuration());
+        // isRead(false) -> isNew(true) 변환 로직 검증
+        assertThat(dto.isNew()).isTrue();
+    }
+
+    @Test
+    @DisplayName("스킬 거래 요청 조회 - 보낸 요청 (데이터가 없을 경우 빈 목록을 반환하고 벌크 업데이트 실행)")
+    void getSentRequests_Empty() {
+        // given
+        Long userId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
+        Slice<SkillExchangeDetailQuery> emptySlice = new SliceImpl<>(List.of(), pageable, false);
+
+        when(exchangeRepository.findAllByRequesterIdWithReceiver(any(), any(), any()))
+                .thenReturn(emptySlice);
+
+        // when
+        SkillExchangeDetailsResponseDto result = exchangeService.getSentRequests(userId, null, 10);
+
+        // then
+        assertThat(result.getContents()).isEmpty();
+        assertThat(result.isHasNext()).isFalse();
+        verify(exchangeRepository).bulkUpdateRequesterReadStatus(userId);
+    }
+
+    @Test
+    @DisplayName("스킬 거래 요청 조회 - 받은 요청")
+    public void getReceivedRequests() {
+        // given
+        Long userId = 1L;
+        Long cursorId = null;
+        int size = 10;
+        Pageable pageable = PageRequest.of(0, size);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate exchangeDate = LocalDate.of(2024, 1, 25);
+        LocalTime exchangeTime = LocalTime.of(12, 0);
+
+        // 테스트용 Query 데이터 생성 (isRead가 false인 데이터 포함)
+        SkillExchangeDetailQuery queryResult = new SkillExchangeDetailQuery(
+                10L, userId, 2L, 1L, 100L, "url", "상대방", "Java",
+                ExchangeStatus.PENDING, 2, "메시지", now,
+                exchangeDate, exchangeTime, 60, false
+        );
+
+        Slice<SkillExchangeDetailQuery> slice = new SliceImpl<>(List.of(queryResult), pageable, false);
+
+        // Mock 설정
+        when(exchangeRepository.findAllByReceiverIdWithRequester(userId, cursorId, pageable))
+                .thenReturn(slice);
+
+        // when
+        SkillExchangeDetailsResponseDto result = exchangeService.getReceivedRequests(userId, cursorId, size);
+
+        // then
+        // 1. Repository의 조회 메서드가 호출되었는지 확인
+        verify(exchangeRepository).findAllByReceiverIdWithRequester(userId, cursorId, pageable);
+
+        // 2. 벌크 업데이트 메서드가 호출되었는지 확인
+        verify(exchangeRepository).bulkUpdateReceiverReadStatus(userId);
+
+        // 3. 응답 데이터 검증
+        assertThat(result.getContents()).hasSize(1);
+
+        SkillExchangeDetailDto dto = result.getContents().get(0);
+        assertThat(dto.getSkillExchangeId()).isEqualTo(queryResult.skillExchangeId());
+        assertThat(dto.getTargetUserId()).isEqualTo(queryResult.targetUserId());
+        assertThat(dto.getSkillId()).isEqualTo(queryResult.skillId());
+        assertThat(dto.getChatRoomId()).isEqualTo(queryResult.chatRoomId());
+        assertThat(dto.getTargetProfileImageUrl()).isEqualTo(queryResult.targetProfileImageUrl());
+        assertThat(dto.getTargetNickname()).isEqualTo(queryResult.targetNickname());
+        assertThat(dto.getSkillName()).isEqualTo(queryResult.skillName());
+
+        assertThat(dto.getExchangeStatus()).isEqualTo(queryResult.exchangeStatus().getDescription());
+        assertThat(dto.getCreditPrice()).isEqualTo(queryResult.creditPrice());
+        assertThat(dto.getMessage()).isEqualTo(queryResult.message());
+
+        // LocalDateTime 변환 검증 (createdAt)
+        assertThat(dto.getRequestedDate()).isEqualTo(now.toLocalDate());
+
+        // LocalDate + LocalTime 결합 검증 (atTime 로직 확인)
+        assertThat(dto.getExchangeDateTime()).isEqualTo(exchangeDate.atTime(exchangeTime));
+        assertThat(dto.getExchangeDuration()).isEqualTo(queryResult.exchangeDuration());
+        // isRead(false) -> isNew(true) 변환 로직 검증
+        assertThat(dto.isNew()).isTrue();
+    }
+
+    @Nested
+    @DisplayName("스킬 거래 수락")
+    class AcceptSkillExchange {
+        private User receiver = createUser();
+        private User requester = createUser();
+        private UserSkill receiverSkill = createUserSkill(60);
+        private LocalTime start = LocalTime.now();
+        private LocalTime end = LocalTime.now().plusMinutes(60);
+
+        @Nested
+        @DisplayName("성공 케이스")
+        class SuccessCases {
+            @Test
+            @DisplayName("성공")
+            public void success() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when
+                SkillExchangeResponseDto sut = exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId());
+
+                // then
+                assertThat(skillExchange.isRequesterRead()).isFalse();
+                assertThat(sut.getExchangeStatus()).isEqualTo(ExchangeStatus.ACCEPTED.getDescription());
+                assertThat(sut.getSkillExchangeId()).isEqualTo(skillExchange.getId());
+            }
+        }
+
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+            @Test
+            @DisplayName("receiverId로 스킬 거래가 존재 하지 않음 ExchangeNotFoundException")
+            public void fail_ExchangeNotFoundException() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.empty());
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(ExchangeNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("해당 스킬 거래가 receiver의 거래가 아님 ExchangeAccessDeniedException")
+            public void fail_ExchangeAccessDeniedException() {
+                // given
+                User otherUser = createUser();
+                SkillExchange skillExchange = createExchange(requester, otherUser, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(ExchangeAccessDeniedException.class);
+            }
+
+            @Test
+            @DisplayName("스킬 거래 상태가 대기중이 아니라 InvalidExchangeStatus")
+            public void fail_InvalidExchangeStatus() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(InvalidExchangeStatusException.class);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("스킬 거래 거절")
+    class RejectSkillExchange {
+        private User receiver = createUser();
+        private User requester = createUser();
+        private UserSkill receiverSkill = createUserSkill(60);
+        private LocalTime start = LocalTime.now();
+        private LocalTime end = LocalTime.now().plusMinutes(60);
+
+        @Nested
+        @DisplayName("성공 케이스")
+        class SuccessCases {
+            @Test
+            @DisplayName("성공")
+            public void success() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when
+                SkillExchangeResponseDto sut = exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId());
+
+                // then
+                assertThat(skillExchange.isRequesterRead()).isFalse();
+                assertThat(sut.getExchangeStatus()).isEqualTo(ExchangeStatus.REJECTED.getDescription());
+                assertThat(sut.getSkillExchangeId()).isEqualTo(skillExchange.getId());
+                verify(creditService).refundCreditForExchange(
+                        eq(skillExchange),
+                        eq(SupplyType.ADD),
+                        eq(HistoryType.EXCHANGE_REJECTED));
+            }
+        }
+
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+            @Test
+            @DisplayName("receiverId로 스킬 거래가 존재 하지 않음 ExchangeNotFoundException")
+            public void fail_ExchangeNotFoundException() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.empty());
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(ExchangeNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("해당 스킬 거래가 receiver의 거래가 아님 ExchangeAccessDeniedException")
+            public void fail_ExchangeAccessDeniedException() {
+                // given
+                User otherUser = createUser();
+                SkillExchange skillExchange = createExchange(requester, otherUser, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(ExchangeAccessDeniedException.class);
+            }
+
+            @Test
+            @DisplayName("스킬 거래 상태가 대기중이 아니라 InvalidExchangeStatus")
+            public void fail_InvalidExchangeStatus() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
+                // skillExchange 조회 및 검증 Mock
+                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(InvalidExchangeStatusException.class);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("스킬 거래 취소")
+    class CancelSkillExchange {
+        private User receiver = createUser();
+        private User requester = createUser();
+        private UserSkill receiverSkill = createUserSkill(60);
+
+
+        @Nested
+        @DisplayName("성공 케이스")
+        class SuccessCases {
+
+            @Test
+            @DisplayName("멘토는 수락된 거래만 취소 가능")
+            public void success_mentor() {
+                // given
+                // 취소 기한 통과를 위해 내일 날짜로 설정
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
+                skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when
+                SkillExchangeResponseDto result = exchangeService.cancelSkillExchange(receiver.getId(), skillExchange.getId());
+
+                // then
+                assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                assertThat(skillExchange.isRequesterRead()).isFalse();
+                verify(creditService).refundCreditForExchange(eq(skillExchange), eq(SupplyType.ADD), eq(HistoryType.EXCHANGE_CANCELED));
+                assertThat(result.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED.getDescription());
+            }
+
+
+            @Test
+            @DisplayName("멘티는 대기중인 거래를 취소 할 수 있음")
+            public void success_mentee_Pending() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when
+                exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId());
+
+                // then
+                assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                assertThat(skillExchange.isReceiverRead()).isFalse();
+                verify(creditService).refundCreditForExchange(any(), any(), any());
+            }
+
+            @Test
+            @DisplayName("멘티는 수락된 거래를 취소할 수 있음")
+            public void success_mentee_Accepted() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
+                skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when
+                exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId());
+
+                // then
+                assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                verify(creditService).refundCreditForExchange(any(), any(), any());
+            }
+        }
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+
+            @Test
+            @DisplayName("거래와 관련 없는 제3자가 취소를 시도하면 ExchangeAccessDeniedException")
+            public void fail_ExchangeAccessDenied() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                Long strangerId = 999L;
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when & then
+                assertThatThrownBy(() -> exchangeService.cancelSkillExchange(strangerId, skillExchange.getId()))
+                        .isInstanceOf(ExchangeAccessDeniedException.class);
+            }
+
+            @Test
+            @DisplayName("거래 당일 취소를 시도하면 ExchangeCancelNotAllowedException")
+            public void fail_ExchangeCancelNotAllowed() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                // 오늘 날짜로 강제 설정 (validateCancelDeadline 통과 불가)
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now());
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when & then
+                assertThatThrownBy(() -> exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId()))
+                        .isInstanceOf(ExchangeCancelNotAllowedException.class);
+            }
+
+            @Test
+            @DisplayName("멘토(수락자)가 아직 수락하지 않은(PENDING) 상태에서 취소를 시도하면 InvalidExchangeStatusException")
+            public void fail_Mentor_Cancel_Pending() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
+                // 상태: PENDING
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when & then
+                assertThatThrownBy(() -> exchangeService.cancelSkillExchange(receiver.getId(), skillExchange.getId()))
+                        .isInstanceOf(InvalidExchangeStatusException.class)
+                        .hasMessageContaining("수락된 거래만 취소가 가능합니다");
+            }
+
+            @Test
+            @DisplayName("이미 거절되거나 취소된 거래를 다시 취소하려고 하면 InvalidExchangeStatusException")
+            public void fail_Already_Processed_Exchange() {
+                // given
+                SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill,
+                        LocalTime.of(14, 0), LocalTime.of(15, 0));
+                ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
+                skillExchange.cancel(); // 이미 취소됨
+
+                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+                // when & then
+                assertThatThrownBy(() -> exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId()))
+                        .isInstanceOf(InvalidExchangeStatusException.class);
             }
         }
     }
@@ -619,14 +1026,14 @@ class SkillExchangeServiceImplTest {
         return userSkill;
     }
 
-    private Credit createCredit(User user, int amount){
+    private Credit createCredit(User user, int amount) {
         Credit credit = Credit.create(user, amount);
         ReflectionTestUtils.setField(credit, "id", creditId++);
         return credit;
     }
 
     private CreditHistory createExchangeRequestHistory(User mentee, User mentor, SkillExchange exchange,
-                                                       int amount, int balanceAfter){
+                                                       int amount, int balanceAfter) {
         CreditHistory history = CreditHistory.createSkillExchange(
                 mentee,
                 mentor,
@@ -640,11 +1047,11 @@ class SkillExchangeServiceImplTest {
         return history;
     }
 
-    private SkillExchange createExchange(User receiverUser, UserSkill receiverSkill,
+    private SkillExchange createExchange(User requester, User receiverUser, UserSkill receiverSkill,
                                          LocalTime starTime, LocalTime endTime) {
 
         SkillExchange skillExchange = SkillExchange.create(
-                null, receiverUser, receiverSkill, LocalDate.of(2026, 2, 4),
+                requester, receiverUser, receiverSkill, LocalDate.of(2026, 2, 4),
                 starTime, endTime, "message");
         ReflectionTestUtils.setField(skillExchange, "id", exchangeId++);
         return skillExchange;
