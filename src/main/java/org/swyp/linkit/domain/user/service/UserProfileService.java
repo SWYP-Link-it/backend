@@ -34,6 +34,19 @@ public class UserProfileService {
     private final AvailableScheduleService availableScheduleService;
     private final CreditService creditService;
 
+    // 프로필 조회
+    public UserProfileResponseDto getProfile(Long userId) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 프로필 조회
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(UserProfileNotFoundException::new);
+
+        return UserProfileResponseDto.from(userProfile);
+    }
+
     // 프로필 생성
     @Transactional
     public UserProfileResponseDto createProfile(Long userId, UserProfileDto profileDto) {
