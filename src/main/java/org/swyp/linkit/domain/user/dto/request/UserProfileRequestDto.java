@@ -2,6 +2,7 @@ package org.swyp.linkit.domain.user.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
@@ -36,9 +37,11 @@ public class UserProfileRequestDto {
 
     @Schema(description = "등록할 스킬 목록")
     @Valid
+    @NotEmpty(message = "최소 1개 이상의 스킬을 등록해야 합니다.")
     private List<UserSkillRequestDto> skills;
 
     @Schema(description = "교환 가능 시간대 목록")
     @Valid
+    @NotEmpty(message = "최소 1개 이상의 가능 시간을 등록해야 합니다.")
     private List<AvailableScheduleRequestDto> availableSchedules;
 }

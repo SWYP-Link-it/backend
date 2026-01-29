@@ -3,10 +3,14 @@ package org.swyp.linkit.domain.user.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
+import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.AvailableScheduleRepository;
+import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -22,6 +26,26 @@ import java.util.stream.Collectors;
 public class AvailableScheduleService {
 
     private final AvailableScheduleRepository availableScheduleRepository;
+    private final UserRepository userRepository;
+
+    // 가능 시간 생성
+    @Transactional
+    public void createSchedule(Long userId, AvailableScheduleDto scheduleDto) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. AvailableSchedule 생성
+        AvailableSchedule schedule = AvailableSchedule.create(
+                user,
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getStartTime(),
+                scheduleDto.getEndTime()
+        );
+
+        // 3. 유저에 추가 (cascade로 자동 저장)
+        user.addAvailableSchedule(schedule);
+    }
 
     // 현재 날짜 기준 2일 후부터 ~ 3개월 후까지의 가능한 날짜 반환
     public List<ExpandedScheduleDto> getExpandedSchedules(Long mentorUserId) {

@@ -26,7 +26,7 @@ public class UserSkillService {
 
     // 사용자 스킬 생성
     @Transactional
-    public UserSkillResponseDto createUserSkill(Long userProfileId, UserSkillDto skillDto) {
+    public void createUserSkill(Long userProfileId, UserSkillDto skillDto) {
         // 1. 프로필 조회
         UserProfile userProfile = userProfileRepository.findById(userProfileId)
                 .orElseThrow(UserProfileNotFoundException::new);
@@ -47,14 +47,11 @@ public class UserSkillService {
 
         // 4. 프로필에 추가 (cascade로 자동 저장)
         userProfile.addUserSkill(userSkill);
-
-        // 5. ResponseDto 변환 및 반환
-        return UserSkillResponseDto.from(userSkill);
     }
 
     // 사용자 스킬 수정
     @Transactional
-    public UserSkillResponseDto updateUserSkill(Long userProfileId, Long userSkillId, UserSkillDto skillDto) {
+    public void updateUserSkill(Long userProfileId, Long userSkillId, UserSkillDto skillDto) {
         // 1. 스킬 조회 및 권한 확인
         UserSkill userSkill = userSkillRepository.findByIdAndUserProfileId(userSkillId, userProfileId)
                 .orElseThrow(() -> new UserSkillNotFoundException("수정할 스킬을 찾을 수 없거나 권한이 없습니다."));
@@ -63,7 +60,7 @@ public class UserSkillService {
         SkillCategory category = skillCategoryRepository.findByCategoryType(skillDto.getSkillCategoryType())
                 .orElseThrow(SkillCategoryNotFoundException::new);
 
-        // 3. 스킬 정보 수정
+        // 3. 스킬 정보 수정 (더티 체킹으로 자동 업데이트)
         userSkill.update(
                 category,
                 skillDto.getSkillName(),
@@ -72,9 +69,6 @@ public class UserSkillService {
                 skillDto.getSkillDescription(),
                 skillDto.getExchangeDuration()
         );
-
-        // 4. ResponseDto 변환 및 반환
-        return UserSkillResponseDto.from(userSkill);
     }
 
     // 사용자 스킬 삭제
