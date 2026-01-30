@@ -63,6 +63,9 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("요청한 프로필 ID에 해당하는 프로필이 존재하지 않는 경우 발생합니다.")
     USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "UP001", "프로필을 찾을 수 없습니다."),
 
+    @ExplainError("이미 프로필이 존재하는 사용자가 프로필을 다시 생성하려고 할 때 발생합니다.")
+    USER_PROFILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "UP002", "이미 프로필이 존재합니다."),
+
     // 사용자 스킬
     @ExplainError("요청한 스킬 ID에 해당하는 스킬이 존재하지 않는 경우 발생합니다.")
     USER_SKILL_NOT_FOUND(HttpStatus.NOT_FOUND, "US001", "스킬을 찾을 수 없습니다."),

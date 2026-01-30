@@ -15,6 +15,7 @@ import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
+import org.swyp.linkit.global.error.exception.UserProfileAlreadyExistsException;
 import org.swyp.linkit.global.error.exception.UserProfileNotFoundException;
 
 import java.util.List;
@@ -56,7 +57,7 @@ public class UserProfileService {
 
         // 2. 이미 프로필이 있는지 확인
         if (userProfileRepository.existsByUserId(userId)) {
-            throw new UserProfileNotFoundException();
+            throw new UserProfileAlreadyExistsException();
         }
 
         // 3. UserProfile 생성

@@ -62,10 +62,10 @@ public class UserProfileExceptionDocs {
             }
         }
 
-        public static class UserProfileNotFoundException implements SwaggerExampleExceptions {
+        public static class UserProfileAlreadyExistsException implements SwaggerExampleExceptions {  // ✅ 추가
             @Override
             public BaseErrorCode getErrorCode() {
-                return ErrorCode.USER_PROFILE_NOT_FOUND;
+                return ErrorCode.USER_PROFILE_ALREADY_EXISTS;
             }
         }
 
