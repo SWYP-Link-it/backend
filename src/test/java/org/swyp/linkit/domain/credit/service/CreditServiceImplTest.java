@@ -325,7 +325,7 @@ class CreditServiceImplTest {
                         eq(skillExchange),
                         eq(SupplyType.USE),
                         eq(skillExchange.getCreditPrice()),
-                        eq(skillExchange.getCreditPrice() + credit.getBalance()),
+                        eq(credit.getBalance()),
                         eq(HistoryType.EXCHANGE_REQUEST));
             }
         }
@@ -405,7 +405,7 @@ class CreditServiceImplTest {
                         eq(skillExchange),
                         eq(supplyType),
                         eq(skillExchange.getCreditPrice()),
-                        eq(skillExchange.getCreditPrice() + credit.getBalance()),
+                        eq(credit.getBalance()),
                         eq(historyType));
             }
         }
