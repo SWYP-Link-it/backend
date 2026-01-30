@@ -88,3 +88,7 @@ frontend:
 backend:
   url: ${BACKEND_URL:http://localhost:8080}
   prod-url: ${BACKEND_PROD_URL:https://your-production-backend.com}
+
+# Scheduler
+schedules:
+  cancel-cron: "0 0 0 * * *"
