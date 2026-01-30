@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
+import org.swyp.linkit.global.error.exception.InvalidExchangeStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,6 +63,13 @@ public class SkillExchange extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     private ExchangeStatus exchangeStatus;
 
+    @Column(nullable = false)
+    private boolean isRequesterRead;
+
+    @Column(nullable = false)
+    private boolean isReceiverRead;
+
+    @Column(length = 50)
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
@@ -76,6 +84,8 @@ public class SkillExchange extends BaseTimeEntity {
         this.requestDeadLine = requestDeadLine;
         this.creditPrice = creditPrice;
         this.exchangeStatus = exchangeStatus;
+        this.isReceiverRead = false;
+        this.isRequesterRead = false;
         this.message = message;
     }
 
@@ -130,7 +140,57 @@ public class SkillExchange extends BaseTimeEntity {
     /**
      * 비즈니스 메서드
      */
-    // == ExchangeStatus 변경 임시 메서드 ==
+    // == ExchangeStatus 수락 처리 ==
+    public void accept(){
+        if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
+            throw new InvalidExchangeStatusException("수락은 대기중 상태의 거래만 가능합니다.");
+        }
+        this.exchangeStatus = ExchangeStatus.ACCEPTED;
+    }
+
+    // == ExchangeStatus 거절 처리 ==
+    public void reject(){
+        if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
+            throw new InvalidExchangeStatusException("거절은 대기중 상태의 거래만 가능합니다.");
+        }
+        this.exchangeStatus = ExchangeStatus.REJECTED;
+    }
+
+    // == ExchangeStatus 만료 처리 ==
+    public void expire(){
+        // expire 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
+        if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
+            return;
+        }
+        this.exchangeStatus = ExchangeStatus.EXPIRED;
+    }
+
+    // == ExchangeStatus 취소 처리 ==
+    public void cancel(){
+        this.exchangeStatus = ExchangeStatus.CANCELED;
+    }
+
+    // == isRequesterRead false 처리 --
+    public void updateRequesterReadToFalse(){
+        this.isRequesterRead = false;
+    }
+
+    // == isReceiverRead false 처리 --
+    public void updateReceiverReadToFalse(){
+        this.isReceiverRead = false;
+    }
+
+    // == isRequesterRead true 처리 --
+    public void updateRequesterReadToTrue(){
+        this.isRequesterRead = true;
+    }
+
+    // == isReceiverRead true 처리 --
+    public void updateReceiverReadToTrue(){
+        this.isReceiverRead = true;
+    }
+
+    // == ExchangeStatus 변경 메서드 ==
     public void updateExchangeStatus(ExchangeStatus exchangeStatus) {
         this.exchangeStatus = exchangeStatus;
     }

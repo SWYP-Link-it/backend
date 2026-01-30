@@ -91,3 +91,7 @@ frontend:
 backend:
   url: http://localhost:8080
   prod-url: http://localhost:8080
+
+# Scheduler
+schedules:
+  cancel-cron: "*/1 * * * * *"

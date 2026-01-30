@@ -5,10 +5,10 @@ import org.swyp.linkit.global.error.exception.base.BusinessException;
 
 public class SelfExchangeNotAllowedException extends BusinessException {
     public SelfExchangeNotAllowedException() {
-        super(ErrorCode.SELF_REQUEST_NOT_ALLOWED);
+        super(ErrorCode.EXCHANGE_SELF_REQUEST_NOT_ALLOWED);
     }
 
     public SelfExchangeNotAllowedException(String message) {
-        super(ErrorCode.SELF_REQUEST_NOT_ALLOWED, message);
+        super(ErrorCode.EXCHANGE_SELF_REQUEST_NOT_ALLOWED, message);
     }
 }
