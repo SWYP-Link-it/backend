@@ -119,7 +119,7 @@ public class CreditServiceImpl implements CreditService{
                 skillExchange,
                 SupplyType.USE,
                 amount,
-                credit.getBalance() + amount,
+                credit.getBalance(),
                 HistoryType.EXCHANGE_REQUEST
         );
 
@@ -149,7 +149,7 @@ public class CreditServiceImpl implements CreditService{
                 skillExchange,
                 supplyType,
                 amount,
-                credit.getBalance() + amount,
+                credit.getBalance(),
                 historyType
         );
     }
