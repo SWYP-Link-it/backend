@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Long> {
 
     /**
-     *  date 기준 멘토의 얘약 현황 조회
+     *  date 기준 멘토의 예약 현황 조회
      *  receiverId, date, ExchangeStatus 로 SkillExchange, UserSkill Fetch Join
      */
     @Query("SELECT se FROM SkillExchange se " +
@@ -52,8 +52,8 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
 
 
     /**
-     *  보낸 요청 조회
-     *  requesterId, cursor 기반 페이징
+     *  받은 요청 조회
+     *  receiverId, cursor 기반 페이징
      */
     @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery" +
             "(se.id, se.receiver.id, r.id, rs.id, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
