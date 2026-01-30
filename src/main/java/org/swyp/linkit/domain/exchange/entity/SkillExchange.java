@@ -144,7 +144,7 @@ public class SkillExchange extends BaseTimeEntity {
     // == ExchangeStatus 수락 처리 ==
     public void accept(){
         if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
-            throw new InvalidExchangeStatusException(ErrorCode.EXCHANGE_INVALID_STATUS + "status= PENDING");
+            throw new InvalidExchangeStatusException("수락은 대기중 상태의 거래만 가능합니다.");
         }
         this.exchangeStatus = ExchangeStatus.ACCEPTED;
     }
@@ -152,7 +152,7 @@ public class SkillExchange extends BaseTimeEntity {
     // == ExchangeStatus 거절 처리 ==
     public void reject(){
         if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
-            throw new InvalidExchangeStatusException(ErrorCode.EXCHANGE_INVALID_STATUS + "status= PENDING");
+            throw new InvalidExchangeStatusException("거절은 대기중 상태의 거래만 가능합니다.");
         }
         this.exchangeStatus = ExchangeStatus.REJECTED;
     }
