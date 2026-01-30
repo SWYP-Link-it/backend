@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
-import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.exception.InvalidExchangeStatusException;
 
 import java.time.LocalDate;
@@ -157,6 +156,15 @@ public class SkillExchange extends BaseTimeEntity {
         this.exchangeStatus = ExchangeStatus.REJECTED;
     }
 
+    // == ExchangeStatus 만료 처리 ==
+    public void expire(){
+        // expire 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
+        if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
+            return;
+        }
+        this.exchangeStatus = ExchangeStatus.EXPIRED;
+    }
+
     // == ExchangeStatus 취소 처리 ==
     public void cancel(){
         this.exchangeStatus = ExchangeStatus.CANCELED;
@@ -165,13 +173,21 @@ public class SkillExchange extends BaseTimeEntity {
     // == isRequesterRead false 처리 --
     public void updateRequesterReadToFalse(){
         this.isRequesterRead = false;
-
     }
 
     // == isReceiverRead false 처리 --
     public void updateReceiverReadToFalse(){
         this.isReceiverRead = false;
+    }
 
+    // == isRequesterRead true 처리 --
+    public void updateRequesterReadToTrue(){
+        this.isRequesterRead = true;
+    }
+
+    // == isReceiverRead true 처리 --
+    public void updateReceiverReadToTrue(){
+        this.isReceiverRead = true;
     }
 
     // == ExchangeStatus 변경 메서드 ==
