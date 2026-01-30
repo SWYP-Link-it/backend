@@ -20,7 +20,7 @@ public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Lo
             "left join fetch se.receiverSkill " +
             "WHERE ch.user.id = :userId " +
             "AND (:supplyType IS NULL OR ch.supplyType = :supplyType) " +
-            "AND (:cursorId IS NULL OR ch.id < :cursorId)" +
+            "AND (:cursorId IS NULL OR ch.id < :cursorId) " +
             "ORDER BY ch.id DESC")
     Slice<CreditHistory> findAllByUserIdAndSupplyType(@Param("userId") Long userId,
                                                       @Param("supplyType") SupplyType supplyType,

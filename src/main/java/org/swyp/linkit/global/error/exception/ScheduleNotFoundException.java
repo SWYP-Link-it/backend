@@ -5,10 +5,10 @@ import org.swyp.linkit.global.error.exception.base.BusinessException;
 
 public class ScheduleNotFoundException extends BusinessException {
     public ScheduleNotFoundException() {
-        super(ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION);
+        super(ErrorCode.EXCHANGE_SCHEDULE_NOT_FOUND);
     }
 
     public ScheduleNotFoundException(String message) {
-        super(ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION, message);
+        super(ErrorCode.EXCHANGE_SCHEDULE_NOT_FOUND, message);
     }
 }
