@@ -29,18 +29,18 @@ public class SkillCategory extends BaseTimeEntity {
     @Column(name = "category_type", nullable = false, unique = true, length = 100)
     private SkillCategoryType categoryType;
 
-    @Column(name = "category_name", nullable = false, length = 100)
-    private String categoryName;
-
     @Builder(access = AccessLevel.PRIVATE)
     private SkillCategory(SkillCategoryType categoryType) {
         this.categoryType = categoryType;
-        this.categoryName = categoryType.getDisplayName();
     }
 
     public static SkillCategory create(SkillCategoryType categoryType) {
         return SkillCategory.builder()
                 .categoryType(categoryType)
                 .build();
+    }
+
+    public String getCategoryName() {
+        return categoryType.getDescription();
     }
 }

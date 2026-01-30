@@ -17,5 +17,5 @@ public enum SkillCategoryType {
     MUSIC("음악"),
     ETC("기타");
 
-    private final String displayName;
+    private final String description;
 }
