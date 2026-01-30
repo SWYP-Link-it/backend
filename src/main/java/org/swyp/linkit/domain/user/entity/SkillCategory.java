@@ -26,22 +26,21 @@ public class SkillCategory extends BaseTimeEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "category_code", nullable = false, unique = true, length = 100)
-    private SkillCategoryType categoryCode;
-
-    @Column(name = "category_name", nullable = false, length = 100)
-    private String categoryName;
+    @Column(name = "category_type", nullable = false, unique = true, length = 100)
+    private SkillCategoryType categoryType;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private SkillCategory(SkillCategoryType categoryCode, String categoryName) {
-        this.categoryCode = categoryCode;
-        this.categoryName = categoryName;
+    private SkillCategory(SkillCategoryType categoryType) {
+        this.categoryType = categoryType;
     }
 
-    public static SkillCategory create(SkillCategoryType categoryCode) {
+    public static SkillCategory create(SkillCategoryType categoryType) {
         return SkillCategory.builder()
-                .categoryCode(categoryCode)
-                .categoryName(categoryCode.getDisplayName())
+                .categoryType(categoryType)
                 .build();
+    }
+
+    public String getCategoryName() {
+        return categoryType.getDescription();
     }
 }

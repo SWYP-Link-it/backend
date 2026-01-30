@@ -99,12 +99,12 @@ class CreditHistoryServiceImplTest {
         assertThat(sut.getHistoryType()).isEqualTo(historyType);
     }
 
-    
+
 
     private UserSkill createUserSkill(){
         SkillCategory skillCategory = SkillCategory.create(SkillCategoryType.DEVELOPMENT);
-        UserSkill userSkill = UserSkill.create(skillCategory, "JAVA", SkillLevel.HIGH,
-                "description", 30, true);
+        UserSkill userSkill = UserSkill.create(skillCategory, "JAVA", "TITLE",
+                SkillProficiency.HIGH, "description", 30);
         ReflectionTestUtils.setField(userSkill, "id", 1L);
         return userSkill;
     }

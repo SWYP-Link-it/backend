@@ -463,7 +463,6 @@ class SkillExchangeRepositoryTest {
     private UserProfile createProfile(User user, UserSkill userSkill) {
         UserProfile userProfile = UserProfile.create(
                 user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 null,
@@ -480,10 +479,10 @@ class SkillExchangeRepositoryTest {
         return UserSkill.create(
                 type,
                 "skillName",
-                SkillLevel.HIGH,
+                "skillTitle",
+                SkillProficiency.HIGH,
                 "description",
-                30,
-                true);
+                30);
     }
 
     private SkillExchange createExchange(User requester, User receiver, UserSkill receiverSkill,

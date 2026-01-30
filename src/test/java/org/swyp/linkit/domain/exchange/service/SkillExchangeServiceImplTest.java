@@ -24,7 +24,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
-import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
+import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
 import org.swyp.linkit.domain.user.service.UserService;
@@ -89,18 +89,24 @@ class SkillExchangeServiceImplTest {
                 when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // mentor 의 3개월치 데이터 Mock 처리
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 1),
-                        "SUN", LocalTime.of(10, 0),
-                        LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(11, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 1),
-                        "SUN", LocalTime.of(11, 0),
-                        LocalTime.of(12, 0));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        Weekday.SUN,
+                        LocalTime.of(11, 0),
+                        LocalTime.of(12, 0)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 6),
-                        "WED", LocalTime.of(10, 0),
-                        LocalTime.of(12, 0));
+                        Weekday.WED,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(12, 0)
+                );
 
                 when(availableScheduleService.getExpandedSchedules(mentor.getId()))
                         .thenReturn(List.of(schedule1, schedule2, schedule3));
@@ -172,22 +178,31 @@ class SkillExchangeServiceImplTest {
                 when(userSkillService.getUserSkillWithProfileAndUser(receiverSkill1.getId())).thenReturn(receiverSkill1);
 
                 // mentor 의 3개월치 데이터 Mock 처리
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 4),
-                        "SUN", LocalTime.of(10, 0),
-                        LocalTime.of(12, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(12, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 4),
-                        "SUN", LocalTime.of(14, 0),
-                        LocalTime.of(16, 0));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
+                        Weekday.SUN,
+                        LocalTime.of(14, 0),
+                        LocalTime.of(16, 0)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 4),
-                        "WED", LocalTime.of(16, 30),
-                        LocalTime.of(17, 0));
-                AvailableScheduleDto schedule4 = new AvailableScheduleDto(
+                        Weekday.WED,
+                        LocalTime.of(16, 30),
+                        LocalTime.of(17, 0)
+                );
+                ExpandedScheduleDto schedule4 = ExpandedScheduleDto.of(
                         LocalDate.of(2026, 2, 4),
-                        "WED", LocalTime.of(17, 30),
-                        LocalTime.of(18, 0));
+                        Weekday.WED,
+                        LocalTime.of(17, 30),
+                        LocalTime.of(18, 0)
+                );
+
                 when(availableScheduleService.getExpandedSchedules(mentorUser.getId()))
                         .thenReturn(List.of(schedule1, schedule2, schedule3, schedule4));
 
@@ -280,12 +295,25 @@ class SkillExchangeServiceImplTest {
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
 
                 // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [20:00 ~ 22:00]
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(20, 0), LocalTime.of(22, 0));
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(11, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(13, 0),
+                        LocalTime.of(13, 30)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(20, 0),
+                        LocalTime.of(22, 0)
+                );
+
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
@@ -417,12 +445,25 @@ class SkillExchangeServiceImplTest {
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
 
                 // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(11, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(13, 0),
+                        LocalTime.of(13, 30)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(23, 30),
+                        LocalTime.of(1, 0)
+                );
+
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
@@ -452,12 +493,25 @@ class SkillExchangeServiceImplTest {
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
 
                 // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(11, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(13, 0),
+                        LocalTime.of(13, 30)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(23, 30),
+                        LocalTime.of(1, 0)
+                );
+
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
@@ -487,12 +541,25 @@ class SkillExchangeServiceImplTest {
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
 
                 // 멘토의 가능한 시간 조회 Mock 처리 -> date 날에 [10:00 ~ 12:00], [13:00 ~ 13:30], [23:30 ~ 1:00]
-                AvailableScheduleDto schedule1 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(10, 0), LocalTime.of(11, 0));
-                AvailableScheduleDto schedule2 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(13, 0), LocalTime.of(13, 30));
-                AvailableScheduleDto schedule3 = new AvailableScheduleDto(
-                        date, "SUN", LocalTime.of(23, 30), LocalTime.of(1, 0));
+                ExpandedScheduleDto schedule1 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(10, 0),
+                        LocalTime.of(11, 0)
+                );
+                ExpandedScheduleDto schedule2 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(13, 0),
+                        LocalTime.of(13, 30)
+                );
+                ExpandedScheduleDto schedule3 = ExpandedScheduleDto.of(
+                        date,
+                        Weekday.SUN,
+                        LocalTime.of(23, 30),
+                        LocalTime.of(1, 0)
+                );
+
                 when(availableScheduleService.getExpandedSchedules(mentor.getId())).thenReturn(List.of(schedule1, schedule2, schedule3));
 
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
@@ -1022,7 +1089,6 @@ class SkillExchangeServiceImplTest {
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 PreferredRegion.CHUNGCHEONG,
@@ -1050,10 +1116,10 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
-                SkillLevel.LOW,
+                "skillTitle",
+                SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                true);
+                exchangeDuration);
         ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
         return userSkill;
     }
@@ -1062,10 +1128,11 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = UserSkill.create(
                 null,
                 "skillName",
-                SkillLevel.LOW,
+                "skillTitle",
+                SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                false);
+                exchangeDuration);
+        userSkill.toggleVisibility();
         ReflectionTestUtils.setField(userSkill, "id", userSkillId++);
         return userSkill;
     }

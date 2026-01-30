@@ -114,7 +114,6 @@ class CreditHistoryRepositoryTest {
         return UserProfile.create(
                 user,
                 null,
-                null,
                 ExchangeType.OFFLINE,
                 null,
                 null);
@@ -126,10 +125,10 @@ class CreditHistoryRepositoryTest {
         return UserSkill.create(
                 skillCategory,
                 "java",
-                SkillLevel.LOW,
+                "title",
+                SkillProficiency.LOW,
                 "description",
-                30,
-                true);
+                30);
     }
 
     private CreditHistory createRewardHistory(int amount, int balanceAfter) {

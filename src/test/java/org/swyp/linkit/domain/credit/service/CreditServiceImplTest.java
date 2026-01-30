@@ -435,8 +435,8 @@ class CreditServiceImplTest {
 
     private UserSkill createUserSkill(){
         SkillCategory skillCategory = SkillCategory.create(SkillCategoryType.DEVELOPMENT);
-        UserSkill userSkill = UserSkill.create(skillCategory, "java", SkillLevel.LOW,
-                "description", 30, true);
+        UserSkill userSkill = UserSkill.create(skillCategory, "java", "title",
+                SkillProficiency.LOW, "description", 30);
         ReflectionTestUtils.setField(userSkill, "id", 1L);
         return userSkill;
     }

@@ -173,7 +173,6 @@ public class SkillExchangeServiceWithRepositoryTest {
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 PreferredRegion.CHUNGCHEONG,
@@ -199,10 +198,10 @@ public class SkillExchangeServiceWithRepositoryTest {
         return UserSkill.create(
                 skillCategory,
                 "skillName",
-                SkillLevel.LOW,
+                "skillTitle",
+                SkillProficiency.LOW,
                 "description",
-                60,
-                true);
+                60);
     }
 
     private SkillCategory createSkillCategory() {
