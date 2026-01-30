@@ -44,7 +44,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final UserService userService;
     private final UserSkillService userSkillService;
     private final CreditService creditService;
-    private final CreditHistoryService historyService;
 
     /**
      * 멘토의 거래 가능 날짜 조회
@@ -235,7 +234,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         skillExchange.updateRequesterReadToFalse();
 
         // 5. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
-        creditService.refundCreditForExchange(skillExchange, SupplyType.ADD, HistoryType.EXCHANGE_REJECTED);
+        creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_REJECTED);
 
         // 5. 응답 Dto 변환
         return SkillExchangeResponseDto.from(skillExchange);
@@ -262,7 +261,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 5. 취소 처리
         skillExchange.cancel();
         // 6. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
-        creditService.refundCreditForExchange(skillExchange, SupplyType.ADD, HistoryType.EXCHANGE_CANCELED);
+        creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_CANCELED);
 
         return SkillExchangeResponseDto.from(skillExchange);
     }
@@ -276,6 +275,32 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         boolean hasUnreadSent = exchangeRepository.existsByRequester_IdAndIsRequesterReadFalse(userId);
         boolean hasUnreadReceived = exchangeRepository.existsByReceiver_IdAndIsReceiverReadFalse(userId);
         return SkillExchangeNotificationResponseDto.of(hasUnreadSent, hasUnreadReceived);
+    }
+
+    /**
+     *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
+     */
+    @Transactional
+    @Override
+    public int expirePendingRequests() {
+        LocalDate today = LocalDate.now();
+        // 1. expired 처리 대상 목록 조회 (Requester, Receiver Fetch Join)
+        List<SkillExchange> expiredTargets = exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING);
+        // 1.1. 처리 대상이 없다면 return
+        if(expiredTargets.isEmpty()) return 0;
+
+        // 2. expired 변경, 확인 안함 처리(requester, receiver), 환불
+        for (SkillExchange exchange : expiredTargets) {
+            // pending -> expired 변경
+            exchange.expire();
+            // 확인 안함 처리(requester, receiver)
+            exchange.updateReceiverReadToFalse();
+            exchange.updateRequesterReadToFalse();
+
+            // 크레딧 환불 처리
+            creditService.refundCreditForExchange(exchange, HistoryType.EXCHANGE_EXPIRED);
+        }
+        return expiredTargets.size();
     }
 
     // == private Methods ==

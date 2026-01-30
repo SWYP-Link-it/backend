@@ -396,7 +396,7 @@ class CreditServiceImplTest {
                 when(creditRepository.findByUserId(requester.getId())).thenReturn(Optional.of(credit));
 
                 // when
-                creditService.refundCreditForExchange(skillExchange, supplyType, historyType);
+                creditService.refundCreditForExchange(skillExchange, historyType);
 
                 // then
                 verify(historyService).createExchangeHistory(
@@ -421,14 +421,13 @@ class CreditServiceImplTest {
                 receiver = createUser();
                 UserSkill receiverSkill = createUserSkill();
                 skillExchange = createSkillExchange(requester, receiver, receiverSkill);
-                SupplyType supplyType = SupplyType.ADD;
                 HistoryType historyType = HistoryType.EXCHANGE_CANCELED;
 
                 // credit 조회 Mock 처리
                 when(creditRepository.findByUserId(user.getId())).thenReturn(Optional.empty());
 
                 // when && then
-                assertThatThrownBy(() -> creditService.refundCreditForExchange(skillExchange, supplyType, historyType))
+                assertThatThrownBy(() -> creditService.refundCreditForExchange(skillExchange, historyType))
                         .isInstanceOf(NotFoundCreditException.class);
             }
         }

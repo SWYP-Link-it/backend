@@ -43,6 +43,10 @@ public interface SkillExchangeService {
      *  요청 관리 네비바, 탭에 사용할 신규 알림 표시
      */
     SkillExchangeNotificationResponseDto getNotification(Long userId);
+    /**
+     *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
+     */
+    int expirePendingRequests();
 
 
 

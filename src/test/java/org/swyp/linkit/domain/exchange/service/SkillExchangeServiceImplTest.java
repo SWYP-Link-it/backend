@@ -34,6 +34,7 @@ import org.swyp.linkit.global.error.exception.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -782,7 +783,6 @@ class SkillExchangeServiceImplTest {
                 assertThat(sut.getSkillExchangeId()).isEqualTo(skillExchange.getId());
                 verify(creditService).refundCreditForExchange(
                         eq(skillExchange),
-                        eq(SupplyType.ADD),
                         eq(HistoryType.EXCHANGE_REJECTED));
             }
         }
@@ -863,7 +863,7 @@ class SkillExchangeServiceImplTest {
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
                 assertThat(skillExchange.isRequesterRead()).isFalse();
-                verify(creditService).refundCreditForExchange(eq(skillExchange), eq(SupplyType.ADD), eq(HistoryType.EXCHANGE_CANCELED));
+                verify(creditService).refundCreditForExchange(eq(skillExchange), eq(HistoryType.EXCHANGE_CANCELED));
                 assertThat(result.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED.getDescription());
             }
 
@@ -884,7 +884,7 @@ class SkillExchangeServiceImplTest {
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
                 assertThat(skillExchange.isReceiverRead()).isFalse();
-                verify(creditService).refundCreditForExchange(any(), any(), any());
+                verify(creditService).refundCreditForExchange(any(), any());
             }
 
             @Test
@@ -903,7 +903,7 @@ class SkillExchangeServiceImplTest {
 
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
-                verify(creditService).refundCreditForExchange(any(), any(), any());
+                verify(creditService).refundCreditForExchange(any(), any());
             }
         }
         @Nested
@@ -975,6 +975,50 @@ class SkillExchangeServiceImplTest {
             }
         }
     }
+
+    @Test
+    @DisplayName("거래 날짜 전날까지 수락되지 않은 요청은 거절(expired) 처리 되어야한다.")
+    public void expirePendingRequests() {
+        // given
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+
+        UserSkill userSkill = createUserSkill(30);
+
+        // expire 처리 대상 목록 조회 Mock
+        List<SkillExchange> expiredTargets = new ArrayList<>();
+        for(int i = 1; i <= 10; i++){
+            User requester = createUser();
+            User receiver = createUser();
+            SkillExchange skillExchange = SkillExchange.
+                    create(requester, receiver, userSkill, yesterday, null, null, null);
+            skillExchange.updateReceiverReadToTrue();
+            skillExchange.updateRequesterReadToTrue();
+            expiredTargets.add(skillExchange);
+        }
+        when(exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING)).thenReturn(expiredTargets);
+
+        // when
+        int resultCount = exchangeService.expirePendingRequests();
+
+        // then
+        assertThat(resultCount).isEqualTo(expiredTargets.size());
+        for (SkillExchange se : expiredTargets) {
+            // 상태 변경 확인
+            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
+            // 읽음 상태가 다시 false로 초기화되었는지 확인
+            assertThat(se.isRequesterRead()).isFalse();
+            assertThat(se.isReceiverRead()).isFalse();
+        }
+        // 호출 횟수 검증
+        verify(exchangeRepository, times(1)).findAllExpiredTargets(today, ExchangeStatus.PENDING);
+        verify(creditService, times(expiredTargets.size()))
+                .refundCreditForExchange(
+                        any(SkillExchange.class),
+                        eq(HistoryType.EXCHANGE_EXPIRED)
+                );
+    }
+
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
