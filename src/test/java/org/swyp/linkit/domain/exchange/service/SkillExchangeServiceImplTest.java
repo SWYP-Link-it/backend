@@ -24,6 +24,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
@@ -57,6 +58,9 @@ class SkillExchangeServiceImplTest {
 
     @Mock
     UserSkillService userSkillService;
+
+    @Mock
+    SettlementService settlementService;
 
     @Mock
     CreditService creditService;
@@ -769,6 +773,7 @@ class SkillExchangeServiceImplTest {
                 SkillExchangeResponseDto sut = exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId());
 
                 // then
+                verify(settlementService).createSettlement(skillExchange);
                 assertThat(skillExchange.isRequesterRead()).isFalse();
                 assertThat(sut.getExchangeStatus()).isEqualTo(ExchangeStatus.ACCEPTED.getDescription());
                 assertThat(sut.getSkillExchangeId()).isEqualTo(skillExchange.getId());
@@ -930,6 +935,7 @@ class SkillExchangeServiceImplTest {
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
                 assertThat(skillExchange.isRequesterRead()).isFalse();
+                verify(settlementService).cancelSettlement(skillExchange.getId());
                 verify(creditService).refundCreditForExchange(eq(skillExchange), eq(HistoryType.EXCHANGE_CANCELED));
                 assertThat(result.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED.getDescription());
             }
@@ -950,6 +956,7 @@ class SkillExchangeServiceImplTest {
 
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                verify(settlementService, never()).cancelSettlement(skillExchange.getId());
                 assertThat(skillExchange.isReceiverRead()).isFalse();
                 verify(creditService).refundCreditForExchange(any(), any());
             }
@@ -970,6 +977,7 @@ class SkillExchangeServiceImplTest {
 
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                verify(settlementService).cancelSettlement(skillExchange.getId());
                 verify(creditService).refundCreditForExchange(any(), any());
             }
         }

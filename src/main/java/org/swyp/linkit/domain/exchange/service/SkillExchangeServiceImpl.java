@@ -8,8 +8,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
-import org.swyp.linkit.domain.credit.entity.SupplyType;
-import org.swyp.linkit.domain.credit.service.CreditHistoryService;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
@@ -17,6 +15,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -44,6 +43,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final UserService userService;
     private final UserSkillService userSkillService;
     private final CreditService creditService;
+    private final SettlementService settlementService;
 
     /**
      * 멘토의 거래 가능 날짜 조회
@@ -211,6 +211,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
+        // 5. Settlement 생성
+        settlementService.createSettlement(skillExchange);
+
         // 5. 응답 Dto 변환
         return SkillExchangeResponseDto.from(skillExchange);
     }
@@ -315,12 +318,17 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             if (currentStatus != ExchangeStatus.PENDING && currentStatus != ExchangeStatus.ACCEPTED) {
                 throw new InvalidExchangeStatusException("대기중, 수락된 거래만 취소가 가능합니다.");
             }
+            // settlement 취소 처리
+            if (currentStatus == ExchangeStatus.ACCEPTED){
+                settlementService.cancelSettlement(skillExchange.getId());
+            }
             skillExchange.updateReceiverReadToFalse();
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
-                throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다. 대기 중인 경우 거절을 이용해주세요.");
+                throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다.");
             }
+            settlementService.cancelSettlement(skillExchange.getId());
             skillExchange.updateRequesterReadToFalse();
         }
     }
