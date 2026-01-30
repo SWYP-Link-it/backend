@@ -132,8 +132,7 @@ public class CreditServiceImpl implements CreditService{
      */
     @Transactional
     @Override
-    public void refundCreditForExchange(SkillExchange skillExchange, SupplyType supplyType,
-                                        HistoryType historyType) {
+    public void refundCreditForExchange(SkillExchange skillExchange, HistoryType historyType) {
         User requester = skillExchange.getRequester();
         int amount = skillExchange.getCreditPrice();
         // 1. credit 조회 -> NotFoundCreditException
@@ -147,7 +146,7 @@ public class CreditServiceImpl implements CreditService{
                 requester,
                 skillExchange.getReceiver(),
                 skillExchange,
-                supplyType,
+                SupplyType.ADD,
                 amount,
                 credit.getBalance(),
                 historyType
