@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ApiResponseDto.fail(errorCode.getCode(), errorCode.getMessage()));
+                .body(ApiResponseDto.fail(errorCode.getCode(), e.getMessage()));
     }
 
     // 2. HTTP Method 가 다를때 예외 처리
