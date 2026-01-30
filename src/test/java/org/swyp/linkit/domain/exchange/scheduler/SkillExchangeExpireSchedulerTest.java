@@ -38,6 +38,6 @@ class SkillExchangeExpireSchedulerTest {
                 .untilAsserted(() -> {
                     verify(expireScheduler, atLeast(2)).runExpireRequests();
                     verify(exchangeService, atLeast(2)).expirePendingRequests();
-        });
+                });
     }
 }

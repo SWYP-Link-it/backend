@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.user.entity.OAuthProvider;
-import org.swyp.linkit.domain.user.entity.SkillLevel;
+import org.swyp.linkit.domain.user.entity.SkillProficiency;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
@@ -56,8 +56,8 @@ class CreditHistoryTest {
         HistoryType historyType = HistoryType.EXCHANGE_REQUEST;
         SupplyType supplyType = SupplyType.USE;
 
-        UserSkill userSkill = UserSkill.create(null, "name", SkillLevel.HIGH,
-                "description", 30, true);
+        UserSkill userSkill = UserSkill.create(null, "name", "title",
+                SkillProficiency.HIGH, "description", 30);
         SkillExchange skillExchange = SkillExchange
                 .create(user, targetUser, userSkill, LocalDate.of(2026, 1, 31),
                         LocalTime.of(10, 0), LocalTime.of(12, 0), "message");

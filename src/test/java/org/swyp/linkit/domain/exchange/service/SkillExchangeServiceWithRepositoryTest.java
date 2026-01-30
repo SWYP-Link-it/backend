@@ -194,14 +194,14 @@ public class SkillExchangeServiceWithRepositoryTest {
                 "nickname" + uuid);
     }
 
-    private UserSkill createUserSkill(SkillCategory skillCategory, int exchangeDuration) {
+    private UserSkill createUserSkill(SkillCategory skillCategory) {
         return UserSkill.create(
                 skillCategory,
                 "skillName",
                 "skillTitle",
                 SkillProficiency.LOW,
                 "description",
-                exchangeDuration);
+                60);
     }
 
     private SkillCategory createSkillCategory() {
