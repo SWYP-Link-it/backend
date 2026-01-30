@@ -33,17 +33,13 @@ public class UserProfileDto {
     }
 
     public static UserProfileDto from(UserProfileRequestDto requestDto) {
-        List<UserSkillDto> skillDtos = requestDto.getSkills() != null
-                ? requestDto.getSkills().stream()
+        List<UserSkillDto> skillDtos = requestDto.getSkills().stream()
                 .map(UserSkillDto::from)
-                .collect(Collectors.toList())
-                : null;
+                .collect(Collectors.toList());
 
-        List<AvailableScheduleDto> scheduleDtos = requestDto.getAvailableSchedules() != null
-                ? requestDto.getAvailableSchedules().stream()
+        List<AvailableScheduleDto> scheduleDtos = requestDto.getAvailableSchedules().stream()
                 .map(AvailableScheduleDto::from)
-                .collect(Collectors.toList())
-                : null;
+                .collect(Collectors.toList());
 
         return UserProfileDto.builder()
                 .experienceDescription(requestDto.getExperienceDescription())
