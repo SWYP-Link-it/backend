@@ -26,7 +26,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -320,6 +319,36 @@ class SkillExchangeRepositoryTest {
         assertThat(sut.getRequester().getId()).isEqualTo(requester.getId());
     }
 
+    @Test
+    @DisplayName("거래 만료 처리해야할 목록 조회")
+    public void findAllExpiredTargets() {
+        // given
+        LocalDate today = LocalDate.now();
+        ExchangeStatus pendingStatus = ExchangeStatus.PENDING;
+
+        // 대상 데이터 탐색
+        List<SkillExchange> expectedTargets = exchangeRepository.findAll().stream()
+                .filter(se -> se.getExchangeStatus().equals(pendingStatus))
+                .filter(se -> se.getScheduledDate().isBefore(today))
+                .toList();
+
+        int expectedSize = expectedTargets.size();
+        assertThat(expectedSize).isEqualTo(10);
+
+        // when
+        System.out.println("== 조회 쿼리 시작 ==");
+        List<SkillExchange> expiredTargets = exchangeRepository.findAllExpiredTargets(today, pendingStatus);
+
+        // then
+        assertThat(expiredTargets.size()).isEqualTo(expectedSize);
+        for (SkillExchange target : expiredTargets) {
+            // 조회된 데이터가 모두 today 이전
+            assertThat(target.getScheduledDate()).isBefore(today);
+            // 조회된 데이터가 모두 pending
+            assertThat(target.getExchangeStatus()).isEqualTo(pendingStatus);
+        }
+    }
+
     private List<SkillExchange> getReceiverBulkUpdateResults(Long receiverId) {
         return em.getEntityManager()
                 .createQuery("select se from SkillExchange se where se.receiver.id = :receiverId", SkillExchange.class)
@@ -403,7 +432,7 @@ class SkillExchangeRepositoryTest {
 
         // skillExchange 세팅
         // 짝수면 PENDING, 홀수면 CANCELED
-        scheduledDate = LocalDate.of(2026, 2, 6);
+        scheduledDate = LocalDate.now().minusDays(1);
         for (int i = 1; i <= 20; i++) {
             SkillExchange exchange = createExchange(requester, receiver, receiverSkill,
                     scheduledDate, LocalTime.of(i, 0), LocalTime.of(i + 1, 0));
