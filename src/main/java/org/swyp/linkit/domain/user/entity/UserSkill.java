@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(
         name = "user_skill",
@@ -53,6 +56,9 @@ public class UserSkill extends BaseTimeEntity {
     @Column(name = "is_visible", nullable = false)
     private Boolean isVisible;
 
+    @OneToMany(mappedBy = "userSkill", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSkillImage> images = new ArrayList<>();
+
     @Builder(access = AccessLevel.PRIVATE)
     private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
                       String skillTitle, SkillProficiency skillProficiency, String skillDescription,
@@ -94,6 +100,36 @@ public class UserSkill extends BaseTimeEntity {
         this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
+    }
+
+    // 이미지 추가
+    public void addImage(UserSkillImage image) {
+        if (image == null) return;
+
+        if (!this.images.contains(image)) {
+            this.images.add(image);
+        }
+
+        if (image.getUserSkill() != this) {
+            image.assignUserSkill(this);
+        }
+    }
+
+    // 이미지 제거
+    public void removeImage(UserSkillImage image) {
+        if (image == null) return;
+
+        this.images.remove(image);
+        if (image.getUserSkill() == this) {
+            image.assignUserSkill(null);
+        }
+    }
+
+    // 모든 이미지 제거
+    public void clearImages() {
+        for (UserSkillImage image : new ArrayList<>(this.images)) {
+            removeImage(image);
+        }
     }
 
     // 조회수 증가
