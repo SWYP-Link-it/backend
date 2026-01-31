@@ -8,8 +8,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
-import org.swyp.linkit.domain.credit.entity.SupplyType;
-import org.swyp.linkit.domain.credit.service.CreditHistoryService;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
@@ -17,6 +15,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -44,6 +43,8 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final UserService userService;
     private final UserSkillService userSkillService;
     private final CreditService creditService;
+    private final SettlementService settlementService;
+    private final SkillExchangeExpireProcessor exchangeExpireProcessor;
 
     /**
      * 멘토의 거래 가능 날짜 조회
@@ -211,6 +212,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
+        // 5. Settlement 생성
+        settlementService.createSettlement(skillExchange);
+
         // 5. 응답 Dto 변환
         return SkillExchangeResponseDto.from(skillExchange);
     }
@@ -221,8 +225,8 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Transactional
     @Override
     public SkillExchangeResponseDto rejectSkillExchange(Long receiverId, Long skillExchangeId) {
-        // 1. SkillExchange 조회 및 검증 -> ExchangeNotFoundException
-        SkillExchange skillExchange = getSkillExchangeWithReceiver(skillExchangeId);
+        // 1. SkillExchange (Receiver, Requester Fetch Join) -> ExchangeNotFoundException
+        SkillExchange skillExchange = getSkillExchangeWithReceiverAndRequester(skillExchangeId);
 
         // 2. 해당 스킬 거래가 receiver의 거래 여부 검증 -> ExchangeAccessDeniedException
         validateReceiverAuthority(receiverId, skillExchange);
@@ -247,8 +251,8 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Transactional
     @Override
     public SkillExchangeResponseDto cancelSkillExchange(Long userId, Long skillExchangeId) {
-        // 1. skillExchange 조회 -> ExchangeNotFoundException
-        SkillExchange skillExchange = getSkillExchangeById(skillExchangeId);
+        // 1. skillExchange 조회 (Receiver, Requester Fetch Join) -> ExchangeNotFoundException
+        SkillExchange skillExchange = getSkillExchangeWithReceiverAndRequester(skillExchangeId);
 
         // 2. 거래 취소 요청이 해당 유저의 skillExchange 여부 검증 -> ExchangeAccessDeniedException
         validateCancelAuthority(userId, skillExchange);
@@ -260,10 +264,40 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
         // 5. 취소 처리
         skillExchange.cancel();
+
         // 6. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_CANCELED);
 
         return SkillExchangeResponseDto.from(skillExchange);
+    }
+
+    /**
+     *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public int expirePendingRequests() {
+        LocalDate today = LocalDate.now();
+
+        // 1. expired 처리 대상 목록 조회 (Requester, Receiver Fetch Join)
+        List<SkillExchange> expiredTargets = exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING);
+        if(expiredTargets.isEmpty()){
+            log.info("만료 처리 대상 없음");
+            return 0;
+        }
+
+        // 2. 각 거래 독립적인 트랜잭션으로 처리
+        int successCount = 0;
+        for (SkillExchange exchange : expiredTargets) {
+            try {
+                // REQUIRES_NEW
+                exchangeExpireProcessor.expireSingleSkillExchange(exchange);
+                successCount++;
+            } catch (Exception e){
+                log.error("거래 만료 처리 실패. skillExchangeId: {}, errorMessage: {}", exchange.getId(), e.getMessage());
+            }
+        }
+        return successCount;
     }
 
     /**
@@ -277,33 +311,15 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         return SkillExchangeNotificationResponseDto.of(hasUnreadSent, hasUnreadReceived);
     }
 
-    /**
-     *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
-     */
-    @Transactional
-    @Override
-    public int expirePendingRequests() {
-        LocalDate today = LocalDate.now();
-        // 1. expired 처리 대상 목록 조회 (Requester, Receiver Fetch Join)
-        List<SkillExchange> expiredTargets = exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING);
-        // 1.1. 처리 대상이 없다면 return
-        if(expiredTargets.isEmpty()) return 0;
-
-        // 2. expired 변경, 확인 안함 처리(requester, receiver), 환불
-        for (SkillExchange exchange : expiredTargets) {
-            // pending -> expired 변경
-            exchange.expire();
-            // 확인 안함 처리(requester, receiver)
-            exchange.updateReceiverReadToFalse();
-            exchange.updateRequesterReadToFalse();
-
-            // 크레딧 환불 처리
-            creditService.refundCreditForExchange(exchange, HistoryType.EXCHANGE_EXPIRED);
-        }
-        return expiredTargets.size();
-    }
-
     // == private Methods ==
+
+    /**
+     *  skillExchangeId로 조회 및 Receiver, Requester Fetch Join
+     */
+    public SkillExchange getSkillExchangeWithReceiverAndRequester(Long skillExchangeId){
+        return exchangeRepository.findByIdWithRequesterAndReceiver(skillExchangeId)
+                .orElseThrow(() -> new ExchangeNotFoundException());
+    }
 
     /**
      *   requester, receiver 구분 및 상태 검증 및 읽음 업데이트
@@ -315,12 +331,17 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             if (currentStatus != ExchangeStatus.PENDING && currentStatus != ExchangeStatus.ACCEPTED) {
                 throw new InvalidExchangeStatusException("대기중, 수락된 거래만 취소가 가능합니다.");
             }
+            // settlement 취소 처리
+            if (currentStatus == ExchangeStatus.ACCEPTED){
+                settlementService.cancelSettlement(skillExchange.getId());
+            }
             skillExchange.updateReceiverReadToFalse();
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
-                throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다. 대기 중인 경우 거절을 이용해주세요.");
+                throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다.");
             }
+            settlementService.cancelSettlement(skillExchange.getId());
             skillExchange.updateRequesterReadToFalse();
         }
     }
@@ -347,13 +368,13 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         }
     }
 
-    /**
-     *  SkillExchange 조회
-     */
-    private SkillExchange getSkillExchangeById(Long skillExchangeId) {
-        return exchangeRepository.findById(skillExchangeId)
-                .orElseThrow(() -> new ExchangeNotFoundException());
-    }
+//    /**
+//     *  SkillExchange 조회
+//     */
+//    private SkillExchange getSkillExchangeById(Long skillExchangeId) {
+//        return exchangeRepository.findById(skillExchangeId)
+//                .orElseThrow(() -> new ExchangeNotFoundException());
+//    }
 
 
     /**

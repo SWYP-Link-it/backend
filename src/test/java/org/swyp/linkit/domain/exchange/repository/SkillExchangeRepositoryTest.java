@@ -349,6 +349,30 @@ class SkillExchangeRepositoryTest {
         }
     }
 
+    @Test
+    @DisplayName("skillExchangeId로 조회 및 Receiver, Requester Fetch Join")
+    public void findByIdWithRequesterAndReceiver() {
+        // given
+        SkillExchange skillExchange = exchangeList.get(0);
+        Long id = skillExchange.getId();
+        User requester = skillExchange.getRequester();
+        User receiver = skillExchange.getReceiver();
+
+        // when
+        System.out.println("== 조회 쿼리 시작 ==");
+        Optional<SkillExchange> optionalSkillExchange = exchangeRepository.findByIdWithRequesterAndReceiver(id);
+        assertThat(optionalSkillExchange).isPresent();
+
+        SkillExchange foundSkillExchange = optionalSkillExchange.get();
+        User foundRequester = foundSkillExchange.getRequester();
+        User foundReceiver = foundSkillExchange.getReceiver();
+
+        // then
+        // 아래 검증 시 추가 쿼리가 발생하지 않아야한다.
+        assertThat(requester.getNickname()).isEqualTo(foundRequester.getNickname());
+        assertThat(receiver.getNickname()).isEqualTo(foundReceiver.getNickname());
+    }
+
     private List<SkillExchange> getReceiverBulkUpdateResults(Long receiverId) {
         return em.getEntityManager()
                 .createQuery("select se from SkillExchange se where se.receiver.id = :receiverId", SkillExchange.class)

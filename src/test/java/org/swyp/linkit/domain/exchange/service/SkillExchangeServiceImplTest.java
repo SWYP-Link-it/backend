@@ -24,6 +24,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
@@ -59,7 +60,13 @@ class SkillExchangeServiceImplTest {
     UserSkillService userSkillService;
 
     @Mock
+    SettlementService settlementService;
+
+    @Mock
     CreditService creditService;
+
+    @Mock
+    SkillExchangeExpireProcessor exchangeExpireProcessor;
 
     @InjectMocks
     SkillExchangeServiceImpl exchangeService;
@@ -769,6 +776,7 @@ class SkillExchangeServiceImplTest {
                 SkillExchangeResponseDto sut = exchangeService.acceptSkillExchange(receiver.getId(), skillExchange.getId());
 
                 // then
+                verify(settlementService).createSettlement(skillExchange);
                 assertThat(skillExchange.isRequesterRead()).isFalse();
                 assertThat(sut.getExchangeStatus()).isEqualTo(ExchangeStatus.ACCEPTED.getDescription());
                 assertThat(sut.getSkillExchangeId()).isEqualTo(skillExchange.getId());
@@ -839,7 +847,7 @@ class SkillExchangeServiceImplTest {
                 // given
                 SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
                 // skillExchange 조회 및 검증 Mock
-                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when
                 SkillExchangeResponseDto sut = exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId());
@@ -863,7 +871,7 @@ class SkillExchangeServiceImplTest {
                 // given
                 SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
                 // skillExchange 조회 및 검증 Mock
-                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.empty());
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.empty());
 
                 // when && then
                 assertThatThrownBy(() -> exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId()))
@@ -877,7 +885,7 @@ class SkillExchangeServiceImplTest {
                 User otherUser = createUser();
                 SkillExchange skillExchange = createExchange(requester, otherUser, receiverSkill, start, end);
                 // skillExchange 조회 및 검증 Mock
-                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when && then
                 assertThatThrownBy(() -> exchangeService.rejectSkillExchange(receiver.getId(), skillExchange.getId()))
@@ -890,7 +898,7 @@ class SkillExchangeServiceImplTest {
                 // given
                 SkillExchange skillExchange = createExchange(requester, receiver, receiverSkill, start, end);
                 // skillExchange 조회 및 검증 Mock
-                when(exchangeRepository.findByIdWithReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
                 skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
 
                 // when && then
@@ -922,7 +930,7 @@ class SkillExchangeServiceImplTest {
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
                 skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when
                 SkillExchangeResponseDto result = exchangeService.cancelSkillExchange(receiver.getId(), skillExchange.getId());
@@ -930,6 +938,7 @@ class SkillExchangeServiceImplTest {
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
                 assertThat(skillExchange.isRequesterRead()).isFalse();
+                verify(settlementService).cancelSettlement(skillExchange.getId());
                 verify(creditService).refundCreditForExchange(eq(skillExchange), eq(HistoryType.EXCHANGE_CANCELED));
                 assertThat(result.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED.getDescription());
             }
@@ -943,13 +952,14 @@ class SkillExchangeServiceImplTest {
                         LocalTime.of(14, 0), LocalTime.of(15, 0));
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when
                 exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId());
 
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                verify(settlementService, never()).cancelSettlement(skillExchange.getId());
                 assertThat(skillExchange.isReceiverRead()).isFalse();
                 verify(creditService).refundCreditForExchange(any(), any());
             }
@@ -963,13 +973,14 @@ class SkillExchangeServiceImplTest {
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
                 skillExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when
                 exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId());
 
                 // then
                 assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.CANCELED);
+                verify(settlementService).cancelSettlement(skillExchange.getId());
                 verify(creditService).refundCreditForExchange(any(), any());
             }
         }
@@ -985,7 +996,7 @@ class SkillExchangeServiceImplTest {
                         LocalTime.of(14, 0), LocalTime.of(15, 0));
                 Long strangerId = 999L;
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when & then
                 assertThatThrownBy(() -> exchangeService.cancelSkillExchange(strangerId, skillExchange.getId()))
@@ -1001,7 +1012,7 @@ class SkillExchangeServiceImplTest {
                 // 오늘 날짜로 강제 설정 (validateCancelDeadline 통과 불가)
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now());
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when & then
                 assertThatThrownBy(() -> exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId()))
@@ -1017,7 +1028,7 @@ class SkillExchangeServiceImplTest {
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
                 // 상태: PENDING
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when & then
                 assertThatThrownBy(() -> exchangeService.cancelSkillExchange(receiver.getId(), skillExchange.getId()))
@@ -1034,7 +1045,7 @@ class SkillExchangeServiceImplTest {
                 ReflectionTestUtils.setField(skillExchange, "scheduledDate", LocalDate.now().plusDays(1));
                 skillExchange.cancel(); // 이미 취소됨
 
-                when(exchangeRepository.findById(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+                when(exchangeRepository.findByIdWithRequesterAndReceiver(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
 
                 // when & then
                 assertThatThrownBy(() -> exchangeService.cancelSkillExchange(requester.getId(), skillExchange.getId()))
@@ -1063,27 +1074,18 @@ class SkillExchangeServiceImplTest {
             skillExchange.updateRequesterReadToTrue();
             expiredTargets.add(skillExchange);
         }
+
         when(exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING)).thenReturn(expiredTargets);
+        doNothing().when(exchangeExpireProcessor).expireSingleSkillExchange(any(SkillExchange.class));
 
         // when
         int resultCount = exchangeService.expirePendingRequests();
 
         // then
         assertThat(resultCount).isEqualTo(expiredTargets.size());
-        for (SkillExchange se : expiredTargets) {
-            // 상태 변경 확인
-            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
-            // 읽음 상태가 다시 false로 초기화되었는지 확인
-            assertThat(se.isRequesterRead()).isFalse();
-            assertThat(se.isReceiverRead()).isFalse();
-        }
         // 호출 횟수 검증
         verify(exchangeRepository, times(1)).findAllExpiredTargets(today, ExchangeStatus.PENDING);
-        verify(creditService, times(expiredTargets.size()))
-                .refundCreditForExchange(
-                        any(SkillExchange.class),
-                        eq(HistoryType.EXCHANGE_EXPIRED)
-                );
+        verify(exchangeExpireProcessor, times(expiredTargets.size())).expireSingleSkillExchange(any(SkillExchange.class));
     }
 
 
