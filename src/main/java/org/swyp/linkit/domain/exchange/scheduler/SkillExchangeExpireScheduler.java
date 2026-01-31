@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 
 @Component
@@ -17,7 +16,6 @@ public class SkillExchangeExpireScheduler {
     /**
      *  매일 12시 00분에 거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
      */
-    @Transactional
     @Scheduled(cron = "${schedules.cancel-cron}", zone = "Asia/Seoul")
     public void runExpireRequests(){
         log.info("== 수락 되지 않은 거래 자동 만료(거절) 시작 ==");

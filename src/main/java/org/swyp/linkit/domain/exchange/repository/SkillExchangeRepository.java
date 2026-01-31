@@ -104,6 +104,7 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "JOIN FETCH se.receiver " +
             "WHERE se.id = :id")
     Optional<SkillExchange> findByIdWithReceiver(@Param("id") Long id);
+    // -> 거절은 receiver Credit 까지?
 
     /**
      *  requester 취소
@@ -126,4 +127,14 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "AND se.exchangeStatus = :pending")
     List<SkillExchange> findAllExpiredTargets(@Param("today") LocalDate today,
                                               @Param("pending") ExchangeStatus pending);
+
+    // 아래 테스트 미완료
+    /**
+     *  skillExchangeId로 조회 및 Receiver, Requester Fetch Join
+     */
+    @Query("SELECT se FROM SkillExchange se " +
+            "JOIN FETCH se.receiver " +
+            "JOIN FETCH se.requester " +
+            "WHERE se.id = :id")
+    Optional<SkillExchange> findByIdWithRequesterAndReceiver(@Param("id") Long id);
 }

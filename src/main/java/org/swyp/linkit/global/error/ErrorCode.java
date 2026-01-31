@@ -152,7 +152,6 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("스킬이 멘토의 소유가 아닐 경우 발생합니다.")
     EXCHANGE_SKILL_MENTOR_MISS_MATCH(HttpStatus.BAD_REQUEST, "EX008", "스킬이 멘토의 소유가 아닙니다."),
 
-    //
     @ExplainError("스킬 거래가 존재하지 않는 경우 발생합니다.")
     EXCHANGE_NOT_FOUND(HttpStatus.NOT_FOUND, "EX009", "스킬 거래가 존재하지 않습니다."),
 
@@ -167,7 +166,11 @@ public enum ErrorCode implements BaseErrorCode {
 
     @ExplainError("스킬 거래의 상태가 변경 가능한 상태가 아닐 때 발생합니다.")
     EXCHANGE_INVALID_STATUS(HttpStatus.BAD_REQUEST, "EX013", "변경 할 수 없는 거래 상태입니다."),
-//
+
+    // 정산
+    SETTLEMENT_INVALID_STATUS(HttpStatus.BAD_REQUEST, "SE001", "유효하지 않은 정산 상태입니다."),
+
+    SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SE002", "정산이 존재하지 않습니다."),
 
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
