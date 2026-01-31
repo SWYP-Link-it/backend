@@ -74,6 +74,19 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("요청한 스킬 카테고리가 존재하지 않는 경우 발생합니다.")
     SKILL_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "SC001", "스킬 카테고리를 찾을 수 없습니다."),
 
+    // 스킬 이미지 업로드
+    @ExplainError("업로드 파일 크기가 2MB를 초과하는 경우 발생합니다.")
+    SKILL_IMAGE_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "SI001", "파일 용량은 최대 2MB까지 업로드할 수 있습니다."),
+
+    @ExplainError("지원하지 않는 이미지 파일 형식인 경우 발생합니다. (JPG, PNG만 지원)")
+    SKILL_IMAGE_FILE_TYPE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "SI002", "지원하지 않는 파일 형식입니다. JPG 또는 PNG 파일만 업로드할 수 있습니다."),
+
+    @ExplainError("이미지 업로드 개수가 5개를 초과하는 경우 발생합니다.")
+    SKILL_IMAGE_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "SI003", "이미지는 최대 5장까지 업로드할 수 있습니다."),
+
+    @ExplainError("이미지 업로드 중 서버 오류가 발생한 경우입니다.")
+    SKILL_IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SI004", "이미지 업로드에 실패했습니다."),
+
     // 사용자 선호 시간대
     @ExplainError("요청한 스케줄 ID에 해당하는 스케줄이 존재하지 않는 경우 발생합니다.")
     AVAILABLE_SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "AS001", "스케줄을 찾을 수 없습니다."),
