@@ -45,23 +45,33 @@ public class UserSkillImageUploadService {
             return null;
         }
 
-        // 1. 파일 검증
-        validateImage(file);
-
-        // 2. 고유 파일명 생성
+        // 1. 고유 파일명 생성
         String fileName = generateFileName(file, userId, userSkillId);
 
-        // 3. NCP에 업로드
+        // 2. NCP에 업로드
         String imageUrl = uploadToNCP(file, fileName);
 
         log.info("이미지 업로드 성공: {}", imageUrl);
         return imageUrl;
     }
 
-    // 이미지 파일 검증
-    private void validateImage(MultipartFile file) {
+    // 이미지 개수 검증
+    public void validateImageCount(int imageCount) {
+        if (imageCount > MAX_IMAGE_COUNT) {
+            log.warn("이미지 개수 초과: {}", imageCount);
+            throw new SkillImageCountExceededException();
+        }
+    }
+
+    // 이미지 파일 검증 (사전 검증용)
+    public void validateImageOnly(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return;
+        }
+
         // 파일 크기 체크 (2MB)
         if (file.getSize() > MAX_FILE_SIZE) {
+            log.warn("파일 크기 초과: {} ({} bytes)", file.getOriginalFilename(), file.getSize());
             throw new SkillImageFileSizeExceededException();
         }
 
@@ -73,13 +83,6 @@ public class UserSkillImageUploadService {
         }
 
         log.debug("이미지 검증 통과: {} ({} bytes)", file.getOriginalFilename(), file.getSize());
-    }
-
-    // 이미지 개수 검증
-    public void validateImageCount(int imageCount) {
-        if (imageCount > MAX_IMAGE_COUNT) {
-            throw new SkillImageCountExceededException();
-        }
     }
 
     // 고유 파일명 생성

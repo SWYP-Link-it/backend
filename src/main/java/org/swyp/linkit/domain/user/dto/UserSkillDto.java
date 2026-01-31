@@ -19,9 +19,8 @@ public class UserSkillDto {
     private Integer exchangeDuration;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserSkillDto(Long id, SkillCategoryType skillCategoryType,
-                         String skillName, String skillTitle,
-                         SkillProficiency skillProficiency,
+    private UserSkillDto(Long id, SkillCategoryType skillCategoryType, String skillName,
+                         String skillTitle, SkillProficiency skillProficiency,
                          String skillDescription, Integer exchangeDuration) {
         this.id = id;
         this.skillCategoryType = skillCategoryType;

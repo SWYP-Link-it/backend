@@ -8,6 +8,11 @@ import lombok.Getter;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.SkillProficiency;
 import org.swyp.linkit.domain.user.entity.UserSkill;
+import org.swyp.linkit.domain.user.entity.UserSkillImage;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Builder
@@ -18,22 +23,22 @@ public class UserSkillResponseDto {
     @Schema(description = "스킬 ID", example = "1")
     private Long id;
 
-    @Schema(description = "스킬 카테고리 타입", example = "MUSIC")
+    @Schema(description = "스킬 카테고리 타입", example = "DEVELOPMENT")
     private SkillCategoryType skillCategoryType;
 
-    @Schema(description = "스킬 카테고리명", example = "음악")
+    @Schema(description = "스킬 카테고리 이름", example = "개발")
     private String skillCategoryName;
 
-    @Schema(description = "스킬명", example = "기타")
+    @Schema(description = "스킬명", example = "React")
     private String skillName;
 
-    @Schema(description = "스킬 제목", example = "초보자를 위한 기타 레슨")
+    @Schema(description = "스킬 제목", example = "React 고급 강의")
     private String skillTitle;
 
-    @Schema(description = "스킬 숙련도", example = "MEDIUM")
+    @Schema(description = "스킬 숙련도", example = "HIGH")
     private SkillProficiency skillProficiency;
 
-    @Schema(description = "스킬 소개", example = "5년 경력의 기타리스트입니다.")
+    @Schema(description = "스킬 소개", example = "5년 경력의 React 개발자입니다.")
     private String skillDescription;
 
     @Schema(description = "스킬 거래 시간 (분)", example = "60")
@@ -42,8 +47,11 @@ public class UserSkillResponseDto {
     @Schema(description = "조회수", example = "0")
     private Long viewCount;
 
-    @Schema(description = "스킬 장터 노출 여부", example = "true")
+    @Schema(description = "장터 노출 여부", example = "true")
     private Boolean isVisible;
+
+    @Schema(description = "스킬 이미지 URL 목록", example = "[\"https://...\", \"https://...\"]")
+    private List<String> imageUrls;
 
     public static UserSkillResponseDto from(UserSkill userSkill) {
         return UserSkillResponseDto.builder()
@@ -57,6 +65,10 @@ public class UserSkillResponseDto {
                 .exchangeDuration(userSkill.getExchangeDuration())
                 .viewCount(userSkill.getViewCount())
                 .isVisible(userSkill.getIsVisible())
+                .imageUrls(userSkill.getImages().stream()
+                        .sorted(Comparator.comparing(UserSkillImage::getImageOrder))
+                        .map(UserSkillImage::getImageUrl)
+                        .collect(Collectors.toList()))
                 .build();
     }
 }
