@@ -2,6 +2,14 @@ spring:
   application:
     name: link-it
 
+    # Multipart
+    servlet:
+      multipart:
+        enabled: true
+        max-file-size: 10MB
+        max-request-size: 50MB
+        file-size-threshold: 2MB
+
   # Database
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:linkit_test}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -92,3 +100,13 @@ backend:
 # Scheduler
 schedules:
   cancel-cron: "0 0 0 * * *"
+
+# NCP Object Storage
+ncp:
+  object-storage:
+    endpoint: https://kr.object.ncloudstorage.com
+    region: kr-standard
+    access-key: ${NCP_ACCESS_KEY:dummy}
+    secret-key: ${NCP_SECRET_KEY:dummy}
+    bucket-name: ${NCP_BUCKET_NAME:link-it-dummy}
+    skill-image-path: skill-images/
