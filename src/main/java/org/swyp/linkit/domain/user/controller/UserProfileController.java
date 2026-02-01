@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -22,7 +23,9 @@ import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.swyp.linkit.domain.user.dto.UserProfileDto;
 import org.swyp.linkit.domain.user.dto.request.UserProfileRequestDto;
 import org.swyp.linkit.domain.user.dto.response.UserProfileResponseDto;
+import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.service.UserProfileService;
+import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
@@ -41,6 +44,7 @@ import java.util.Map;
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
+    private final UserSkillService userSkillService;
 
     @Operation(
             summary = "프로필 조회",
@@ -122,6 +126,32 @@ public class UserProfileController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("프로필이 수정되었습니다.", profile)
+        );
+    }
+
+    @Operation(
+            summary = "스킬 노출 토글",
+            description = "특정 스킬의 장터 노출 여부를 토글합니다."
+    )
+    @ApiErrorExceptionsExample(UserProfileExceptionDocs.ToggleSkillVisibility.class)
+    @PatchMapping(value = "/skills/{skillId}/visibility", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<UserSkillResponseDto>> toggleSkillVisibility(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomOAuth2User oAuth2User,
+
+            @Parameter(description = "스킬 ID", required = true)
+            @PathVariable Long skillId) {
+
+        log.info("[UserProfile] PATCH /profile/skills/{}/visibility : userId={}",
+                skillId, oAuth2User.getUserId());
+
+        UserSkillResponseDto skill = userSkillService.toggleVisibility(
+                oAuth2User.getUserId(),
+                skillId
+        );
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("스킬 노출 상태가 변경되었습니다.", skill)
         );
     }
 
