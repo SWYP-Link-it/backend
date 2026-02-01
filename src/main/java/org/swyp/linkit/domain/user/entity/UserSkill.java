@@ -146,4 +146,19 @@ public class UserSkill extends BaseTimeEntity {
     protected void assignUserProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
     }
+
+    // 스킬 소유자의 닉네임 조회
+    public String getOwnerNickname() {
+        return this.userProfile.getUser().getNickname();
+    }
+
+    // 스킬 소유자의 프로필 사진 URL 조회
+    public String getOwnerProfileImageUrl() {
+        return this.userProfile.getUser().getProfileImageUrl();
+    }
+
+    // 스킬 소유자의 사용자 ID 조회
+    public Long getOwnerId() {
+        return this.userProfile.getUser().getId();
+    }
 }

@@ -31,8 +31,8 @@ public class SkillCardResponseDto {
     public static SkillCardResponseDto from(UserSkill userSkill) {
         return SkillCardResponseDto.builder()
                 .skillId(userSkill.getId())
-                .profileImageUrl(userSkill.getUserProfile().getUser().getProfileImageUrl())
-                .nickname(userSkill.getUserProfile().getUser().getNickname())
+                .profileImageUrl(userSkill.getOwnerProfileImageUrl())
+                .nickname(userSkill.getOwnerNickname())
                 .skillTitle(userSkill.getSkillTitle())
                 .skillName(userSkill.getSkillName())
                 .build();
