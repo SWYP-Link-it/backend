@@ -69,6 +69,9 @@ services:
       BACKEND_PROD_URL: ${BACKEND_PROD_URL}
       COOKIE_SECURE: ${COOKIE_SECURE}
       COOKIE_SAME_SITE: ${COOKIE_SAME_SITE}
+      NCP_ACCESS_KEY: ${NCP_ACCESS_KEY}
+      NCP_SECRET_KEY: ${NCP_SECRET_KEY}
+      NCP_BUCKET_NAME: ${NCP_BUCKET_NAME}
     depends_on:
       db:
         condition: service_healthy

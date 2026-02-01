@@ -95,3 +95,13 @@ backend:
 # Scheduler
 schedules:
   cancel-cron: "*/1 * * * * *"
+
+# NCP Object Storage
+ncp:
+  object-storage:
+    endpoint: https://kr.object.ncloudstorage.com
+    region: kr-standard
+    access-key: dummy
+    secret-key: dummy
+    bucket-name: link-it-dummy
+    skill-image-path: skill-images/
