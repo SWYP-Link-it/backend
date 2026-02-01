@@ -37,7 +37,7 @@ class SkillExchangeExpireProcessorTest {
         User requester = createUser();
         User receiver = createUser();
         UserSkill userSkill = UserSkill
-                .create(null, "name", "titme", null, null, 30);
+                .create(null, "name", "title", null, null, 30);
         LocalTime start = LocalTime.now();
 
         // 알림 초기 상태는 false 이기에 true로 변경

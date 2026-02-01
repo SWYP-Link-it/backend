@@ -16,6 +16,7 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.entity.SupplyType;
 import org.swyp.linkit.domain.credit.repository.CreditRepository;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.global.error.exception.NotEnoughCreditException;
 import org.swyp.linkit.global.error.exception.NotFoundCreditException;
@@ -369,7 +370,6 @@ class CreditServiceImplTest {
         }
     }
 
-    ///
     @Nested
     @DisplayName("크레딧 수급 - 스킬 교환 취소 및 거절 (requester에게 credit 지급 및 creditHistory 생성)")
     class RefundCreditForExchange {
@@ -431,6 +431,79 @@ class CreditServiceImplTest {
                         .isInstanceOf(NotFoundCreditException.class);
             }
         }
+    }
+
+    @Nested
+    @DisplayName("크레딧 수급 - 스킬 거래 정산 (receiver에게 credit 지급 및 creditHistory 생성)")
+    class settleCredit {
+        private User requester;
+        private User receiver;
+        private UserSkill receiverSkill;
+        private SkillExchange skillExchange;
+        private Settlement settlement;
+
+        @Nested
+        @DisplayName("성공 케이스")
+        class SuccessCases {
+            @Test
+            @DisplayName("성공")
+            public void success() {
+                // given
+                requester = createUser();
+                receiver = user;
+                receiverSkill = createUserSkill();
+                skillExchange = createSkillExchange(requester, receiver, receiverSkill);
+                settlement = createSettlement(skillExchange, receiver);
+                int balance = credit.getBalance();
+
+                // credit 조회 Mock
+                when(creditRepository.findByUserId(receiver.getId())).thenReturn(Optional.of(credit));
+
+                // when
+                creditService.settleCredit(settlement);
+
+                // then
+                // credit 정산 여부
+                assertThat(credit.getBalance()).isEqualTo(balance + settlement.getAmount());
+
+                verify(historyService, atMost(1)).createExchangeHistory(
+                        receiver,
+                        requester,
+                        skillExchange,
+                        SupplyType.ADD,
+                        skillExchange.getCreditPrice(),
+                        credit.getBalance(),
+                        HistoryType.EXCHANGE_SETTLED
+                );
+            }
+        }
+
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+            @Test
+            @DisplayName("credit이 존재하지 않아 NotFoundCreditException")
+            public void fail_NotFoundCreditException() {
+                // given
+                requester = createUser();
+                receiver = user;
+                receiverSkill = createUserSkill();
+                skillExchange = createSkillExchange(requester, receiver, receiverSkill);
+                settlement = createSettlement(skillExchange, receiver);
+                // credit 조회 Mock
+                when(creditRepository.findByUserId(receiver.getId())).thenReturn(Optional.empty());
+
+                // when && then
+                assertThatThrownBy(() -> creditService.settleCredit(settlement))
+                        .isInstanceOf(NotFoundCreditException.class);
+            }
+        }
+    }
+
+    private Settlement createSettlement(SkillExchange exchange, User receiver){
+        Settlement settlement = Settlement.create(exchange, receiver);
+        ReflectionTestUtils.setField(settlement, "id", 1L);
+        return settlement;
     }
 
     private UserSkill createUserSkill(){
