@@ -1,9 +1,11 @@
 package org.swyp.linkit.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.dto.UserSkillDto;
+import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.SkillCategory;
 import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -14,6 +16,7 @@ import org.swyp.linkit.global.error.exception.SkillCategoryNotFoundException;
 import org.swyp.linkit.global.error.exception.UserProfileNotFoundException;
 import org.swyp.linkit.global.error.exception.UserSkillNotFoundException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -80,6 +83,22 @@ public class UserSkillService {
         // 2. 프로필에서 스킬 제거 (orphanRemoval = true로 자동 삭제)
         UserProfile userProfile = userSkill.getUserProfile();
         userProfile.removeUserSkill(userSkill);
+    }
+
+    // 스킬 노출 토글
+    @Transactional
+    public UserSkillResponseDto toggleVisibility(Long userId, Long skillId) {
+        // 1. 스킬 조회
+        UserSkill userSkill = userSkillRepository.findByIdAndUserId(skillId, userId)
+                .orElseThrow(UserSkillNotFoundException::new);
+
+        // 2. 노출 토글
+        userSkill.toggleVisibility();
+
+        log.info("스킬 노출 상태 변경: userId={}, skillId={}, isVisible={}",
+                userId, skillId, userSkill.getIsVisible());
+
+        return UserSkillResponseDto.from(userSkill);
     }
 
     // UserSkill ID로 UserProfile, User 포함하여 조회

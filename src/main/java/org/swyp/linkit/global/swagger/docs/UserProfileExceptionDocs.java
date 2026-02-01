@@ -130,4 +130,23 @@ public class UserProfileExceptionDocs {
             }
         }
     }
+
+    /**
+     * toggleSkillVisibility
+     */
+    public static class ToggleSkillVisibility {
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class UserSkillNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.USER_SKILL_NOT_FOUND;
+            }
+        }
+    }
 }
