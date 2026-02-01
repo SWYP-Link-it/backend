@@ -368,15 +368,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         }
     }
 
-//    /**
-//     *  SkillExchange 조회
-//     */
-//    private SkillExchange getSkillExchangeById(Long skillExchangeId) {
-//        return exchangeRepository.findById(skillExchangeId)
-//                .orElseThrow(() -> new ExchangeNotFoundException());
-//    }
-
-
     /**
      *  해당 스킬 거래가 receiver의 거래 여부 검증 -> ExchangeAccessDeniedException
      */

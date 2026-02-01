@@ -1,4 +1,4 @@
-package org.swyp.linkit.domain.settlement.entitiy;
+package org.swyp.linkit.domain.settlement.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

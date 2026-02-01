@@ -11,6 +11,7 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.entity.SupplyType;
 import org.swyp.linkit.domain.credit.repository.CreditRepository;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.error.exception.NotEnoughCreditException;
 import org.swyp.linkit.global.error.exception.NotFoundCreditException;
@@ -34,6 +35,7 @@ public class CreditServiceImpl implements CreditService{
     public CreditDto createCredit(User user) {
         // credit 생성, save
         Credit credit = creditRepository.save(Credit.create(user, 0));
+
         log.debug("크레딧 생성. userId= {}", user.getId());
         return CreditDto.from(credit);
     }
@@ -66,6 +68,7 @@ public class CreditServiceImpl implements CreditService{
     public CreditDto getCreditBalance(Long userId) {
         // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(userId);
+
         log.debug("크레딧 잔액 조회. userId= {}, balance= {}", userId, credit.getBalance());
         return CreditDto.from(credit);
     }
@@ -78,6 +81,7 @@ public class CreditServiceImpl implements CreditService{
     public CreditWithUserDetailsDto getCreditBalanceWithUserDetails(Long userId) {
         // 1. credit 조회
         Credit credit = getCreditByUserId(userId);
+
         // 2. user 객체 접근 -> 조회 쿼리 1번 추가 발생
         User user = credit.getUser();
         log.debug("크레딧 잔액 및 유저 정보 조회. userId= {}, balance= {}", userId, credit.getBalance());
@@ -93,6 +97,7 @@ public class CreditServiceImpl implements CreditService{
     public void validateAvailableBalance(Long userId, int amount) {
         // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(userId);
+
         // 2. 잔액이 요청 금액보다 부족 여부 검증 -> NotEnoughCreditException
         if(credit.getBalance() < amount){
             throw new NotEnoughCreditException();
@@ -108,10 +113,13 @@ public class CreditServiceImpl implements CreditService{
     public void useCreditForExchangeRequest(SkillExchange skillExchange) {
         User requester = skillExchange.getRequester();
         int amount = skillExchange.getCreditPrice();
+
         // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(requester.getId());
+
         // 2. credit 차감 -> NotEnoughCreditException
         credit.useCredit(amount);
+
         // 3. creditHistory 생성
         historyService.createExchangeHistory(
                 requester,
@@ -135,6 +143,7 @@ public class CreditServiceImpl implements CreditService{
     public void refundCreditForExchange(SkillExchange skillExchange, HistoryType historyType) {
         User requester = skillExchange.getRequester();
         int amount = skillExchange.getCreditPrice();
+
         // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(requester.getId());
 
@@ -152,11 +161,35 @@ public class CreditServiceImpl implements CreditService{
                 historyType
         );
     }
-    //todo 여기까지 테스트 완료
 
-    // 정산 -> receiver 에게 크레딧 지급 및 creditHistory 생성
+    /**
+     *  크레딧 수급 - 스킬 거래 정산
+     *  (receiver에게 credit 지급 및 creditHistory 생성)
+     */
+    @Transactional
+    @Override
+    public void settleCredit(Settlement settlement) {
+        SkillExchange skillExchange = settlement.getSkillExchange();
+        User receiver = skillExchange.getReceiver();
+        int amount = settlement.getAmount();
 
+        // 1. credit 조회 -> NotFoundCreditException
+        Credit credit = getCreditByUserId(receiver.getId());
 
+        // 2. credit 지급 -> InvalidCreditAmountException
+        credit.addCredit(amount);
+
+        // 3. creditHistory 생성
+        historyService.createExchangeHistory(
+                receiver,
+                skillExchange.getRequester(),
+                skillExchange,
+                SupplyType.ADD,
+                amount,
+                credit.getBalance(),
+                HistoryType.EXCHANGE_SETTLED
+        );
+    }
     // == private Method ==
 
     // Credit 조회 및 지급 + CreditHistory 생성 및 save 처리

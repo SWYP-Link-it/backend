@@ -5,54 +5,78 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
-import org.swyp.linkit.domain.settlement.entitiy.Settlement;
+import org.swyp.linkit.domain.settlement.entity.Settlement;
+import org.swyp.linkit.domain.settlement.entity.SettlementStatus;
 import org.swyp.linkit.domain.settlement.repository.SettlementRepository;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.error.exception.SettlementNotFoundException;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class SettlementServiceImpl implements SettlementService{
+public class SettlementServiceImpl implements SettlementService {
 
-    private final SettlementRepository repository;
+    private final SettlementRepository settlementRepository;
+    private final SettlementProcessor settlementProcessor;
 
     /**
-     *  Settlement 생성
+     * Settlement 생성
      */
     @Transactional
     @Override
     public void createSettlement(SkillExchange skillExchange) {
         User receiver = skillExchange.getReceiver();
-        repository.save(Settlement.create(skillExchange, receiver));
+        settlementRepository.save(Settlement.create(skillExchange, receiver));
         log.info("정산 데이터 생성 완료. skillExchangeId= {}, receiverId= {}", skillExchange.getId(), receiver.getId());
     }
 
     /**
-     *  거래 수락 후 취소 시 정산 상태 변경(PENDING -> CANCELED)
+     * 거래 수락 후 취소 시 정산 상태 변경(PENDING -> CANCELED)
      */
     @Transactional
     @Override
     public void cancelSettlement(Long skillExchangeId) {
         // 조회
-        Settlement settlement = repository.findBySkillExchangeId(skillExchangeId)
+        Settlement settlement = settlementRepository.findBySkillExchangeId(skillExchangeId)
                 .orElseThrow(SettlementNotFoundException::new);
 
-        // cancel 처리
+        // cancel 처리 -> InvalidSettlementStatusException
         settlement.cancel();
         log.info("정산 취소 완료. settlementId= {}, skillExchangeId= {}", settlement.getId(), skillExchangeId);
     }
 
     /**
-     *  자동 정산 실행 (스케줄러 전용)
-     *  종료 시간이 지난 대기 중인 정산 건들을 처리하고 크레딧 지급
+     * 자동 정산 실행 (스케줄러 전용)
+     * 종료 시간이 지난 대기 중인 정산 건들을 처리하고 크레딧 지급
      */
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public int processAutoSettlement() {
-        return 0;
-        // 유저 가르친 횟수
+        LocalDate today = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+
+        // 1. 정산 대상인 Settlement 조회 ( Requester, Receiver, ReceiverSkill, ReceiverProfile Fetch Join)
+        List<Settlement> settleTargets = settlementRepository.findSettleTargets(SettlementStatus.PENDING, today, nowTime);
+        if (settleTargets.isEmpty()) {
+            log.info("정산 처리 대상 없음");
+            return 0;
+        }
+
+        // 2. 각 정산 독립적인 트랜잭션으로 처리
+        int successCount = 0;
+        for (Settlement settlement : settleTargets) {
+            try {
+                // REQUIRES_NEW
+                settlementProcessor.processSingleSettlement(settlement);
+                successCount++;
+            } catch (Exception e) {
+                log.error("정산 처리 실패. settlementId: {}, errorMessage: {}", settlement.getId(), e.getMessage());
+            }
+        }
+        return successCount;
     }
-
-
 }
