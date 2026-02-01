@@ -14,7 +14,7 @@ public class SkillExchangeExpireScheduler {
     private final SkillExchangeService exchangeService;
 
     /**
-     *  매일 12시 00분에 거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
+     *  매일 00시 00분에 거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
      */
     @Scheduled(cron = "${schedules.cancel-cron}", zone = "Asia/Seoul")
     public void runExpireRequests(){
