@@ -39,15 +39,7 @@ public class SkillMarketController {
 
         log.info("[SkillMarket] GET /market/skills : category={}", category);
 
-        List<SkillCardResponseDto> skills;
-
-        if (category != null) {
-            // 카테고리별 조회
-            skills = skillMarketService.getVisibleSkillsByCategory(category);
-        } else {
-            // 전체 조회
-            skills = skillMarketService.getAllVisibleSkills();
-        }
+        List<SkillCardResponseDto> skills = skillMarketService.getVisibleSkills(category);
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 카드 목록을 조회했습니다.", skills)
