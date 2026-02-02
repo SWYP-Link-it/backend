@@ -86,4 +86,15 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "AND us.isVisible = true " +
             "ORDER BY us.createdAt DESC")
     List<UserSkill> findVisibleSkillsWithImagesByUserId(@Param("userId") Long userId);
+
+    // 스킬명으로 노출 중인 스킬 검색 (완전 일치, 대소문자 무시)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory " +
+            "WHERE us.isVisible = true " +
+            "AND LOWER(us.skillName) = LOWER(:skillName) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> searchVisibleSkillsByName(@Param("skillName") String skillName);
+
 }
