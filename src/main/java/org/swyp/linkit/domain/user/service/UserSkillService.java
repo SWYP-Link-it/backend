@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.dto.UserSkillDto;
+import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.SkillCategory;
 import org.swyp.linkit.domain.user.entity.UserProfile;
@@ -15,6 +16,8 @@ import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 import org.swyp.linkit.global.error.exception.SkillCategoryNotFoundException;
 import org.swyp.linkit.global.error.exception.UserProfileNotFoundException;
 import org.swyp.linkit.global.error.exception.UserSkillNotFoundException;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -115,5 +118,16 @@ public class UserSkillService {
                 .orElseThrow(() ->
                         new UserSkillNotFoundException("존재하지 않는 스킬입니다")
                 );
+    }
+
+    // 특정 사용자의 교환용 스킬 목록 조회
+    public List<UserSkillForExchangeDto> getSkillsForExchange(Long userId) {
+        List<UserSkill> skills = userSkillRepository.findVisibleSkillsByUserId(userId);
+
+        log.info("교환용 스킬 목록 조회: userId={}, count={}", userId, skills.size());
+
+        return skills.stream()
+                .map(UserSkillForExchangeDto::from)
+                .toList();
     }
 }

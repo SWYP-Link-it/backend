@@ -15,6 +15,9 @@ import org.swyp.linkit.global.error.exception.SkillImageFileTypeNotSupportedExce
 import org.swyp.linkit.global.error.exception.SkillImageUploadFailedException;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -126,20 +129,45 @@ public class UserSkillImageUploadService {
         }
     }
 
-    // NCP에서 이미지 삭제
+    // NCP Object Storage에서 이미지 삭제
     public void deleteImage(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            log.warn("삭제할 이미지 URL이 비어있습니다.");
+            return;
+        }
+
         try {
-            String fileName = extractFileNameFromUrl(imageUrl);
-            amazonS3.deleteObject(bucketName, fileName);
-            log.info("이미지 삭제 성공: {}", imageUrl);
+            String key = extractKeyFromUrl(imageUrl);
+            amazonS3.deleteObject(bucketName, key);
+            log.info("이미지 삭제 성공: key={}", key);
         } catch (Exception e) {
-            log.error("NCP 이미지 삭제 실패: {}", e.getMessage(), e);
+            log.error("NCP 이미지 삭제 실패: url={}, error={}", imageUrl, e.getMessage(), e);
         }
     }
 
-    // URL에서 파일명 추출
-    private String extractFileNameFromUrl(String imageUrl) {
-        int bucketIndex = imageUrl.indexOf(bucketName) + bucketName.length() + 1;
-        return imageUrl.substring(bucketIndex);
+    // URL에서 S3 객체 키 추출
+    private String extractKeyFromUrl(String imageUrl) {
+        URI uri = URI.create(imageUrl);
+        String rawPath = uri.getRawPath();
+
+        // 앞의 "/" 제거
+        String path = rawPath.startsWith("/") ? rawPath.substring(1) : rawPath;
+
+        // 버킷 이름 prefix 제거
+        String key = removeBucketPrefix(path);
+
+        // URL 디코딩 (공백, 한글 등 특수문자 처리)
+        return URLDecoder.decode(key, StandardCharsets.UTF_8);
+    }
+
+    // Path에서 버킷 이름 prefix 제거
+    private String removeBucketPrefix(String path) {
+        String prefix = bucketName + "/";
+
+        if (path.startsWith(prefix)) {
+            return path.substring(prefix.length());
+        }
+
+        return path;
     }
 }

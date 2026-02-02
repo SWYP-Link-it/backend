@@ -8,13 +8,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
+import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
 import org.swyp.linkit.domain.market.service.SkillMarketService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
+import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
+import org.swyp.linkit.global.swagger.docs.SkillMarketExceptionDocs;
 
 import java.util.List;
 
@@ -43,6 +47,26 @@ public class SkillMarketController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 카드 목록을 조회했습니다.", skills)
+        );
+    }
+
+    @Operation(
+            summary = "스킬 상세 정보 조회",
+            description = "스킬 ID로 스킬 상세 정보와 프로필 정보를 함께 조회합니다. " +
+                    "해당 사용자의 다른 스킬 목록도 포함됩니다."
+    )
+    @ApiErrorExceptionsExample(SkillMarketExceptionDocs.GetSkillDetail.class)
+    @GetMapping(value = "/skills/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<SkillDetailDto>> getSkillDetail(
+            @Parameter(description = "스킬 ID", required = true)
+            @PathVariable Long skillId) {
+
+        log.info("[SkillMarket] GET /market/skills/{}", skillId);
+
+        SkillDetailDto skillDetail = skillMarketService.getSkillDetail(skillId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("스킬 상세 정보를 조회했습니다.", skillDetail)
         );
     }
 }
