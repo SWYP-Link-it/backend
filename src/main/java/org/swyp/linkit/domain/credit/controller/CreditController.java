@@ -43,7 +43,7 @@ public class CreditController {
     public ResponseEntity<ApiResponseDto<CreditBalanceResponseDto>> getCreditBalance(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 
-        log.info("[Credit] Get getCreditBalance : userId= {}", oAuth2User.getUserId());
+        log.debug("[Credit] Get getCreditBalance : userId= {}", oAuth2User.getUserId());
         CreditDto creditDto = creditService.getCreditBalance(oAuth2User.getUserId());
         CreditBalanceResponseDto responseDto = CreditBalanceResponseDto.from(creditDto);
 
@@ -59,7 +59,7 @@ public class CreditController {
     public ResponseEntity<ApiResponseDto<CreditBalanceWithUserDetailsResponseDto>> getCreditBalanceWithUserDetails(
             @AuthenticationPrincipal CustomOAuth2User oAuth2User) {
 
-        log.info("[Credit] Get getCreditBalanceWithUserDetails : userId= {}", oAuth2User.getUserId());
+        log.debug("[Credit] Get getCreditBalanceWithUserDetails : userId= {}", oAuth2User.getUserId());
         CreditWithUserDetailsDto cd = creditService.getCreditBalanceWithUserDetails(oAuth2User.getUserId());
         CreditBalanceWithUserDetailsResponseDto responseDto = CreditBalanceWithUserDetailsResponseDto.from(cd);
 
@@ -78,7 +78,7 @@ public class CreditController {
             @RequestParam(required = false) SupplyType supplyType,
             @RequestParam(required = false, defaultValue = "5") int size) {
 
-        log.info("[Credit] Get getCreditHistories : userId= {}", oAuth2User.getUserId());
+        log.debug("[Credit] Get getCreditHistories : userId= {}", oAuth2User.getUserId());
         CreditHistoryResponseDto responseDto = historyService
                 .getUserCreditHistories(oAuth2User.getUserId(), supplyType, nextCursor, size);
 
