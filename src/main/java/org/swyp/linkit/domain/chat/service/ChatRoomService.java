@@ -14,10 +14,7 @@ import org.swyp.linkit.domain.chat.repository.ChatRoomDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.repository.UserRepository;
-import org.swyp.linkit.global.error.exception.ChatInvalidUserException;
-import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
-import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
-import org.swyp.linkit.global.error.exception.ChatSameUserException;
+import org.swyp.linkit.global.error.exception.*;
 
 import java.util.List;
 import java.util.Set;
@@ -39,7 +36,7 @@ public class ChatRoomService {
      */
     @Transactional
     public ChatRoomDto createOrGetRoom(Long mentorId, Long menteeId) {
-        validateUsers(mentorId, menteeId);
+        validateUserIds(mentorId, menteeId);
 
         // 기존 채팅방 확인
         return chatRoomRepository.findByMentorIdAndMenteeId(mentorId, menteeId)
@@ -48,8 +45,11 @@ public class ChatRoomService {
                     return ChatRoomDto.from(room);
                 })
                 .orElseGet(() -> {
-                    // 새 채팅방 생성
-                    ChatRoom newRoom = ChatRoom.create(mentorId, menteeId);
+                    // User 엔티티 조회 후 연관관계로 주입
+                    User mentor = findUserById(mentorId);
+                    User mentee = findUserById(menteeId);
+
+                    ChatRoom newRoom = ChatRoom.create(mentor, mentee);
                     chatRoomRepository.save(newRoom);
                     log.info("새로운 채팅방 생성: roomId={}, mentorId={}, menteeId={}", newRoom.getId(), mentorId, menteeId);
                     return ChatRoomDto.from(newRoom);
@@ -64,8 +64,8 @@ public class ChatRoomService {
 
         Set<Long> deletedRoomIds = Set.copyOf(chatRoomDeleteRepository.findDeletedRoomIdsByUserId(userId));
 
-        // JPQL JOIN으로 한 번에 조회 (N+1 해결)
-        // 결과: [ChatRoom, User(mentor), User(mentee), ChatMessage(lastMessage)]
+        // fetch join으로 한 번에 조회 (N+1 해결)
+        // 결과: [ChatRoom(with mentor, mentee), ChatMessage(lastMessage)]
         List<Object[]> results = chatRoomRepository.findAllByUserIdWithDetails(userId);
 
         return results.stream()
@@ -75,16 +75,14 @@ public class ChatRoomService {
                 })
                 .map(row -> {
                     ChatRoom room = (ChatRoom) row[0];
-                    User mentor = (User) row[1];
-                    User mentee = (User) row[2];
-                    ChatMessage lastMessage = (ChatMessage) row[3];
+                    ChatMessage lastMessage = (ChatMessage) row[1];
 
                     // 마지막 메시지 내용
                     String lastMessageContent = lastMessage != null ? lastMessage.getContent() : null;
 
-                    // 상대방 정보
+                    // 상대방 정보 (연관관계로 바로 접근)
                     boolean isMentor = room.getMentorId().equals(userId);
-                    User partner = isMentor ? mentee : mentor;
+                    User partner = isMentor ? room.getMentee() : room.getMentor();
                     String partnerNickname = partner != null ? partner.getNickname() : "알 수 없음";
                     String partnerProfileImageUrl = partner != null ? partner.getProfileImageUrl() : null;
 
@@ -94,10 +92,10 @@ public class ChatRoomService {
     }
 
     /**
-     * 채팅방 ID로 조회
+     * 채팅방 ID로 조회 (fetch join)
      */
     public ChatRoom findById(Long roomId) {
-        return chatRoomRepository.findById(roomId)
+        return chatRoomRepository.findByIdWithUsers(roomId)
                 .orElseThrow(() -> new ChatRoomNotFoundException(roomId));
     }
 
@@ -161,13 +159,18 @@ public class ChatRoomService {
 
     // === Private Helper Methods ===
 
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
+    }
+
     private void validateUserExists(Long userId) {
         if (userId == null || userId <= 0) {
             throw new ChatInvalidUserException();
         }
     }
 
-    private void validateUsers(Long mentorId, Long menteeId) {
+    private void validateUserIds(Long mentorId, Long menteeId) {
         if (mentorId == null || menteeId == null) {
             throw new ChatInvalidUserException();
         }
