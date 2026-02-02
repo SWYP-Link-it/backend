@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.global.validation.EndTimeDeserializer;
+import org.swyp.linkit.global.validation.ValidScheduleTime;
 
 import java.time.LocalTime;
 
@@ -17,6 +18,7 @@ import java.time.LocalTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Schema(description = "교환 가능 시간 등록 요청")
+@ValidScheduleTime
 public class AvailableScheduleRequestDto {
 
     @Schema(description = "스케줄 ID (수정 시 필수, 생성 시 null)", example = "1")
