@@ -85,7 +85,7 @@ public class CreditHistoryServiceImplIntegrationTest {
 
                 // then
                 // creditHistory 생성 검증
-                Optional<CreditHistory> optionalCreditHistory = historyRepository.findByUserId(savedUser.getId());
+                Optional<CreditHistory> optionalCreditHistory = historyRepository.findTopByUserIdOrderByIdDesc(savedUser.getId());
                 assertThat(optionalCreditHistory).isPresent();
 
                 CreditHistory foundHistory = optionalCreditHistory.get();
@@ -130,7 +130,7 @@ public class CreditHistoryServiceImplIntegrationTest {
                 SkillExchange skillExchange = createSavedExchange(requester, receiver, receiverSkill);
 
                 int amount = 2;
-                int balanceAfter = requesterCredit.getBalance() + amount;
+                int balanceAfter = requesterCredit.getBalance() - amount;
                 HistoryType historyType = HistoryType.EXCHANGE_REQUEST;
 
                 // when

@@ -85,7 +85,7 @@ public class CreditServiceImplIntegrationTest {
 
                 // then
                 // DB credit 저장 검증
-                assertThat(creditRepository.findByUserId(userId))
+                assertThat(creditRepository.findById(result.getCreditId()))
                         .isPresent()
                         .get()
                         .satisfies(credit -> {
@@ -138,7 +138,7 @@ public class CreditServiceImplIntegrationTest {
                         });
 
                 // DB creditHistory save 검증
-                assertThat(historyRepository.findByUserId(userId))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(userId))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
@@ -209,7 +209,7 @@ public class CreditServiceImplIntegrationTest {
                         });
 
                 // DB creditHistory save 검증
-                assertThat(historyRepository.findByUserId(userId))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(userId))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
@@ -448,7 +448,7 @@ public class CreditServiceImplIntegrationTest {
                         .isEqualTo(requesterBeforeBalance - expectedChangeAmount);
 
                 // creditHistory 검증
-                assertThat(historyRepository.findByUserId(requester.getId()))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(requester.getId()))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
@@ -543,7 +543,7 @@ public class CreditServiceImplIntegrationTest {
 
                 // creditHistory 검증
                 int expectedChangeAmount = skillExchange.getExchangeDuration() / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
-                assertThat(historyRepository.findByUserId(requester.getId()))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(requester.getId()))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
@@ -582,7 +582,7 @@ public class CreditServiceImplIntegrationTest {
 
                 // creditHistory 검증
                 int expectedChangeAmount = skillExchange.getExchangeDuration() / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
-                assertThat(historyRepository.findByUserId(requester.getId()))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(requester.getId()))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
@@ -659,7 +659,7 @@ public class CreditServiceImplIntegrationTest {
                 assertThat(foundCredit.getBalance()).isEqualTo(receiverBeforeBalance + settlementAmount);
 
                 // creditHistory 검증
-                assertThat(historyRepository.findByUserId(receiver.getId()))
+                assertThat(historyRepository.findTopByUserIdOrderByIdDesc(receiver.getId()))
                         .isPresent()
                         .get()
                         .satisfies(history -> {
