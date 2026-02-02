@@ -156,7 +156,7 @@ public class SkillExchangeController {
             description = "멘토가 스킬 거래를 수락 합니다. 수락은 대기중 상태만 가능합니다."
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.AcceptSkillExchange.class)
-    @PostMapping(value = "/{skillExchangeId}/accept", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/request/{skillExchangeId}/accept", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<SkillExchangeResponseDto>> acceptSkillExchange(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
             @Parameter(description = "스킬 거래의 ID", example = "1")
@@ -175,7 +175,7 @@ public class SkillExchangeController {
             description = "멘토가 스킬 거래를 거절 합니다. 거절은 대기중 상태만 가능합니다."
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.RejectSkillExchange.class)
-    @PostMapping(value = "/{skillExchangeId}/reject", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/request/{skillExchangeId}/reject", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<SkillExchangeResponseDto>> rejectSkillExchange(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
             @Parameter(description = "스킬 거래의 ID", example = "1")
@@ -194,7 +194,7 @@ public class SkillExchangeController {
             description = "스킬 거래를 취소 합니다. (멘토 : 수락됨, 멘티 : 대기중, 수락됨) 상태에서만 취소가 가능합니다."
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.CancelSkillExchange.class)
-    @PostMapping(value = "/{skillExchangeId}/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/request/{skillExchangeId}/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<SkillExchangeResponseDto>> cancelSkillExchange(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
             @Parameter(description = "스킬 거래의 ID", example = "1")
