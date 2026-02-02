@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.user.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,7 +9,7 @@ import org.swyp.linkit.domain.user.entity.UserSkill;
 
 @Getter
 @Builder
-@AllArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Schema(description = "교환용 스킬 정보 응답 DTO")
 public class UserSkillForExchangeDto {
 
