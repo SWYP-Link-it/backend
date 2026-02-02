@@ -29,5 +29,6 @@ public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Lo
                                                       @Param("cursorId") Long cursorId,
                                                       Pageable pageable);
 
-    Optional<CreditHistory> findByUserId(@Param("userId") Long userId);
+    Optional<CreditHistory> findTopByUserIdOrderByIdDesc(@Param("userId") Long userId);
+
 }
