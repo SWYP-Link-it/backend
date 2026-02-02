@@ -100,6 +100,8 @@ public class CreditServiceImpl implements CreditService{
 
         // 2. 잔액이 요청 금액보다 부족 여부 검증 -> NotEnoughCreditException
         if(credit.getBalance() < amount){
+            log.warn("크레딧 잔액이 요청 금액보다 부족하여 크레딧 사용이 불가. userId= {}, balance= {}, amount= {}",
+                    userId, credit.getBalance(), amount);
             throw new NotEnoughCreditException();
         }
     }
@@ -131,7 +133,8 @@ public class CreditServiceImpl implements CreditService{
                 HistoryType.EXCHANGE_REQUEST
         );
 
-        log.info("크레딧 차감 완료. userId= {}, amount= {}, balance= {}", requester.getId(), amount, credit.getBalance());
+        log.info("스킬 거래 요청으로 인한 크레딧 차감. userId= {}, amount= {}, balance= {}",
+                requester.getId(), amount, credit.getBalance());
     }
 
     /**
@@ -160,6 +163,9 @@ public class CreditServiceImpl implements CreditService{
                 credit.getBalance(),
                 historyType
         );
+        log.info("스킬 교환 취소 및 거절로 인한 크레딧 지급. userId= {}, amount= {}, balance= {}",
+                requester.getId(), amount, credit.getBalance());
+
     }
 
     /**
@@ -189,6 +195,9 @@ public class CreditServiceImpl implements CreditService{
                 credit.getBalance(),
                 HistoryType.EXCHANGE_SETTLED
         );
+        log.info("스킬 거래 정산으로 인한 크레딧 지급. userId= {}, amount= {}, balance= {}",
+                receiver.getId(), amount, credit.getBalance());
+
     }
     // == private Method ==
 
