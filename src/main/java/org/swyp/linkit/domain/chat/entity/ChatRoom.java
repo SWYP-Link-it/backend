@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
 import java.time.LocalDateTime;
@@ -20,11 +21,13 @@ public class ChatRoom extends BaseTimeEntity {
     @Column(name = "chat_room_id")
     private Long id;
 
-    @Column(name = "mentor_id", nullable = false)
-    private Long mentorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentor_id", nullable = false)
+    private User mentor;
 
-    @Column(name = "mentee_id", nullable = false)
-    private Long menteeId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentee_id", nullable = false)
+    private User mentee;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,10 +46,7 @@ public class ChatRoom extends BaseTimeEntity {
     private Integer unreadMenteeCount;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private ChatRoom(Long mentorId, Long menteeId, ChatRoomStatus status,
-                     Integer unreadMentorCount, Integer unreadMenteeCount) {
-        this.mentorId = mentorId;
-        this.menteeId = menteeId;
+    private ChatRoom(ChatRoomStatus status, Integer unreadMentorCount, Integer unreadMenteeCount) {
         this.status = status;
         this.unreadMentorCount = unreadMentorCount;
         this.unreadMenteeCount = unreadMenteeCount;
@@ -55,14 +55,33 @@ public class ChatRoom extends BaseTimeEntity {
     /**
      * 1:1 채팅방 생성 (멘토-멘티)
      */
-    public static ChatRoom create(Long mentorId, Long menteeId) {
-        return ChatRoom.builder()
-                .mentorId(mentorId)
-                .menteeId(menteeId)
+    public static ChatRoom create(User mentor, User mentee) {
+        ChatRoom chatRoom = ChatRoom.builder()
                 .status(ChatRoomStatus.OPEN)
                 .unreadMentorCount(0)
                 .unreadMenteeCount(0)
                 .build();
+        chatRoom.assignMentor(mentor);
+        chatRoom.assignMentee(mentee);
+        return chatRoom;
+    }
+
+    // === 연관관계 편의 메서드 ===
+    private void assignMentor(User mentor) {
+        this.mentor = mentor;
+    }
+
+    private void assignMentee(User mentee) {
+        this.mentee = mentee;
+    }
+
+    // === 편의 메서드: ID 조회 (하위 호환성) ===
+    public Long getMentorId() {
+        return mentor != null ? mentor.getId() : null;
+    }
+
+    public Long getMenteeId() {
+        return mentee != null ? mentee.getId() : null;
     }
 
     /**
