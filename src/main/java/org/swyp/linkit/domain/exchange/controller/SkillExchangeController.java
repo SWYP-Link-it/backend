@@ -14,6 +14,8 @@ import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
+import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
+import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
@@ -21,6 +23,7 @@ import org.swyp.linkit.global.swagger.docs.SkillExchangeExceptionDocs;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +32,24 @@ import java.time.YearMonth;
 public class SkillExchangeController {
 
     private final SkillExchangeService exchangeService;
+    private final UserSkillService userSkillService;
+
+    /**
+     * 멘토의 교환 가능 스킬 정보 조회
+     */
+    @Operation(
+            summary = "멘토의 교환 가능 스킬 정보 조회",
+            description = "거래 신청 전, 멘토가 제공 가능한 스킬 목록에 대한 정보를 조회합니다."
+    )
+    @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetReceiverSkillDetails.class)
+    @GetMapping(value = "/mentors/{mentorId}/skills", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<List<UserSkillForExchangeDto>>> getReceiverSkillDetails(
+            @Parameter(description = "멘토의 사용자 ID", example = "1")
+            @PathVariable Long mentorId) {
+
+        List<UserSkillForExchangeDto> responseDto = userSkillService.getSkillsForExchange(mentorId);
+        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
+    }
 
     /**
      *  멘토의 거래 가능 날짜 조회
@@ -205,3 +226,22 @@ public class SkillExchangeController {
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 }
+//    /**
+//     *  멘토의 스킬 정보 조회
+//     */
+//    @Operation(
+//            summary = "멘토의 스킬 정보 조회",
+//            description = "멘토의 스킬 정보를 조회합니다."
+//    )
+//    @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetAvailableDates.class)
+//    @GetMapping(value = "/mentors/{mentorId}/available-dates", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<ApiResponseDto<AvailableDatesResponseDto>> getAvailableDates(
+//            @Parameter(description = "멘토의 사용자 ID", example = "1")
+//            @PathVariable Long mentorId,
+//
+//            @Parameter(description = "조회할 년-월 (YYYY-MM)", example = "2026-01")
+//            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month){
+//
+//        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, month.toString());
+//        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
+//    }
