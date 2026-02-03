@@ -2,9 +2,6 @@ package org.swyp.linkit.global.swagger.docs;
 
 import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.code.BaseErrorCode;
-import org.swyp.linkit.global.error.exception.ExchangeCancelNotAllowedException;
-import org.swyp.linkit.global.error.exception.InvalidExchangeStatusException;
-import org.swyp.linkit.global.error.exception.NotFoundCreditException;
 import org.swyp.linkit.global.swagger.annotation.ExceptionDoc;
 import org.swyp.linkit.global.swagger.exception.SwaggerExampleExceptions;
 
@@ -13,6 +10,18 @@ import org.swyp.linkit.global.swagger.exception.SwaggerExampleExceptions;
  */
 @ExceptionDoc
 public class SkillExchangeExceptionDocs {
+
+    /**
+     * getReceiverSkillDetails
+     */
+    public static class GetReceiverSkillDetails{
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+    }
 
     /**
      * getAvailableDates

@@ -19,9 +19,6 @@ public class UserSkillForExchangeDto {
     @Schema(description = "스킬명", example = "React")
     private String skillName;
 
-    @Schema(description = "스킬 제목", example = "React 고급 강의")
-    private String skillTitle;
-
     @Schema(description = "스킬 거래 시간 (분)", example = "60")
     private Integer exchangeDuration;
 
@@ -32,7 +29,6 @@ public class UserSkillForExchangeDto {
         return UserSkillForExchangeDto.builder()
                 .skillId(userSkill.getId())
                 .skillName(userSkill.getSkillName())
-                .skillTitle(userSkill.getSkillTitle())
                 .exchangeDuration(userSkill.getExchangeDuration())
                 .creditPrice(calculateCreditPrice(userSkill.getExchangeDuration()))
                 .build();
