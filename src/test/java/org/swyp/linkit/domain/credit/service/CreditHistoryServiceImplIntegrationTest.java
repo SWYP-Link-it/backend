@@ -67,7 +67,7 @@ public class CreditHistoryServiceImplIntegrationTest {
         @DisplayName("성공 케이스")
         class SuccessCases {
             @Test
-            @DisplayName("성공")
+            @DisplayName("리워드 지급 관련 크레딧 내역을 생성한다. targetUser, SkillExchange -> null")
             public void success() {
                 // given
                 User savedUser = createSavedUser();
@@ -111,14 +111,14 @@ public class CreditHistoryServiceImplIntegrationTest {
     }
 
     @Nested
-    @DisplayName("스킬 교환 크레딧 내역을 생성한다.")
+    @DisplayName("스킬 거래 크레딧 내역을 생성한다.")
     class CreateExchangeHistory{
 
         @Nested
         @DisplayName("성공 케이스")
         class SuccessCases {
             @Test
-            @DisplayName("성공")
+            @DisplayName("스킬 거래 관련 크레딧 내역을 생성한다.")
             public void success() {
                 // given
                 User requester = createSavedUser();
@@ -126,7 +126,7 @@ public class CreditHistoryServiceImplIntegrationTest {
                 Credit requesterCredit = createSavedCredit(requester, 5);
                 SkillCategory skillCategory = createSavedSkillCategory();
                 UserSkill receiverSkill = createUserSkill(skillCategory);
-                UserProfile receiverProfile = createSavedUserProfile(receiver, receiverSkill);
+                createSavedUserProfile(receiver, receiverSkill);
                 SkillExchange skillExchange = createSavedExchange(requester, receiver, receiverSkill);
 
                 int amount = 2;

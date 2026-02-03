@@ -49,32 +49,34 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 멘토의 거래 가능 날짜 조회
      */
+    // 완료
     @Transactional(readOnly = true)
     @Override
-    public AvailableDatesResponseDto getAvailableDates(Long mentorId, String month) {
+    public AvailableDatesResponseDto getAvailableDates(Long mentorId, String yearMonth) {
         // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
         getMentorAndValidation(mentorId);
 
         // 2. 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환) 및 월별 필터링
         List<String> filteredSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
                 .map(dto -> dto.getDate().toString())
-                .filter(date -> date.startsWith(month))
+                .filter(date -> date.startsWith(yearMonth))
                 .distinct()
                 .sorted()
                 .toList();
 
         // 3. 가능한 날짜가 존재 검증 -> ScheduleNotFoundException
         if (filteredSchedules.isEmpty()) {
-            throw new ScheduleNotFoundException(month + "해당 월에 멘토의 스케줄이 존재하지 않습니다.");
+            throw new ScheduleNotFoundException(yearMonth + "해당 월에 멘토의 스케줄이 존재하지 않습니다.");
         }
 
         // 4. 응답 Dto 변환
-        return AvailableDatesResponseDto.of(month, filteredSchedules);
+        return AvailableDatesResponseDto.of(yearMonth, filteredSchedules);
     }
 
     /**
      * 멘토의 날짜 별 거래 가능 시간 조회
      */
+    // 완료
     @Transactional(readOnly = true)
     @Override
     public AvailableSlotsResponseDto getAvailableSlots(Long mentorId, Long receiverSkillId, LocalDate date) {
@@ -98,6 +100,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
+    // 완료
     public SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto) {
         // 1. 멘티 조회 및 검증
         User mentee = userService.getUserById(requesterId);
@@ -199,6 +202,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
+    // 완료
     public SkillExchangeResponseDto acceptSkillExchange(Long receiverId, Long skillExchangeId) {
         // 1. SkillExchange 조회 및 검증 -> ExchangeNotFoundException
         SkillExchange skillExchange = getSkillExchangeWithReceiver(skillExchangeId);
@@ -224,6 +228,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
+    // 완료
     public SkillExchangeResponseDto rejectSkillExchange(Long receiverId, Long skillExchangeId) {
         // 1. SkillExchange (Receiver, Requester Fetch Join) -> ExchangeNotFoundException
         SkillExchange skillExchange = getSkillExchangeWithReceiverAndRequester(skillExchangeId);
