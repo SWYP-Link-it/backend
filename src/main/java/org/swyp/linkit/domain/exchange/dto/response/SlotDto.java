@@ -23,7 +23,7 @@ public class SlotDto {
     @Schema(description = "종료 시간", example = "HH:mm")
     private LocalTime endTime;
 
-    @Schema(description = "예약 가능 여부", example = "true")
+    @Schema(description = "예약 가능 여부 (true, false)", example = "true")
     private boolean isAvailable;
 
     private SlotDto(LocalTime startTime, boolean isAvailable){
