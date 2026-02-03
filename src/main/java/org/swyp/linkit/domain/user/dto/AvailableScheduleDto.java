@@ -1,19 +1,36 @@
 package org.swyp.linkit.domain.user.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.swyp.linkit.domain.user.dto.request.AvailableScheduleRequestDto;
+import org.swyp.linkit.domain.user.entity.Weekday;
 
-import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
 public class AvailableScheduleDto {
 
-    private LocalDate date;
-    private String dayOfWeek;
+    private Long id;
+    private Weekday dayOfWeek;
     private LocalTime startTime;
     private LocalTime endTime;
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private AvailableScheduleDto(Long id, Weekday dayOfWeek,
+                                 LocalTime startTime, LocalTime endTime) {
+        this.id = id;
+        this.dayOfWeek = dayOfWeek;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
+    public static AvailableScheduleDto from(AvailableScheduleRequestDto requestDto) {
+        return AvailableScheduleDto.builder()
+                .id(requestDto.getId())
+                .dayOfWeek(requestDto.getDayOfWeek())
+                .startTime(requestDto.getStartTime())
+                .endTime(requestDto.getEndTime())
+                .build();
+    }
 }

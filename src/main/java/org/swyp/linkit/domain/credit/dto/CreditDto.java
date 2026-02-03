@@ -11,13 +11,13 @@ import org.swyp.linkit.domain.credit.entity.Credit;
 @Builder(access = AccessLevel.PRIVATE)
 public class CreditDto {
 
-    private Long id;
+    private Long creditId;
     private Long userId;
     private int balance;
 
     public static CreditDto from(Credit credit) {
         return CreditDto.builder()
-                .id(credit.getId())
+                .creditId(credit.getId())
                 .userId(credit.getUser().getId())
                 .balance(credit.getBalance())
                 .build();

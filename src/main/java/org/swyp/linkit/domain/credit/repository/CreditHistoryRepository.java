@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.credit.entity.CreditHistory;
 import org.swyp.linkit.domain.credit.entity.SupplyType;
 
+import java.util.Optional;
+
 public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Long> {
 
     /**
@@ -20,10 +22,13 @@ public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Lo
             "left join fetch se.receiverSkill " +
             "WHERE ch.user.id = :userId " +
             "AND (:supplyType IS NULL OR ch.supplyType = :supplyType) " +
-            "AND (:cursorId IS NULL OR ch.id < :cursorId)" +
+            "AND (:cursorId IS NULL OR ch.id < :cursorId) " +
             "ORDER BY ch.id DESC")
     Slice<CreditHistory> findAllByUserIdAndSupplyType(@Param("userId") Long userId,
                                                       @Param("supplyType") SupplyType supplyType,
                                                       @Param("cursorId") Long cursorId,
                                                       Pageable pageable);
+
+    Optional<CreditHistory> findTopByUserIdOrderByIdDesc(@Param("userId") Long userId);
+
 }

@@ -5,10 +5,10 @@ import org.swyp.linkit.global.error.exception.base.BusinessException;
 
 public class UnavailableExchangeTimeException extends BusinessException {
     public UnavailableExchangeTimeException() {
-        super(ErrorCode.INVALID_SCHEDULE_TIME);
+        super(ErrorCode.EXCHANGE_INVALID_SCHEDULE_TIME);
     }
 
     public UnavailableExchangeTimeException(String message) {
-        super(ErrorCode.INVALID_SCHEDULE_TIME, message);
+        super(ErrorCode.EXCHANGE_INVALID_SCHEDULE_TIME, message);
     }
 }

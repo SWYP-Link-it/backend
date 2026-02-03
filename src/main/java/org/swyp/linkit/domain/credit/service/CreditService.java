@@ -1,8 +1,10 @@
 package org.swyp.linkit.domain.credit.service;
 
-import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
 import org.swyp.linkit.domain.credit.dto.CreditDto;
 import org.swyp.linkit.domain.credit.dto.CreditWithUserDetailsDto;
+import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.user.entity.User;
 
 public interface CreditService {
@@ -11,6 +13,9 @@ public interface CreditService {
     CreditDto rewardCreditOnSignupSetup(User user);
     CreditDto rewardCreditOnProfileSetup(User user);
     CreditDto getCreditBalance(Long userId);
-    CreditBalanceUpdateDto useCredit(Long userId, int amount);
+    void validateAvailableBalance(Long userId, int amount);
+    void useCreditForExchangeRequest(SkillExchange skillExchange);
+    void refundCreditForExchange(SkillExchange skillExchange, HistoryType historyType);
+    void settleCredit(Settlement settlement);
     CreditWithUserDetailsDto getCreditBalanceWithUserDetails(Long userId);
 }

@@ -16,10 +16,10 @@ import java.time.LocalDateTime;
 public class CreditHistoryDetailDto {
 
     @Schema(description = "크레딧 사용 내역 식별자(ID)", example = "1")
-    private Long id;
+    private Long creditHistoryId;
     @Schema(description = "스킬 거래 상대 유저 식별자(ID)", example = "2")
     private Long targetUserId;
-    @Schema(description = "상대 유저의 스킬 식별자(ID)", example = "1")
+    @Schema(description = "스킬 식별자(ID)", example = "1")
     private Long skillId;
     @Schema(description = "상대 유저의 프로필 이미지 url", example = "https://example-image")
     private String targetProfileImageUrl;
@@ -39,7 +39,7 @@ public class CreditHistoryDetailDto {
         SkillExchange skillExchange = history.getSkillExchange();
 
         return CreditHistoryDetailDto.builder()
-                .id(history.getId())
+                .creditHistoryId(history.getId())
                 .targetUserId(targetUser == null ? null : targetUser.getId())
                 .skillId(skillExchange == null ? null : skillExchange.getReceiverSkill().getId())
                 .targetProfileImageUrl(targetUser == null ? defaultProfileImageUrl : targetUser.getProfileImageUrl())

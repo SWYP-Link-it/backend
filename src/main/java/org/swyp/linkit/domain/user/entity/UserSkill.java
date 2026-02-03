@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(
         name = "user_skill",
@@ -34,9 +37,12 @@ public class UserSkill extends BaseTimeEntity {
     @Column(name = "skill_name", nullable = false, length = 100)
     private String skillName;
 
+    @Column(name = "skill_title", nullable = false, length = 40)
+    private String skillTitle;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "skill_level", nullable = false, length = 20)
-    private SkillLevel skillLevel;
+    @Column(name = "skill_proficiency", nullable = false, length = 20)
+    private SkillProficiency skillProficiency;
 
     @Column(name = "skill_description", length = 500)
     private String skillDescription;
@@ -50,14 +56,18 @@ public class UserSkill extends BaseTimeEntity {
     @Column(name = "is_visible", nullable = false)
     private Boolean isVisible;
 
+    @OneToMany(mappedBy = "userSkill", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserSkillImage> images = new ArrayList<>();
+
     @Builder(access = AccessLevel.PRIVATE)
     private UserSkill(UserProfile userProfile, SkillCategory skillCategory, String skillName,
-                      SkillLevel skillLevel, String skillDescription, Integer exchangeDuration,
-                      Long viewCount, Boolean isVisible) {
+                      String skillTitle, SkillProficiency skillProficiency, String skillDescription,
+                      Integer exchangeDuration, Long viewCount, Boolean isVisible) {
         this.userProfile = userProfile;
         this.skillCategory = skillCategory;
         this.skillName = skillName;
-        this.skillLevel = skillLevel;
+        this.skillTitle = skillTitle;
+        this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
         this.viewCount = viewCount;
@@ -66,27 +76,60 @@ public class UserSkill extends BaseTimeEntity {
 
     // 사용자 스킬 생성
     public static UserSkill create(SkillCategory skillCategory, String skillName,
-                                   SkillLevel skillLevel, String skillDescription,
-                                   Integer exchangeDuration, Boolean isVisible) {
+                                   String skillTitle, SkillProficiency skillProficiency,
+                                   String skillDescription, Integer exchangeDuration) {
         return UserSkill.builder()
                 .skillCategory(skillCategory)
                 .skillName(skillName)
-                .skillLevel(skillLevel)
+                .skillTitle(skillTitle)
+                .skillProficiency(skillProficiency)
                 .skillDescription(skillDescription)
                 .exchangeDuration(exchangeDuration)
                 .viewCount(0L)
-                .isVisible(isVisible)
+                .isVisible(true)
                 .build();
     }
 
-    // 사용자 스킬의 정보 수정
-    public void update(String skillName, SkillLevel skillLevel, String skillDescription,
-                       Integer exchangeDuration, Boolean isVisible) {
+    // 사용자 스킬 수정
+    public void update(SkillCategory skillCategory, String skillName, String skillTitle,
+                       SkillProficiency skillProficiency, String skillDescription,
+                       Integer exchangeDuration) {
+        this.skillCategory = skillCategory;
         this.skillName = skillName.trim();
-        this.skillLevel = skillLevel;
+        this.skillTitle = skillTitle.trim();
+        this.skillProficiency = skillProficiency;
         this.skillDescription = skillDescription;
         this.exchangeDuration = exchangeDuration;
-        this.isVisible = isVisible;
+    }
+
+    // 이미지 추가
+    public void addImage(UserSkillImage image) {
+        if (image == null) return;
+
+        if (!this.images.contains(image)) {
+            this.images.add(image);
+        }
+
+        if (image.getUserSkill() != this) {
+            image.assignUserSkill(this);
+        }
+    }
+
+    // 이미지 제거
+    public void removeImage(UserSkillImage image) {
+        if (image == null) return;
+
+        this.images.remove(image);
+        if (image.getUserSkill() == this) {
+            image.assignUserSkill(null);
+        }
+    }
+
+    // 모든 이미지 제거
+    public void clearImages() {
+        for (UserSkillImage image : new ArrayList<>(this.images)) {
+            removeImage(image);
+        }
     }
 
     // 조회수 증가
@@ -94,13 +137,28 @@ public class UserSkill extends BaseTimeEntity {
         this.viewCount++;
     }
 
-    // 사용자 스킬의 카테고리 변경
-    public void changeCategory(SkillCategory skillCategory) {
-        this.skillCategory = skillCategory;
+    // 스킬 장터 노출 토글
+    public void toggleVisibility() {
+        this.isVisible = !this.isVisible;
     }
 
     // 사용자 프로필 연관관계 설정
     protected void assignUserProfile(UserProfile userProfile) {
         this.userProfile = userProfile;
+    }
+
+    // 스킬 소유자의 닉네임 조회
+    public String getOwnerNickname() {
+        return this.userProfile.getUser().getNickname();
+    }
+
+    // 스킬 소유자의 프로필 사진 URL 조회
+    public String getOwnerProfileImageUrl() {
+        return this.userProfile.getUser().getProfileImageUrl();
+    }
+
+    // 스킬 소유자의 사용자 ID 조회
+    public Long getOwnerId() {
+        return this.userProfile.getUser().getId();
     }
 }

@@ -86,8 +86,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .orElseThrow(UserNotFoundException::new);
 
         // 상태 확인
-        if (user.getUserStatus() != UserStatus.ACTIVE) {
-            throw new InvalidUserStatusException("활성화된 사용자가 아닙니다.");
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
 
         // JWT 토큰 발급

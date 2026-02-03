@@ -4,22 +4,25 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.swyp.linkit.domain.credit.dto.CreditBalanceUpdateDto;
 import org.swyp.linkit.domain.credit.dto.CreditDto;
 import org.swyp.linkit.domain.credit.dto.CreditWithUserDetailsDto;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
+import org.swyp.linkit.domain.credit.entity.SupplyType;
 import org.swyp.linkit.domain.credit.repository.CreditRepository;
+import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.global.error.exception.NotEnoughCreditException;
 import org.swyp.linkit.global.error.exception.NotFoundCreditException;
+
+import static org.swyp.linkit.domain.credit.entity.Credit.PROFILE_REWARD;
+import static org.swyp.linkit.domain.credit.entity.Credit.SIGNUP_REWARD;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class CreditServiceImpl implements CreditService{
-
-    private static final int SIGNUP_REWARD = 2;
-    private static final int PROFILE_REWARD = 1;
 
     private final CreditRepository creditRepository;
     private final CreditHistoryService historyService;
@@ -32,6 +35,7 @@ public class CreditServiceImpl implements CreditService{
     public CreditDto createCredit(User user) {
         // credit 생성, save
         Credit credit = creditRepository.save(Credit.create(user, 0));
+
         log.debug("크레딧 생성. userId= {}", user.getId());
         return CreditDto.from(credit);
     }
@@ -62,24 +66,11 @@ public class CreditServiceImpl implements CreditService{
     @Transactional(readOnly = true)
     @Override
     public CreditDto getCreditBalance(Long userId) {
-        // 1. credit 조회
+        // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(userId);
+
         log.debug("크레딧 잔액 조회. userId= {}, balance= {}", userId, credit.getBalance());
         return CreditDto.from(credit);
-    }
-
-    /**
-     *  크레딧 사용
-     */
-    @Transactional
-    @Override
-    public CreditBalanceUpdateDto useCredit(Long userId, int amount) {
-        // 1. credit 조회
-        Credit credit = getCreditByUserId(userId);
-        // 2. 크레딧 차감 -> NotEnoughCreditException
-        credit.useCredit(amount);
-        log.info("크레딧 차감 완료. userId= {}, amount= {}, balance= {}", userId, amount, credit.getBalance());
-        return CreditBalanceUpdateDto.of(credit, amount);
     }
 
     /**
@@ -90,6 +81,7 @@ public class CreditServiceImpl implements CreditService{
     public CreditWithUserDetailsDto getCreditBalanceWithUserDetails(Long userId) {
         // 1. credit 조회
         Credit credit = getCreditByUserId(userId);
+
         // 2. user 객체 접근 -> 조회 쿼리 1번 추가 발생
         User user = credit.getUser();
         log.debug("크레딧 잔액 및 유저 정보 조회. userId= {}, balance= {}", userId, credit.getBalance());
@@ -97,21 +89,130 @@ public class CreditServiceImpl implements CreditService{
     }
 
     /**
-     *  Credit 조회 및 지급 + CreditHistory 생성 및 save 처리
+     * 크레딧 사용 가능 여부 검증
+     * 잔액이 요청 금액보다 부족한 경우
      */
+    @Transactional(readOnly = true)
+    @Override
+    public void validateAvailableBalance(Long userId, int amount) {
+        // 1. credit 조회 -> NotFoundCreditException
+        Credit credit = getCreditByUserId(userId);
+
+        // 2. 잔액이 요청 금액보다 부족 여부 검증 -> NotEnoughCreditException
+        if(credit.getBalance() < amount){
+            log.warn("크레딧 잔액이 요청 금액보다 부족하여 크레딧 사용이 불가. userId= {}, balance= {}, amount= {}",
+                    userId, credit.getBalance(), amount);
+            throw new NotEnoughCreditException();
+        }
+    }
+
+    /**
+     *  크레딧 사용 - 스킬 교환 요청
+     *  (requester에게 credit 감소 및 creditHistory 생성)
+     */
+    @Transactional
+    @Override
+    public void useCreditForExchangeRequest(SkillExchange skillExchange) {
+        User requester = skillExchange.getRequester();
+        int amount = skillExchange.getCreditPrice();
+
+        // 1. credit 조회 -> NotFoundCreditException
+        Credit credit = getCreditByUserId(requester.getId());
+
+        // 2. credit 차감 -> NotEnoughCreditException
+        credit.useCredit(amount);
+
+        // 3. creditHistory 생성
+        historyService.createExchangeHistory(
+                requester,
+                skillExchange.getReceiver(),
+                skillExchange,
+                SupplyType.USE,
+                amount,
+                credit.getBalance(),
+                HistoryType.EXCHANGE_REQUEST
+        );
+
+        log.info("스킬 거래 요청으로 인한 크레딧 차감. userId= {}, amount= {}, balance= {}",
+                requester.getId(), amount, credit.getBalance());
+    }
+
+    /**
+     *  크레딧 수급 - 스킬 교환 취소 및 거절
+     *  (requester에게 credit 지급 및 creditHistory 생성)
+     */
+    @Transactional
+    @Override
+    public void refundCreditForExchange(SkillExchange skillExchange, HistoryType historyType) {
+        User requester = skillExchange.getRequester();
+        int amount = skillExchange.getCreditPrice();
+
+        // 1. credit 조회 -> NotFoundCreditException
+        Credit credit = getCreditByUserId(requester.getId());
+
+        // 2. credit 지급 -> InvalidCreditAmountException
+        credit.addCredit(amount);
+
+        // 3. creditHistory 생성
+        historyService.createExchangeHistory(
+                requester,
+                skillExchange.getReceiver(),
+                skillExchange,
+                SupplyType.ADD,
+                amount,
+                credit.getBalance(),
+                historyType
+        );
+        log.info("스킬 교환 취소 및 거절로 인한 크레딧 지급. userId= {}, amount= {}, balance= {}",
+                requester.getId(), amount, credit.getBalance());
+
+    }
+
+    /**
+     *  크레딧 수급 - 스킬 거래 정산
+     *  (receiver에게 credit 지급 및 creditHistory 생성)
+     */
+    @Transactional
+    @Override
+    public void settleCredit(Settlement settlement) {
+        SkillExchange skillExchange = settlement.getSkillExchange();
+        User receiver = skillExchange.getReceiver();
+        int amount = settlement.getAmount();
+
+        // 1. credit 조회 -> NotFoundCreditException
+        Credit credit = getCreditByUserId(receiver.getId());
+
+        // 2. credit 지급 -> InvalidCreditAmountException
+        credit.addCredit(amount);
+
+        // 3. creditHistory 생성
+        historyService.createExchangeHistory(
+                receiver,
+                skillExchange.getRequester(),
+                skillExchange,
+                SupplyType.ADD,
+                amount,
+                credit.getBalance(),
+                HistoryType.EXCHANGE_SETTLED
+        );
+        log.info("스킬 거래 정산으로 인한 크레딧 지급. userId= {}, amount= {}, balance= {}",
+                receiver.getId(), amount, credit.getBalance());
+
+    }
+    // == private Method ==
+
+    // Credit 조회 및 지급 + CreditHistory 생성 및 save 처리
     private CreditDto applyReward(User user, int amount, HistoryType type) {
-        // 1. credit 조회
+        // 1. credit 조회 -> NotFoundCreditException
         Credit credit = getCreditByUserId(user.getId());
-        // 2. credit 지급
+        // 2. credit 지급 -> InvalidCreditAmountException
         credit.addCredit(amount);
         // 3. creditHistory 생성
         historyService.createRewardHistory(user, amount, credit.getBalance(), type);
         return CreditDto.from(credit);
     }
 
-    /**
-     *  Credit 조회
-     */
+    // Credit 조회 -> NotFoundCreditException
     private Credit getCreditByUserId(Long userId){
         return creditRepository.findByUserId(userId)
                 .orElseThrow(NotFoundCreditException::new);

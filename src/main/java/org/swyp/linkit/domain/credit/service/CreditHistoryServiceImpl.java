@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.credit.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import org.swyp.linkit.domain.user.entity.User;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CreditHistoryServiceImpl implements CreditHistoryService {
 
     private final CreditHistoryRepository historyRepository;
@@ -35,7 +37,7 @@ public class CreditHistoryServiceImpl implements CreditHistoryService {
         CreditHistory creditHistory = historyRepository.save(
                 CreditHistory.createReward(user, amount, balanceAfter, historyType)
         );
-
+        log.info("리워드 크레딧 내역 생성. userId= {}", user.getId());
         return RewardHistoryDto.from(creditHistory);
     }
 
@@ -47,6 +49,8 @@ public class CreditHistoryServiceImpl implements CreditHistoryService {
     public CreditHistory createExchangeHistory(User user, User targetUser, SkillExchange skillExchange,
                                                SupplyType supplyType, int amount, int balanceAfter,
                                                HistoryType historyType) {
+
+        log.info("스킬 거래 크레딧 내역 생성. userId= {}", user.getId());
         // creditHistory 생성, save
         return historyRepository.save(
                 CreditHistory.createSkillExchange(
@@ -61,6 +65,7 @@ public class CreditHistoryServiceImpl implements CreditHistoryService {
     }
     /**
      *  크레딧 내역 커서 기반 페이징 조회
+     *  todo 고도화 기간에 통합 테스트 진행
      */
     @Transactional(readOnly = true)
     @Override
