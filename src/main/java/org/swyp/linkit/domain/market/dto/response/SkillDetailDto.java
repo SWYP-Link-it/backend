@@ -13,6 +13,7 @@ import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,12 +34,10 @@ public class SkillDetailDto {
     private String nickname;
 
     // 메인 스킬 정보
-
     @Schema(description = "선택된 스킬 상세 정보")
     private UserSkillResponseDto mainSkill;
 
     // 프로필 정보
-
     @Schema(description = "프로필 ID", example = "1")
     private Long profileId;
 
@@ -58,14 +57,12 @@ public class SkillDetailDto {
     private String detailedLocation;
 
     // 스케줄 정보
-
     @Schema(description = "교환 가능 시간대 목록")
     private List<AvailableScheduleResponseDto> availableSchedules;
 
-    // 다른 스킬 목록
-
-    @Schema(description = "해당 사용자의 다른 스킬 목록 (현재 스킬 제외)")
-    private List<SkillSummaryDto> otherSkills;
+    // 모든 스킬 목록
+    @Schema(description = "해당 사용자의 모든 스킬 목록 (등록 오래된 순)")
+    private List<SkillSummaryDto> skills;
 
     public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills) {
         UserProfile profile = userSkill.getUserProfile();
@@ -93,9 +90,8 @@ public class SkillDetailDto {
                         .map(AvailableScheduleResponseDto::from)
                         .collect(Collectors.toList()))
 
-                // 다른 스킬 목록 (현재 스킬 제외)
-                .otherSkills(allUserSkills.stream()
-                        .filter(skill -> !skill.getId().equals(userSkill.getId()))
+                // 모든 스킬 목록
+                .skills(allUserSkills.stream()
                         .map(SkillSummaryDto::from)
                         .collect(Collectors.toList()))
 
