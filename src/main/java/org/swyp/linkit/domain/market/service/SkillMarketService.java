@@ -17,13 +17,13 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
     private final SearchService searchService;
 
     // 노출 중인 스킬 카드 조회 (최신순)
+    @Transactional(readOnly = true)
     public List<SkillCardResponseDto> getVisibleSkills(SkillCategoryType category) {
         List<UserSkill> skills;
 
@@ -44,6 +44,7 @@ public class SkillMarketService {
     }
 
     // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체)
+    @Transactional
     public SkillDetailDto getSkillDetail(Long skillId) {
         // 1. 메인 스킬 조회 (이미지 포함)
         UserSkill mainSkill = userSkillRepository.findVisibleSkillDetailById(skillId)

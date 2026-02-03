@@ -24,7 +24,6 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class SearchService {
 
     private final UserSkillRepository userSkillRepository;
@@ -61,6 +60,7 @@ public class SearchService {
     }
 
     // 최근 일주일 인기 검색어 Top 5
+    @Transactional(readOnly = true)
     public List<PopularKeywordDto> getPopularKeywords() {
         LocalDate startDate = LocalDate.now().minusDays(6);  // 오늘 포함 7일
         List<PopularKeywordView> rows = searchKeywordStatRepository.findPopularKeywords(
@@ -85,6 +85,7 @@ public class SearchService {
     }
 
     // 최근 일주일 인기 스킬 Top 5
+    @Transactional(readOnly = true)
     public List<PopularSkillDto> getPopularSkills() {
         LocalDate startDate = LocalDate.now().minusDays(6);  // 오늘 포함 7일
         List<PopularSkillView> views = skillViewStatRepository.findPopularSkills(
