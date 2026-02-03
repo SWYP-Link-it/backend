@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
+import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
@@ -20,6 +21,7 @@ import java.util.List;
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
+    private final SearchService searchService;
 
     // 노출 중인 스킬 카드 조회 (최신순)
     public List<SkillCardResponseDto> getVisibleSkills(SkillCategoryType category) {
@@ -47,14 +49,17 @@ public class SkillMarketService {
         UserSkill mainSkill = userSkillRepository.findVisibleSkillDetailById(skillId)
                 .orElseThrow(() -> new UserSkillNotFoundException("해당 스킬을 찾을 수 없거나 현재 노출 중이 아닙니다."));
 
-        // 2. 해당 사용자의 모든 스킬 조회 (이미지 포함)
-        Long userId = mainSkill.getUserProfile().getUser().getId();
+        // 2. 조회수 집계
+        searchService.recordSkillView(skillId);
+
+        // 3. 해당 사용자의 모든 스킬 조회 (이미지 포함)
+        Long userId = mainSkill.getOwnerId();
         List<UserSkill> allUserSkills = userSkillRepository.findVisibleSkillsWithImagesByUserId(userId);
 
         log.info("스킬 상세 정보 조회: skillId={}, userId={}, totalSkillsCount={}",
                 skillId, userId, allUserSkills.size());
 
-        // 3. DTO 변환
+        // 4. DTO 변환
         return SkillDetailDto.from(mainSkill, allUserSkills);
     }
 }
