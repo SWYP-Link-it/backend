@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.credit.entity.CreditHistory;
 import org.swyp.linkit.domain.credit.entity.SupplyType;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Long> {
@@ -31,4 +32,5 @@ public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Lo
 
     Optional<CreditHistory> findTopByUserIdOrderByIdDesc(@Param("userId") Long userId);
 
+    List<CreditHistory> findAllByUserId(@Param("userId") Long userId);
 }
