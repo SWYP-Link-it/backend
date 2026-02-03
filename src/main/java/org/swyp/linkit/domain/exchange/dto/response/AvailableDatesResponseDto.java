@@ -13,8 +13,8 @@ import java.util.List;
 public class AvailableDatesResponseDto {
 
     // ISO 8601 형식 -> "2026-01-25"
-    @Schema(description = "요청한 월", example = "2026-01")
-    private String month;
+    @Schema(description = "요청한 yyyy-mm", example = "2026-01")
+    private String yearMonth;
 
     @Schema(description = "가능한 날짜")
     private List<String> availableDates;
