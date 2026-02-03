@@ -44,9 +44,6 @@ public class UserSkillResponseDto {
     @Schema(description = "스킬 거래 시간 (분)", example = "60")
     private Integer exchangeDuration;
 
-    @Schema(description = "조회수", example = "0")
-    private Long viewCount;
-
     @Schema(description = "장터 노출 여부", example = "true")
     private Boolean isVisible;
 
@@ -63,7 +60,6 @@ public class UserSkillResponseDto {
                 .skillProficiency(userSkill.getSkillProficiency())
                 .skillDescription(userSkill.getSkillDescription())
                 .exchangeDuration(userSkill.getExchangeDuration())
-                .viewCount(userSkill.getViewCount())
                 .isVisible(userSkill.getIsVisible())
                 .imageUrls(userSkill.getImages().stream()
                         .sorted(Comparator.comparing(UserSkillImage::getImageOrder))

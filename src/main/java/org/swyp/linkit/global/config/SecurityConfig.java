@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 "/auth/refresh",
                                 "/auth/logout",
                                 "/market/skills",
-                                "/market/skills/**"
+                                "/market/skills/**",
+                                "/search/**"
                         ).permitAll()
 
                         .requestMatchers("/auth/me").authenticated()
