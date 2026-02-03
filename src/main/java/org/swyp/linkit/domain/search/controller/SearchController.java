@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
+import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
 import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 
@@ -41,6 +42,22 @@ public class SearchController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 검색 결과를 조회했습니다.", skills)
+        );
+    }
+
+    @Operation(
+            summary = "인기 검색어 Top 5",
+            description = "최근 일주일 기준 인기 검색어 Top 5를 조회합니다."
+    )
+    @GetMapping(value = "/keywords/popular", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<List<PopularKeywordDto>>> getPopularKeywords() {
+
+        log.info("[Search] GET /search/keywords/popular");
+
+        List<PopularKeywordDto> popularKeywords = searchService.getPopularKeywords();
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("인기 검색어 Top 5를 조회했습니다.", popularKeywords)
         );
     }
 }
