@@ -226,22 +226,3 @@ public class SkillExchangeController {
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 }
-//    /**
-//     *  멘토의 스킬 정보 조회
-//     */
-//    @Operation(
-//            summary = "멘토의 스킬 정보 조회",
-//            description = "멘토의 스킬 정보를 조회합니다."
-//    )
-//    @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetAvailableDates.class)
-//    @GetMapping(value = "/mentors/{mentorId}/available-dates", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<ApiResponseDto<AvailableDatesResponseDto>> getAvailableDates(
-//            @Parameter(description = "멘토의 사용자 ID", example = "1")
-//            @PathVariable Long mentorId,
-//
-//            @Parameter(description = "조회할 년-월 (YYYY-MM)", example = "2026-01")
-//            @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month){
-//
-//        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, month.toString());
-//        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
-//    }
