@@ -41,8 +41,8 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "JOIN se.receiver r " +
             "JOIN se.receiverSkill rs " +
             "LEFT JOIN ChatRoom cr ON " +
-            "  (cr.mentorId = r.id AND cr.menteeId = se.requester.id) OR " +
-            "  (cr.mentorId = se.requester.id AND cr.menteeId = r.id) " +
+            "  (cr.mentor.id = r.id AND cr.mentee.id = se.requester.id) OR " +
+            "  (cr.mentor.id = se.requester.id AND cr.mentee.id = r.id) " +
             "WHERE se.requester.id = :requesterId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
@@ -63,8 +63,8 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "JOIN se.requester r " +
             "JOIN se.receiverSkill rs " +
             "LEFT JOIN ChatRoom cr ON " +
-            "  (cr.mentorId = r.id AND cr.menteeId = se.receiver.id) OR " +
-            "  (cr.mentorId = se.receiver.id AND cr.menteeId = r.id) " +
+            "  (cr.mentor.id = r.id AND cr.mentee.id = se.receiver.id) OR " +
+            "  (cr.mentor.id = se.receiver.id AND cr.mentee.id = r.id) " +
             "WHERE se.receiver.id = :receiverId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
