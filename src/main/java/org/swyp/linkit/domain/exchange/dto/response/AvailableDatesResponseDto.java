@@ -16,11 +16,14 @@ public class AvailableDatesResponseDto {
     @Schema(description = "요청한 yyyy-mm", example = "2026-01")
     private String yearMonth;
 
-    @Schema(description = "가능한 날짜", example = "2026-01-06")
+    @Schema(
+            description = "가능한 날짜 리스트",
+            example = "[\"2026-01-06\", \"2026-01-07\", \"2026-01-08\"]"
+    )
     private List<String> availableDates;
 
-    public static AvailableDatesResponseDto of(String month, List<String> availableDates){
-        return new AvailableDatesResponseDto(month, availableDates);
+    public static AvailableDatesResponseDto of(String yearMonth, List<String> availableDates){
+        return new AvailableDatesResponseDto(yearMonth, availableDates);
     }
 
 }
