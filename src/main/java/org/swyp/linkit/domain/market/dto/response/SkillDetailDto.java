@@ -93,7 +93,7 @@ public class SkillDetailDto {
                 // 모든 스킬 목록
                 .skills(allUserSkills.stream()
                         .map(SkillSummaryDto::from)
-                        .collect(Collectors.toList()))
+                        .toList())
 
                 .build();
     }
