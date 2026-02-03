@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.chat.entity.ChatRoom;
 import org.swyp.linkit.domain.chat.entity.ChatRoomStatus;
+import org.swyp.linkit.domain.user.entity.User;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -33,6 +34,10 @@ public class ChatRoomDto {
     private Long createdAtEpochMs;
     private Long modifiedAtEpochMs;
 
+    /**
+     * ChatRoom 엔티티 → DTO 변환 (기본)
+     * 연관관계가 fetch join 되어 있어야 N+1 없이 User 정보 접근 가능
+     */
     public static ChatRoomDto from(ChatRoom room) {
         return ChatRoomDto.builder()
                 .roomId(room.getId())
@@ -48,6 +53,38 @@ public class ChatRoomDto {
                 .build();
     }
 
+    /**
+     * ChatRoom 엔티티 → DTO 변환 (현재 사용자 기준, 상대방 정보 포함)
+     * 연관관계가 fetch join 되어 있어야 N+1 없이 User 정보 접근 가능
+     */
+    public static ChatRoomDto fromWithCurrentUser(ChatRoom room, Long currentUserId, String lastMessageContent) {
+        boolean isMentor = room.getMentorId().equals(currentUserId);
+        User partner = isMentor ? room.getMentee() : room.getMentor();
+        Integer unreadCount = isMentor ? room.getUnreadMentorCount() : room.getUnreadMenteeCount();
+
+        return ChatRoomDto.builder()
+                .roomId(room.getId())
+                .mentorId(room.getMentorId())
+                .menteeId(room.getMenteeId())
+                .status(room.getStatus())
+                .isMentor(isMentor)
+                .partnerId(partner != null ? partner.getId() : null)
+                .partnerNickname(partner != null ? partner.getNickname() : "알 수 없음")
+                .partnerProfileImageUrl(partner != null ? partner.getProfileImageUrl() : null)
+                .lastMessageId(room.getLastMessageId())
+                .lastMessageContent(lastMessageContent)
+                .lastMessageAtEpochMs(toEpochMs(room.getLastMessageAt()))
+                .unreadCount(unreadCount)
+                .unreadMentorCount(room.getUnreadMentorCount())
+                .unreadMenteeCount(room.getUnreadMenteeCount())
+                .createdAtEpochMs(toEpochMs(room.getCreatedAt()))
+                .modifiedAtEpochMs(toEpochMs(room.getModifiedAt()))
+                .build();
+    }
+
+    /**
+     * ChatRoom 엔티티 → DTO 변환 (파트너 정보 직접 전달 - 하위 호환용)
+     */
     public static ChatRoomDto fromWithPartner(ChatRoom room, Long currentUserId,
                                               String partnerNickname, String partnerProfileImageUrl,
                                               String lastMessageContent) {
