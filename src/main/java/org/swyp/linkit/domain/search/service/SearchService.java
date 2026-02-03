@@ -7,13 +7,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
+import org.swyp.linkit.domain.search.dto.response.PopularSkillDto;
+import org.swyp.linkit.domain.search.repository.SkillViewStatRepository;
 import org.swyp.linkit.domain.search.repository.projection.PopularKeywordView;
 import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
+import org.swyp.linkit.domain.search.repository.projection.PopularSkillView;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -24,6 +29,7 @@ public class SearchService {
 
     private final UserSkillRepository userSkillRepository;
     private final SearchKeywordStatRepository searchKeywordStatRepository;
+    private final SkillViewStatRepository skillViewStatRepository;
 
     // 스킬명으로 검색 (완전 일치) + 검색어 집계
     @Transactional
@@ -69,5 +75,43 @@ public class SearchService {
         log.info("인기 검색어 Top 5 조회: count={}", popularKeywords.size());
 
         return popularKeywords;
+    }
+
+    // 스킬 조회수 기록 (일별 집계)
+    @Transactional
+    public void recordSkillView(Long skillId) {
+        skillViewStatRepository.upsertIncrement(LocalDate.now(), skillId);
+        log.debug("스킬 조회수 집계: skillId={}, date={}", skillId, LocalDate.now());
+    }
+
+    // 최근 일주일 인기 스킬 Top 5
+    public List<PopularSkillDto> getPopularSkills() {
+        LocalDate startDate = LocalDate.now().minusDays(6);  // 오늘 포함 7일
+        List<PopularSkillView> views = skillViewStatRepository.findPopularSkills(
+                startDate,
+                PageRequest.of(0, 5)
+        );
+
+        // skillId로 UserSkill 조회
+        List<Long> skillIds = views.stream()
+                .map(PopularSkillView::getSkillId)
+                .toList();
+
+        List<UserSkill> skills = userSkillRepository.findAllById(skillIds);
+
+        // skillId 순서대로 정렬 (Top 5 순서 유지)
+        Map<Long, UserSkill> skillMap = skills.stream()
+                .collect(Collectors.toMap(UserSkill::getId, skill -> skill));
+
+        List<PopularSkillDto> popularSkills = views.stream()
+                .map(view -> {
+                    UserSkill skill = skillMap.get(view.getSkillId());
+                    return PopularSkillDto.from(skill);
+                })
+                .toList();
+
+        log.info("인기 스킬 Top 5 조회: count={}", popularSkills.size());
+
+        return popularSkills;
     }
 }
