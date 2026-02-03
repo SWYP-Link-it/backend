@@ -18,6 +18,7 @@ import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -25,7 +26,6 @@ import java.util.stream.IntStream;
 @Service
 @RequiredArgsConstructor
 public class SearchService {
-
     private final UserSkillRepository userSkillRepository;
     private final SearchKeywordStatRepository searchKeywordStatRepository;
     private final SkillViewStatRepository skillViewStatRepository;
@@ -105,10 +105,9 @@ public class SearchService {
                 .collect(Collectors.toMap(UserSkill::getId, skill -> skill));
 
         List<PopularSkillDto> popularSkills = views.stream()
-                .map(view -> {
-                    UserSkill skill = skillMap.get(view.getSkillId());
-                    return PopularSkillDto.from(skill);
-                })
+                .map(view -> skillMap.get(view.getSkillId()))
+                .filter(Objects::nonNull)
+                .map(PopularSkillDto::from)
                 .toList();
 
         log.info("인기 스킬 Top 5 조회: count={}", popularSkills.size());
