@@ -168,7 +168,7 @@ public class UserProfileController {
         );
     }
 
-    // HttpServletRequest에서 스킬별 이미지 추출
+    // MultiValueMap에서 스킬별 이미지 추출
     private Map<Integer, List<MultipartFile>> extractSkillImages(MultiValueMap<String, MultipartFile> files) {
         if (files == null || files.isEmpty()) {
             return new HashMap<>();
