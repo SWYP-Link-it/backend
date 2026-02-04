@@ -59,6 +59,9 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("이미 다른 사용자가 사용 중인 닉네임으로 변경하려는 경우 발생합니다.")
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "U002", "이미 존재하는 닉네임입니다."),
 
+    @ExplainError("기존 닉네임과 동일한 값으로 변경을 요청한 경우 발생합니다.")
+    SAME_NICKNAME(HttpStatus.BAD_REQUEST, "U003", "기존 닉네임과 동일합니다."),
+
     // 사용자 프로필
     @ExplainError("요청한 프로필 ID에 해당하는 프로필이 존재하지 않는 경우 발생합니다.")
     USER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "UP001", "프로필을 찾을 수 없습니다."),

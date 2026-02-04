@@ -8,6 +8,7 @@ import org.swyp.linkit.domain.user.dto.request.NicknameUpdateRequestDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.DuplicateNicknameException;
+import org.swyp.linkit.global.error.exception.SameNicknameException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 @Slf4j
@@ -32,14 +33,23 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        // 2. 닉네임 중복 검사
-        if (userRepository.existsByNickname(nickname)) {
+        String newNickname = nickname.trim();
+        String oldNickname = user.getNickname();
+
+        // 2. 동일 닉네임이면 변경 없이 종료
+        if (oldNickname.equals(newNickname)) {
+            throw new SameNicknameException("기존 닉네임과 동일합니다.");
+        }
+
+        // 3. 닉네임 중복 검사 (본인 제외)
+        if (userRepository.existsByNicknameAndIdNot(newNickname, userId)) {
             throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
         }
 
-        user.updateNickname(nickname);
+        // 4. 닉네임 변경
+        user.updateNickname(newNickname);
 
         log.info("닉네임 변경: userId={}, oldNickname={}, newNickname={}",
-                userId, user.getNickname(), nickname);
+                userId, oldNickname, newNickname);
     }
 }
