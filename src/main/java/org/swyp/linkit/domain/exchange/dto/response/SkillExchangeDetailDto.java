@@ -1,14 +1,13 @@
 package org.swyp.linkit.domain.exchange.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
-import org.swyp.linkit.domain.user.entity.User;
-import org.swyp.linkit.domain.user.entity.UserSkill;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -49,7 +48,13 @@ public class SkillExchangeDetailDto {
             description = "새로운 상태 업데이트 여부 (true: 신규 알림 있음/빨간 점 표시, false: 확인 완료)",
             example = "true"
     )
+    @JsonProperty("isNew")
     private boolean isNew;
+
+    @JsonIgnore
+    public boolean isNew() {
+        return isNew;
+    }
 
     public static SkillExchangeDetailDto from(SkillExchangeDetailQuery result) {
         return SkillExchangeDetailDto.builder()

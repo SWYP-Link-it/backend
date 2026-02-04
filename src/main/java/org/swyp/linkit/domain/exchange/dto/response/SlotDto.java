@@ -1,6 +1,8 @@
 package org.swyp.linkit.domain.exchange.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,7 +26,13 @@ public class SlotDto {
     private LocalTime endTime;
 
     @Schema(description = "예약 가능 여부 (true, false)", example = "true")
+    @JsonProperty("isAvailable")
     private boolean isAvailable;
+
+    @JsonIgnore
+    public boolean isAvailable() {
+        return isAvailable;
+    }
 
     private SlotDto(LocalTime startTime, boolean isAvailable){
         this.startTime = startTime;
