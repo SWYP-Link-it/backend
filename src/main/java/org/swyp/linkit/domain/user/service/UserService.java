@@ -33,7 +33,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        String newNickname = nickname.trim();
+        String newNickname = nickname;
         String oldNickname = user.getNickname();
 
         // 2. 동일 닉네임이면 변경 없이 종료
