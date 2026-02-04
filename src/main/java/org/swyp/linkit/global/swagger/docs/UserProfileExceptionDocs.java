@@ -62,7 +62,7 @@ public class UserProfileExceptionDocs {
             }
         }
 
-        public static class UserProfileAlreadyExistsException implements SwaggerExampleExceptions {  // ✅ 추가
+        public static class UserProfileAlreadyExistsException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.USER_PROFILE_ALREADY_EXISTS;
@@ -146,6 +146,32 @@ public class UserProfileExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.USER_SKILL_NOT_FOUND;
+            }
+        }
+    }
+
+    /**
+     * updateNickname
+     */
+    public static class UpdateNickname {
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class UserNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.USER_NOT_FOUND;
+            }
+        }
+
+        public static class DuplicateNicknameException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.DUPLICATE_NICKNAME;
             }
         }
     }

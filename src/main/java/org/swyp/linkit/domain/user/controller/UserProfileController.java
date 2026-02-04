@@ -15,16 +15,19 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.swyp.linkit.domain.user.dto.UserProfileDto;
+import org.swyp.linkit.domain.user.dto.request.NicknameUpdateRequestDto;
 import org.swyp.linkit.domain.user.dto.request.UserProfileRequestDto;
 import org.swyp.linkit.domain.user.dto.response.UserProfileResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.service.UserProfileService;
+import org.swyp.linkit.domain.user.service.UserService;
 import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
@@ -44,6 +47,7 @@ public class UserProfileController {
 
     private final UserProfileService userProfileService;
     private final UserSkillService userSkillService;
+    private final UserService userService;
 
     @Operation(
             summary = "프로필 조회",
@@ -165,6 +169,28 @@ public class UserProfileController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 노출 상태가 변경되었습니다.", skill)
+        );
+    }
+
+    @Operation(
+            summary = "닉네임 변경",
+            description = "로그인한 사용자의 닉네임을 변경합니다."
+    )
+    @ApiErrorExceptionsExample(UserProfileExceptionDocs.UpdateNickname.class)
+    @PatchMapping(value = "/nickname", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<Void>> updateNickname(
+            @AuthenticationPrincipal CustomOAuth2User principal,
+            @Valid @RequestBody NicknameUpdateRequestDto requestDto) {
+
+        Long userId = principal.getUserId();
+
+        log.info("[UserProfile] PATCH /profile/nickname : userId={}, newNickname={}",
+                userId, requestDto.getNickname());
+
+        userService.updateNickname(userId, requestDto.getNickname());
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("닉네임이 변경되었습니다.", null)
         );
     }
 
