@@ -1,5 +1,6 @@
 package org.swyp.linkit.domain.exchange.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
@@ -48,8 +49,12 @@ public class SkillExchangeDetailDto {
             example = "true"
     )
     @JsonProperty("isNew")
-    @Getter(AccessLevel.NONE)
     private boolean isNew;
+
+    @JsonIgnore
+    public boolean isNew() {
+        return isNew;
+    }
 
     public static SkillExchangeDetailDto from(SkillExchangeDetailQuery result) {
         return SkillExchangeDetailDto.builder()
