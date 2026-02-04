@@ -10,8 +10,6 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     networks:
@@ -26,8 +24,6 @@ services:
     image: redis:7-alpine
     container_name: link-it-redis
     restart: always
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
