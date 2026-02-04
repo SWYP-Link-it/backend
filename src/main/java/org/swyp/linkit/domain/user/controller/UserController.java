@@ -40,7 +40,7 @@ public class UserController {
 
         Long userId = principal.getUserId();
 
-        log.info("[UserProfile] PATCH /profile/nickname : userId={}, newNickname={}",
+        log.info("[User] PATCH /user/nickname : userId={}, newNickname={}",
                 userId, requestDto.getNickname());
 
         userService.updateNickname(userId, requestDto.getNickname());
