@@ -32,8 +32,8 @@ jobs:
       # NCR(Naver Container Registry) 로그인
       - name: Login to NCR
         run: |
-          echo ${{ secrets.NCR_ACCESS_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \
-            -u ${{ secrets.NCR_ACCESS_KEY_ID }} \
+          echo ${{ secrets.NCP_SECRET_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \
+            -u ${{ secrets.NCP_ACCESS_KEY }} \
             --password-stdin
 
       # Docker 이미지 빌드 및 NCR에 푸시
