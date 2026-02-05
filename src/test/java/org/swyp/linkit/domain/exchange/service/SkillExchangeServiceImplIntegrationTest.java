@@ -1027,7 +1027,7 @@ public class SkillExchangeServiceImplIntegrationTest {
 
             @Test
             @DisplayName("첫 페이지 조회 시 다음 커서가 존재해야 한다.")
-            public void getSentRequests_firstPage() {
+            public void getReceivedRequests_firstPage() {
                 // given
                 User requester = createSavedUser();
 
@@ -1062,7 +1062,7 @@ public class SkillExchangeServiceImplIntegrationTest {
 
             @Test
             @DisplayName("커서가 존재할 때 커서 이후의 데이터를 조회해야한다.")
-            public void getSentRequests_secondPage() {
+            public void getReceivedRequests_secondPage() {
                 // given
                 User requester = createSavedUser();
 
