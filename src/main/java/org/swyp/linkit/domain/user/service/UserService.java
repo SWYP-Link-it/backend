@@ -33,23 +33,22 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
 
-        String newNickname = nickname;
         String oldNickname = user.getNickname();
 
         // 2. 동일 닉네임이면 변경 없이 종료
-        if (oldNickname.equals(newNickname)) {
+        if (oldNickname.equals(nickname)) {
             throw new SameNicknameException("기존 닉네임과 동일합니다.");
         }
 
         // 3. 닉네임 중복 검사 (본인 제외)
-        if (userRepository.existsByNicknameAndIdNot(newNickname, userId)) {
+        if (userRepository.existsByNicknameAndIdNot(nickname, userId)) {
             throw new DuplicateNicknameException("이미 사용 중인 닉네임입니다.");
         }
 
         // 4. 닉네임 변경
-        user.updateNickname(newNickname);
+        user.updateNickname(nickname);
 
         log.info("닉네임 변경: userId={}, oldNickname={}, newNickname={}",
-                userId, oldNickname, newNickname);
+                userId, oldNickname, nickname);
     }
 }
