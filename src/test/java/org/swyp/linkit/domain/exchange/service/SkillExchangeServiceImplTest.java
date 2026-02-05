@@ -218,16 +218,15 @@ class SkillExchangeServiceImplTest {
                         LocalTime.of(10, 0), LocalTime.of(11, 0));
                 SkillExchange exchange2 = createExchange(menteeUser, mentorUser, receiverSkill2,
                         LocalTime.of(14, 0), LocalTime.of(16, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentorUser.getId(), date, ExchangeStatus.CANCELED))
+
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentorUser.getId(), date, getActiveStatuses()))
                         .thenReturn(List.of(exchange1, exchange2));
 
                 // when
                 AvailableSlotsResponseDto result = exchangeService.getAvailableSlots(mentorUser.getId(), receiverSkill1.getId(), date);
 
                 // then
-                List<SlotDto> filteredDto = result.getSlots().stream()
-                        .filter(SlotDto::isAvailable).toList();
-                assertThat(result.getSlots().size()).isEqualTo(10);
+                List<SlotDto> filteredDto = result.getSlots();
                 assertThat(filteredDto.size()).isEqualTo(4);
                 assertThat(filteredDto.get(0).getStartTime()).isEqualTo(LocalTime.parse("11:00"));
                 assertThat(filteredDto.get(1).getStartTime()).isEqualTo(LocalTime.parse("11:30"));
@@ -235,7 +234,7 @@ class SkillExchangeServiceImplTest {
                 assertThat(filteredDto.get(3).getStartTime()).isEqualTo(LocalTime.parse("17:30"));
 
                 verify(userSkillService).getUserSkillWithProfileAndUser(receiverSkill1.getId());
-                verify(exchangeRepository).findAllByReceiverIdAndDate(mentorUser.getId(), date, ExchangeStatus.CANCELED);
+                verify(exchangeRepository).findAllByReceiverIdAndDate(mentorUser.getId(), date, getActiveStatuses());
             }
         }
 
@@ -326,7 +325,7 @@ class SkillExchangeServiceImplTest {
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
                 SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
                 SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, getActiveStatuses()))
                         .thenReturn(List.of(exchange1, exchange2));
 
                 // 스킬 교환 저장 Mock 처리
@@ -476,7 +475,7 @@ class SkillExchangeServiceImplTest {
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
                 SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
                 SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, getActiveStatuses()))
                         .thenReturn(List.of(exchange1, exchange2));
 
                 // 정오 넘어서까지 거래가 진행되도록 처리
@@ -524,7 +523,7 @@ class SkillExchangeServiceImplTest {
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
                 SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
                 SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, getActiveStatuses()))
                         .thenReturn(List.of(exchange1, exchange2));
 
                 // 멘토가 설정한 가능한 시간 이외의 요청 처리
@@ -572,7 +571,7 @@ class SkillExchangeServiceImplTest {
                 // 예약된 현황 조회 Mock 처리 -> date 날에 [10:00 ~ 10:30], [11:00 ~ 12:00]
                 SkillExchange exchange1 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(10, 0), LocalTime.of(10, 30));
                 SkillExchange exchange2 = createExchange(mentee, mentor, mentorSkill, LocalTime.of(11, 0), LocalTime.of(12, 0));
-                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, ExchangeStatus.CANCELED))
+                when(exchangeRepository.findAllByReceiverIdAndDate(mentor.getId(), date, getActiveStatuses()))
                         .thenReturn(List.of(exchange1, exchange2));
 
                 // 멘토가 설정한 가능한 시간 이외의 요청 처리
@@ -1168,6 +1167,15 @@ class SkillExchangeServiceImplTest {
                 starTime, endTime, "message");
         ReflectionTestUtils.setField(skillExchange, "id", exchangeId++);
         return skillExchange;
+    }
+
+    private List<ExchangeStatus> getActiveStatuses(){
+        return List.of(
+                ExchangeStatus.PENDING,
+                ExchangeStatus.ACCEPTED,
+                ExchangeStatus.COMPLETED,
+                ExchangeStatus.SETTLED
+        );
     }
 
 }
