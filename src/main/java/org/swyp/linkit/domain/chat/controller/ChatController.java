@@ -49,7 +49,7 @@ public class ChatController {
             throw new ChatNotParticipantException(me, mentorId, menteeId);
         }
 
-        ChatRoomDto roomDto = chatRoomService.createOrGetRoom(mentorId, menteeId);
+        ChatRoomDto roomDto = chatRoomService.createOrGetRoom(mentorId, menteeId, me);
         return ApiResponseDto.success("채팅방 조회/생성 완료", ChatRoomResponseDto.from(roomDto));
     }
 
@@ -79,7 +79,7 @@ public class ChatController {
             throw new ChatNotParticipantException(roomId, me);
         }
 
-        ChatRoomDto roomDto = chatRoomService.findDtoById(roomId);
+        ChatRoomDto roomDto = chatRoomService.findDtoById(roomId, me);
         return ApiResponseDto.success("채팅방 상세 조회 완료", ChatRoomResponseDto.from(roomDto));
     }
 
