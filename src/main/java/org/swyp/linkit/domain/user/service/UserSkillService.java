@@ -78,14 +78,17 @@ public class UserSkillService {
 
     // 사용자 스킬 삭제
     @Transactional
-    public void deleteUserSkill(Long userProfileId, Long userSkillId) {
+    public void deleteSkill(Long userId, Long skillId) {
         // 1. 스킬 조회 및 권한 확인
-        UserSkill userSkill = userSkillRepository.findByIdAndUserProfileId(userSkillId, userProfileId)
+        UserSkill userSkill = userSkillRepository.findByIdAndUserId(skillId, userId)
                 .orElseThrow(() -> new UserSkillNotFoundException("삭제할 스킬을 찾을 수 없거나 권한이 없습니다."));
 
-        // 2. 프로필에서 스킬 제거 (orphanRemoval = true로 자동 삭제)
+        // 2. 스킬 삭제
         UserProfile userProfile = userSkill.getUserProfile();
         userProfile.removeUserSkill(userSkill);
+
+        log.info("스킬 삭제 완료: userId={}, skillId={}, skillName={}",
+                userId, skillId, userSkill.getSkillName());
     }
 
     // 스킬 노출 토글
