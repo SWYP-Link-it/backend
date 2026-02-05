@@ -49,7 +49,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 멘토의 거래 가능 날짜 조회
      */
-    // 완료
     @Transactional(readOnly = true)
     @Override
     public AvailableDatesResponseDto getAvailableDates(Long mentorId, String yearMonth) {
@@ -99,7 +98,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
-    // 완료
     public SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto) {
         // 1. 멘티 조회 및 검증
         User mentee = userService.getUserById(requesterId);
@@ -276,7 +274,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     }
 
     /**
-     *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
+     *  거래 날짜 전날까지 수락되지 않은 요청 만료(거절) 처리(expired)
      */
     @Transactional(readOnly = true)
     @Override
@@ -306,6 +304,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
     /**
      *  요청 관리 네비바, 탭에 사용할 신규 알림 표시
+     *
      */
     @Transactional
     @Override
