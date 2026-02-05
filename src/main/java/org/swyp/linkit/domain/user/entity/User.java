@@ -112,6 +112,16 @@ public class User extends BaseTimeEntity {
         }
     }
 
+    // 프로필 작성 완료
+    public void completeProfile() {
+        this.userStatus = UserStatus.ACTIVE;
+    }
+
+    // 닉네임 변경
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
     // 회원 탈퇴 처리
     public void withdraw() {
         this.clearAvailableSchedules();

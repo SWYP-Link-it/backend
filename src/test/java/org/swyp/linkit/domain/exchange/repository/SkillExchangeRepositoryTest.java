@@ -77,16 +77,22 @@ class SkillExchangeRepositoryTest {
     public void findAllByReceiverIdAndDate(){
         //given
         Long receiverId = receiver.getId();
-        ExchangeStatus status = ExchangeStatus.CANCELED;
+        List<ExchangeStatus> activeStatuses = List.of(
+                ExchangeStatus.PENDING,
+                ExchangeStatus.ACCEPTED,
+                ExchangeStatus.COMPLETED,
+                ExchangeStatus.SETTLED
+        );
 
         //when
-        List<SkillExchange> sut = exchangeRepository.findAllByReceiverIdAndDate(receiverId, date, status);
+        List<SkillExchange> sut = exchangeRepository.findAllByReceiverIdAndDate(receiverId, date, activeStatuses);
 
         //then
         assertThat(sut.size()).isEqualTo(4);
 
-        boolean hasCanceled = sut.stream().anyMatch(se -> se.getExchangeStatus() == status);
-        assertThat(hasCanceled).isFalse();
+        boolean hasNoeActiveStatus = sut.stream().anyMatch(se ->
+                se.getExchangeStatus() == ExchangeStatus.CANCELED || se.getExchangeStatus() == ExchangeStatus.REJECTED);
+        assertThat(hasNoeActiveStatus).isFalse();
 
         SkillExchange firstExchange = sut.get(0);
         assertEquals(receiverId, firstExchange.getReceiver().getId());
@@ -109,7 +115,6 @@ class SkillExchangeRepositoryTest {
         UserProfile userProfile = UserProfile.create(
                 user,
                 "introduction",
-                "description",
                 ExchangeType.OFFLINE,
                 null,
                 null);
@@ -124,10 +129,10 @@ class SkillExchangeRepositoryTest {
         return UserSkill.create(
                 type,
                 "skillName",
-                SkillLevel.HIGH,
+                "skillTitle",
+                SkillProficiency.MEDIUM,
                 "description",
-                30,
-                true);
+                30);
     }
 
     private SkillExchange createExchange(User requester, User receiver, UserSkill receiverSkill,

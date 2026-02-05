@@ -5,9 +5,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_message")
@@ -24,8 +23,9 @@ public class ChatMessage extends BaseTimeEntity {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoom chatRoom;
 
-    @Column(name = "sender_id", nullable = false)
-    private Long senderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sender_id", nullable = false)
+    private User sender;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "sender_role", nullable = false)
@@ -35,9 +35,8 @@ public class ChatMessage extends BaseTimeEntity {
     private String content;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private ChatMessage(ChatRoom chatRoom, Long senderId, SenderRole senderRole, String content) {
+    private ChatMessage(ChatRoom chatRoom, SenderRole senderRole, String content) {
         this.chatRoom = chatRoom;
-        this.senderId = senderId;
         this.senderRole = senderRole;
         this.content = content;
     }
@@ -45,12 +44,23 @@ public class ChatMessage extends BaseTimeEntity {
     /**
      * 채팅 메시지 생성
      */
-    public static ChatMessage create(ChatRoom chatRoom, Long senderId, SenderRole senderRole, String content) {
-        return ChatMessage.builder()
+    public static ChatMessage create(ChatRoom chatRoom, User sender, SenderRole senderRole, String content) {
+        ChatMessage message = ChatMessage.builder()
                 .chatRoom(chatRoom)
-                .senderId(senderId)
                 .senderRole(senderRole)
                 .content(content)
                 .build();
+        message.assignSender(sender);
+        return message;
+    }
+
+    // === 연관관계 편의 메서드 ===
+    private void assignSender(User sender) {
+        this.sender = sender;
+    }
+
+    // === 편의 메서드: ID 조회 (하위 호환성) ===
+    public Long getSenderId() {
+        return sender != null ? sender.getId() : null;
     }
 }

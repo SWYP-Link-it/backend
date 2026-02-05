@@ -15,7 +15,6 @@ import org.swyp.linkit.TestRedisConfig;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
-import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.user.entity.*;
 
 import java.time.LocalDate;
@@ -32,12 +31,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Import(TestRedisConfig.class)
 @ActiveProfiles("test")
 @SpringBootTest
-@DisplayName("SkillExchangeService + Repository 테스트")
-public class SkillExchangeServiceWithRepositoryTest {
+@DisplayName("스킬 거래 요청 동시성 테스트")
+public class SkillExchangeRequestConcurrencyTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
-    ;
 
     @Autowired
     private EntityManager em;
@@ -46,7 +44,6 @@ public class SkillExchangeServiceWithRepositoryTest {
     private SkillExchangeService exchangeService;
 
     private LocalTime startTime = LocalTime.of(10, 0);
-    private LocalTime endTime = LocalTime.of(11, 0);
     private User mentee1;
     private User mentee2;
     private User mentee3;
@@ -92,7 +89,7 @@ public class SkillExchangeServiceWithRepositoryTest {
             em.persist(skillCategory);
 
             // 멘토 스킬 생성
-            mentorSkill = createUserSkill(skillCategory, 60);
+            mentorSkill = createUserSkill(skillCategory);
             UserProfile mentorProfile = createUserProfile(mentor, List.of(mentorSkill));
             em.persist(mentorProfile);
             em.persist(mentorSkill);
@@ -141,8 +138,8 @@ public class SkillExchangeServiceWithRepositoryTest {
                     successCount.incrementAndGet();
                 } catch (Exception e) {
                     failCount.incrementAndGet();
-                    System.out.println("실패 원인: " + e.getClass());
-                    System.out.println("실패 원인: " + e.getMessage());
+                    System.out.println("실패 원인 class: " + e.getClass());
+                    System.out.println("실패 원인 message: " + e.getMessage());
                 } finally {
                     latch.countDown();
                 }
@@ -176,7 +173,6 @@ public class SkillExchangeServiceWithRepositoryTest {
 
     private UserProfile createUserProfile(User user, List<UserSkill> userSkill) {
         UserProfile userProfile = UserProfile.create(user,
-                "introduction",
                 "description",
                 ExchangeType.OFFLINE,
                 PreferredRegion.CHUNGCHEONG,
@@ -198,35 +194,17 @@ public class SkillExchangeServiceWithRepositoryTest {
                 "nickname" + uuid);
     }
 
-    private UserSkill createUserSkill(SkillCategory skillCategory, int exchangeDuration) {
+    private UserSkill createUserSkill(SkillCategory skillCategory) {
         return UserSkill.create(
                 skillCategory,
                 "skillName",
-                SkillLevel.LOW,
+                "skillTitle",
+                SkillProficiency.LOW,
                 "description",
-                exchangeDuration,
-                true);
-    }
-
-    private UserSkill createUnVisibleUserSkill(SkillCategory skillCategory, int exchangeDuration) {
-        return UserSkill.create(
-                skillCategory,
-                "skillName",
-                SkillLevel.LOW,
-                "description",
-                exchangeDuration,
-                false);
+                60);
     }
 
     private SkillCategory createSkillCategory() {
         return SkillCategory.create(SkillCategoryType.DEVELOPMENT);
-    }
-
-    private SkillExchange createExchange(User receiverUser, User requester, UserSkill receiverSkill,
-                                         LocalTime starTime, LocalTime endTime) {
-
-        return SkillExchange.create(
-                requester, receiverUser, receiverSkill, LocalDate.of(2026, 2, 4),
-                starTime, endTime, "message");
     }
 }

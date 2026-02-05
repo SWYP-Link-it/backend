@@ -64,7 +64,10 @@ public class SecurityConfig {
                                 "/auth/complete-registration",
                                 "/auth/success",
                                 "/auth/refresh",
-                                "/auth/logout"
+                                "/auth/logout",
+                                "/market/skills",
+                                "/market/skills/**",
+                                "/search/**"
                         ).permitAll()
 
                         .requestMatchers("/auth/me").authenticated()

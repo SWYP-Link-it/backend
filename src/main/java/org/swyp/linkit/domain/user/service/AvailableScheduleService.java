@@ -4,9 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.dto.AvailableScheduleDto;
+import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
+import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.AvailableScheduleRepository;
+import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.AvailableScheduleNotFoundException;
+import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -22,9 +27,44 @@ import java.util.stream.Collectors;
 public class AvailableScheduleService {
 
     private final AvailableScheduleRepository availableScheduleRepository;
+    private final UserRepository userRepository;
+
+    // 가능 시간 생성
+    @Transactional
+    public void createSchedule(Long userId, AvailableScheduleDto scheduleDto) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. AvailableSchedule 생성
+        AvailableSchedule schedule = AvailableSchedule.create(
+                user,
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getStartTime(),
+                scheduleDto.getEndTime()
+        );
+
+        // 3. 유저에 추가 (cascade로 자동 저장)
+        user.addAvailableSchedule(schedule);
+    }
+
+    // 가능 시간 수정
+    @Transactional
+    public void updateSchedule(Long userId, Long scheduleId, AvailableScheduleDto scheduleDto) {
+        // 1. 스케줄 조회 및 권한 확인
+        AvailableSchedule schedule = availableScheduleRepository.findByIdAndUserId(scheduleId, userId)
+                .orElseThrow(() -> new AvailableScheduleNotFoundException("수정할 스케줄을 찾을 수 없거나 권한이 없습니다."));
+
+        // 2. 스케줄 정보 수정 (더티 체킹으로 자동 업데이트)
+        schedule.updateSchedule(
+                scheduleDto.getDayOfWeek(),
+                scheduleDto.getStartTime(),
+                scheduleDto.getEndTime()
+        );
+    }
 
     // 현재 날짜 기준 2일 후부터 ~ 3개월 후까지의 가능한 날짜 반환
-    public List<AvailableScheduleDto> getExpandedSchedules(Long mentorUserId) {
+    public List<ExpandedScheduleDto> getExpandedSchedules(Long mentorUserId) {
 
         LocalDate from = LocalDate.now().plusDays(2);
         LocalDate to = LocalDate.now().plusMonths(3);
@@ -40,7 +80,7 @@ public class AvailableScheduleService {
 
         long days = ChronoUnit.DAYS.between(from, to);
 
-        List<AvailableScheduleDto> result = new ArrayList<>();
+        List<ExpandedScheduleDto> result = new ArrayList<>();
 
         // to 날짜 포함
         for (long i = 0; i <= days; i++) {
@@ -49,9 +89,9 @@ public class AvailableScheduleService {
 
             List<AvailableSchedule> rules = byDay.getOrDefault(weekday, List.of());
             for (AvailableSchedule rule : rules) {
-                result.add(new AvailableScheduleDto(
+                result.add(ExpandedScheduleDto.of(
                         date,
-                        weekday.name(),
+                        weekday,
                         rule.getStartTime(),
                         rule.getEndTime()
                 ));
@@ -60,8 +100,8 @@ public class AvailableScheduleService {
 
         // 정렬: 날짜 -> 시작시간
         result.sort(Comparator
-                .comparing(AvailableScheduleDto::getDate)
-                .thenComparing(AvailableScheduleDto::getStartTime));
+                .comparing(ExpandedScheduleDto::getDate)
+                .thenComparing(ExpandedScheduleDto::getStartTime));
 
         return result;
     }

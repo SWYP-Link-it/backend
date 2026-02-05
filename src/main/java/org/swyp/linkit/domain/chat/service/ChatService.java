@@ -14,12 +14,10 @@ import org.swyp.linkit.domain.chat.repository.ChatMessageDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatReadRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
-import org.swyp.linkit.global.error.exception.ChatInvalidMessageException;
-import org.swyp.linkit.global.error.exception.ChatMessageNotFoundException;
-import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
-import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
+import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.*;
 
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,6 +32,7 @@ public class ChatService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatReadRepository chatReadRepository;
     private final ChatMessageDeleteRepository chatMessageDeleteRepository;
+    private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -44,7 +43,7 @@ public class ChatService {
      */
     public void assertParticipant(Long userId, Long roomId) {
         // 디버깅: 채팅방 정보 조회
-        ChatRoom room = chatRoomRepository.findById(roomId).orElse(null);
+        ChatRoom room = chatRoomRepository.findByIdWithUsers(roomId).orElse(null);
         if (room != null) {
             log.debug("참여자 검증 - roomId={}, userId={}, mentorId={}, menteeId={}",
                     roomId, userId, room.getMentorId(), room.getMenteeId());
@@ -64,13 +63,16 @@ public class ChatService {
      */
     @Transactional
     public ChatMessage saveMessage(Long roomId, Long senderId, String content) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findByIdWithUsers(roomId)
                 .orElseThrow(() -> new ChatRoomNotFoundException(roomId));
+
+        // 발신자 User 엔티티 조회
+        User sender = findUserById(senderId);
 
         // 발신자 역할 결정
         SenderRole senderRole = room.getMentorId().equals(senderId) ? SenderRole.MENTOR : SenderRole.MENTEE;
 
-        ChatMessage message = ChatMessage.create(room, senderId, senderRole, content);
+        ChatMessage message = ChatMessage.create(room, sender, senderRole, content);
 
         ChatMessage saved = chatMessageRepository.save(message);
 
@@ -127,7 +129,7 @@ public class ChatService {
      */
     @Transactional
     public void markAsRead(Long roomId, Long userId) {
-        ChatRoom room = chatRoomRepository.findById(roomId)
+        ChatRoom room = chatRoomRepository.findByIdWithUsers(roomId)
                 .orElseThrow(() -> new ChatRoomNotFoundException(roomId));
 
         assertParticipant(userId, roomId);
@@ -228,5 +230,12 @@ public class ChatService {
         } catch (JsonProcessingException e) {
             log.error("읽음 이벤트 직렬화 실패", e);
         }
+    }
+
+    // === Private Helper Methods ===
+
+    private User findUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found: " + userId));
     }
 }

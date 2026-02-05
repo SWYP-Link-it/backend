@@ -16,13 +16,18 @@ import java.time.LocalTime;
 public class SlotDto {
 
     @JsonFormat(pattern = "HH:mm")
-    @Schema(description = "시간", example = "HH:mm")
-    private LocalTime time;
+    @Schema(description = "시작 시간", example = "HH:mm")
+    private LocalTime startTime;
 
-    @Schema(description = "예약 가능 여부", example = "true")
-    private boolean isAvailable;
+    @JsonFormat(pattern = "HH:mm")
+    @Schema(description = "종료 시간", example = "HH:mm")
+    private LocalTime endTime;
 
-    public static SlotDto of(LocalTime time, boolean isAvailable){
-        return new SlotDto(time, isAvailable);
+    private SlotDto(LocalTime startTime, int exchangeDuration){
+        this.startTime = startTime;
+        this.endTime = startTime.plusMinutes(exchangeDuration);
+    }
+    public static SlotDto of(LocalTime startTime, int exchangeDuration){
+        return new SlotDto(startTime, exchangeDuration);
     }
 }

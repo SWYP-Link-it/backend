@@ -95,7 +95,7 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 4. 상태 확인
+        // 4. 탈퇴 사용자 체크
         if (user.getUserStatus() == UserStatus.WITHDRAWN) {
             throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }
@@ -107,9 +107,11 @@ public class AuthService {
     // 현재 로그인한 사용자 정보 조회
     @Transactional(readOnly = true)
     public UserResponseDto getUserInfo(Long userId) {
+        // 1. 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
+        // 2. 탈퇴 사용자 체크
         if (user.getUserStatus() == UserStatus.WITHDRAWN) {
             throw new InvalidUserStatusException("탈퇴한 사용자입니다.");
         }

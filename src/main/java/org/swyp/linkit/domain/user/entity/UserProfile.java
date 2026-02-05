@@ -25,9 +25,6 @@ public class UserProfile extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    @Column(length = 100)
-    private String introduction;
-
     @Column(name = "experience_description", length = 100)
     private String experienceDescription;
 
@@ -49,11 +46,10 @@ public class UserProfile extends BaseTimeEntity {
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserProfile(User user, String introduction, String experienceDescription,
-                        Integer timesTaught, ExchangeType exchangeType, PreferredRegion preferredRegion,
-                        String detailedLocation) {
+    private UserProfile(User user, String experienceDescription,
+                        Integer timesTaught, ExchangeType exchangeType,
+                        PreferredRegion preferredRegion, String detailedLocation) {
         this.user = user;
-        this.introduction = introduction;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
         this.exchangeType = exchangeType;
@@ -62,12 +58,11 @@ public class UserProfile extends BaseTimeEntity {
     }
 
     // 사용자 프로필 생성
-    public static UserProfile create(User user, String introduction, String experienceDescription,
+    public static UserProfile create(User user, String experienceDescription,
                                      ExchangeType exchangeType, PreferredRegion preferredRegion,
                                      String detailedLocation) {
         return UserProfile.builder()
                 .user(user)
-                .introduction(introduction)
                 .experienceDescription(experienceDescription)
                 .timesTaught(0)
                 .exchangeType(exchangeType)
@@ -77,10 +72,8 @@ public class UserProfile extends BaseTimeEntity {
     }
 
     // 사용자 프로필 수정
-    public void updateProfile(String introduction, String experienceDescription,
-                              ExchangeType exchangeType, PreferredRegion preferredRegion,
-                              String detailedLocation) {
-        this.introduction = introduction;
+    public void update(String experienceDescription, ExchangeType exchangeType,
+                       PreferredRegion preferredRegion, String detailedLocation) {
         this.experienceDescription = experienceDescription;
         this.exchangeType = exchangeType;
         this.preferredRegion = preferredRegion;
