@@ -11,6 +11,7 @@ import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetail
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -69,7 +70,7 @@ public class SkillExchangeDetailDto {
                 .creditPrice(result.creditPrice())
                 .message(result.message())
                 .requestedDate(result.createdAt().toLocalDate())
-                .exchangeDateTime(result.exchangeDate().atTime(result.exchangeTime()))
+                .exchangeDateTime(result.exchangeDate().atTime(result.exchangeTime()).truncatedTo(ChronoUnit.SECONDS))
                 .exchangeDuration(result.exchangeDuration())
                 .isNew(!result.isRead())
                 .build();
