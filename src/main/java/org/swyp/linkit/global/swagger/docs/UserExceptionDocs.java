@@ -42,4 +42,30 @@ public class UserExceptionDocs {
             }
         }
     }
+
+    /**
+     * withdrawUser
+     */
+    public static class WithdrawUser {
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class UserNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.USER_NOT_FOUND;
+            }
+        }
+
+        public static class AlreadyWithdrawnException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.ALREADY_WITHDRAWN;
+            }
+        }
+    }
 }
