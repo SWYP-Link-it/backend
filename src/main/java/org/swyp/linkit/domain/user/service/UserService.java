@@ -5,7 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.entity.UserStatus;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.AlreadyWithdrawnException;
 import org.swyp.linkit.global.error.exception.DuplicateNicknameException;
 import org.swyp.linkit.global.error.exception.SameNicknameException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
@@ -50,5 +52,23 @@ public class UserService {
 
         log.info("닉네임 변경: userId={}, oldNickname={}, newNickname={}",
                 userId, oldNickname, nickname);
+    }
+
+    // 회원 탈퇴
+    @Transactional
+    public void withdrawUser(Long userId) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("사용자를 찾을 수 없습니다."));
+
+        // 2. 이미 탈퇴한 사용자 체크
+        if (user.getUserStatus() == UserStatus.WITHDRAWN) {
+            throw new AlreadyWithdrawnException("이미 탈퇴한 사용자입니다.");
+        }
+
+        // 3. 회원 탈퇴 처리
+        user.withdraw();
+
+        log.info("회원 탈퇴 완료: userId={}, nickname={}", userId, user.getNickname());
     }
 }
