@@ -642,47 +642,48 @@ public class SkillExchangeServiceImplIntegrationTest {
                 assertThatThrownBy(() -> skillExchangeService.rejectSkillExchange(mentor.getId(), nonExistExchangeId))
                         .isInstanceOf(ExchangeNotFoundException.class);
             }
+
+            @Test
+            @DisplayName("거래의 수신자(멘토)가 아닌 유저가 거절을 요청하면 ExchangeAccessDeniedException 발생")
+            public void fail_ExchangeAccessDeniedException() {
+                // given
+                User mentee = createSavedUser();
+                User mentor = createSavedUser();
+                User otherUser = createSavedUser();
+                UserSkill mentorSkill = createUserSkill(createSavedSkillCategory(), 60);
+                createSavedUserProfile(mentor, mentorSkill);
+
+                SkillExchange exchange = createSavedExchange(mentee, mentor, mentorSkill,
+                        LocalDate.now().plusDays(3), LocalTime.of(14, 0), LocalTime.of(15, 0));
+
+                // when & then
+                assertThatThrownBy(() -> skillExchangeService.rejectSkillExchange(otherUser.getId(), exchange.getId()))
+                        .isInstanceOf(ExchangeAccessDeniedException.class);
+            }
+
+            @Test
+            @DisplayName("이미 수락되었거나 취소된 거래를 거절하려 하면 InvalidExchangeStatusException 발생")
+            public void fail_InvalidExchangeStatusException() {
+                // given
+                User mentee = createSavedUser();
+                User mentor = createSavedUser();
+                UserSkill mentorSkill = createUserSkill(createSavedSkillCategory(), 60);
+                createSavedUserProfile(mentor, mentorSkill);
+
+                SkillExchange exchange = createSavedExchange(mentee, mentor, mentorSkill,
+                        LocalDate.now().plusDays(3), LocalTime.of(14, 0), LocalTime.of(15, 0));
+
+                // 이미 수락된 상태로 변경
+                exchange.accept();
+                em.flush();
+                em.clear();
+
+                // when & then
+                assertThatThrownBy(() -> skillExchangeService.rejectSkillExchange(mentor.getId(), exchange.getId()))
+                        .isInstanceOf(InvalidExchangeStatusException.class);
+            }
         }
 
-        @Test
-        @DisplayName("거래의 수신자(멘토)가 아닌 유저가 거절을 요청하면 ExchangeAccessDeniedException 발생")
-        public void fail_ExchangeAccessDeniedException() {
-            // given
-            User mentee = createSavedUser();
-            User mentor = createSavedUser();
-            User otherUser = createSavedUser();
-            UserSkill mentorSkill = createUserSkill(createSavedSkillCategory(), 60);
-            createSavedUserProfile(mentor, mentorSkill);
-
-            SkillExchange exchange = createSavedExchange(mentee, mentor, mentorSkill,
-                    LocalDate.now().plusDays(3), LocalTime.of(14, 0), LocalTime.of(15, 0));
-
-            // when & then
-            assertThatThrownBy(() -> skillExchangeService.rejectSkillExchange(otherUser.getId(), exchange.getId()))
-                    .isInstanceOf(ExchangeAccessDeniedException.class);
-        }
-
-        @Test
-        @DisplayName("이미 수락되었거나 취소된 거래를 거절하려 하면 InvalidExchangeStatusException 발생")
-        public void fail_InvalidExchangeStatusException() {
-            // given
-            User mentee = createSavedUser();
-            User mentor = createSavedUser();
-            UserSkill mentorSkill = createUserSkill(createSavedSkillCategory(), 60);
-            createSavedUserProfile(mentor, mentorSkill);
-
-            SkillExchange exchange = createSavedExchange(mentee, mentor, mentorSkill,
-                    LocalDate.now().plusDays(3), LocalTime.of(14, 0), LocalTime.of(15, 0));
-
-            // 이미 수락된 상태로 변경
-            exchange.accept();
-            em.flush();
-            em.clear();
-
-            // when & then
-            assertThatThrownBy(() -> skillExchangeService.rejectSkillExchange(mentor.getId(), exchange.getId()))
-                    .isInstanceOf(InvalidExchangeStatusException.class);
-        }
     }
 
     @Nested
