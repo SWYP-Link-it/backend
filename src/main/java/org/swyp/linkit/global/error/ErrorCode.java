@@ -63,7 +63,7 @@ public enum ErrorCode implements BaseErrorCode {
     SAME_NICKNAME(HttpStatus.BAD_REQUEST, "U003", "기존 닉네임과 동일합니다."),
 
     @ExplainError("이미 탈퇴한 사용자가 다시 요청을 시도한 경우 발생합니다.")
-    ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "U004", "이미 탈퇴한 사용자입니다."),
+    ALREADY_WITHDRAWN(HttpStatus.CONFLICT, "U004", "이미 탈퇴한 사용자입니다."),
 
     // 사용자 프로필
     @ExplainError("요청한 프로필 ID에 해당하는 프로필이 존재하지 않는 경우 발생합니다.")
