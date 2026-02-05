@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -165,6 +166,28 @@ public class UserProfileController {
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 노출 상태가 변경되었습니다.", skill)
+        );
+    }
+
+    @Operation(
+            summary = "스킬 삭제",
+            description = "등록된 스킬을 삭제합니다."
+    )
+    @ApiErrorExceptionsExample(UserProfileExceptionDocs.DeleteSkill.class)
+    @DeleteMapping(value = "/skills/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<Void>> deleteSkill(
+            @AuthenticationPrincipal CustomOAuth2User principal,
+            @Parameter(description = "삭제할 스킬 ID", required = true)
+            @PathVariable Long skillId) {
+
+        Long userId = principal.getUserId();
+
+        log.info("[UserProfile] DELETE /profile/skills/{} : userId={}", skillId, userId);
+
+        userSkillService.deleteSkill(userId, skillId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("스킬이 삭제되었습니다.", null)
         );
     }
 
