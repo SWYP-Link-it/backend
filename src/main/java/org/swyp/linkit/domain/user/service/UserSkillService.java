@@ -10,6 +10,7 @@ import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.SkillCategory;
 import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
+import org.swyp.linkit.domain.user.entity.UserSkillImage;
 import org.swyp.linkit.domain.user.repository.SkillCategoryRepository;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
@@ -28,6 +29,7 @@ public class UserSkillService {
     private final UserProfileRepository userProfileRepository;
     private final SkillCategoryRepository skillCategoryRepository;
     private final UserSkillRepository userSkillRepository;
+    private final UserSkillImageUploadService imageUploadService;
 
     // 사용자 스킬 생성
     @Transactional
@@ -83,7 +85,19 @@ public class UserSkillService {
         UserSkill userSkill = userSkillRepository.findByIdAndUserId(skillId, userId)
                 .orElseThrow(() -> new UserSkillNotFoundException("삭제할 스킬을 찾을 수 없거나 권한이 없습니다."));
 
-        // 2. 스킬 삭제
+        // 2. 스킬에 연결된 이미지들을 NCP Object Storage에서 삭제
+        List<String> imageUrls = userSkill.getImages().stream()
+                .map(UserSkillImage::getImageUrl)
+                .toList();
+
+        for (String imageUrl : imageUrls) {
+            imageUploadService.deleteImage(imageUrl);
+        }
+
+        log.info("스킬 이미지 삭제 완료: userId={}, skillId={}, imageCount={}",
+                userId, skillId, imageUrls.size());
+
+        // 3. 스킬 삭제
         UserProfile userProfile = userSkill.getUserProfile();
         userProfile.removeUserSkill(userSkill);
 
