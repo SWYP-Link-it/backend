@@ -17,17 +17,17 @@ import java.util.Optional;
 public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Long> {
 
     /**
-     *  date 기준 멘토의 예약 현황 조회
+     *  date 기준 멘토의 활성화 된 스킬 거래 조회
      *  receiverId, date, ExchangeStatus 로 SkillExchange, UserSkill Fetch Join
      */
     @Query("SELECT se FROM SkillExchange se " +
             "JOIN FETCH se.receiverSkill " +
             "WHERE se.receiver.id = :receiverId " +
             "AND se.scheduledDate = :date " +
-            "AND se.exchangeStatus != :canceled ")
+            "AND se.exchangeStatus IN :activeStatuses")
     List<SkillExchange> findAllByReceiverIdAndDate(@Param("receiverId") Long receiverId,
                                                    @Param("date")LocalDate date,
-                                                   @Param("canceled") ExchangeStatus canceled);
+                                                   @Param("activeStatuses") List<ExchangeStatus> activeStatuses);
 
     /**
      *  보낸 요청 조회

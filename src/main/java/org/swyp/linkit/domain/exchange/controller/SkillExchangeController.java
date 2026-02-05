@@ -76,7 +76,7 @@ public class SkillExchangeController {
      */
     @Operation(
             summary = "멘토의 날짜 별 거래 가능 시간 조회",
-            description = "날짜 별 멘토의 거래 가능 시간을 조회합니다. 시간은 30분 단위로 응답합니다. available (true, false)로 예약 가능 시간대 여부를 표시합니다."
+            description = "날짜 별 멘토의 거래 가능 시간을 조회합니다."
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetAvailableSlots.class)
     @GetMapping(value = "/mentors/{mentorId}/available-slots", produces = MediaType.APPLICATION_JSON_VALUE)
