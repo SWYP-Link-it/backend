@@ -76,7 +76,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 멘토의 날짜 별 거래 가능 시간 조회
      */
-    // 완료
     @Transactional(readOnly = true)
     @Override
     public AvailableSlotsResponseDto getAvailableSlots(Long mentorId, Long receiverSkillId, LocalDate date) {
@@ -478,8 +477,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     private Set<LocalTime> getBookedSlots(Long mentorId, LocalDate date) {
         // date 기준 멘토의 예약 조회
+        List<ExchangeStatus> activeStatuses = List.of(
+                ExchangeStatus.PENDING,
+                ExchangeStatus.ACCEPTED,
+                ExchangeStatus.COMPLETED,
+                ExchangeStatus.SETTLED
+        );
         List<SkillExchange> bookedExchanges = exchangeRepository
-                .findAllByReceiverIdAndDate(mentorId, date, ExchangeStatus.CANCELED);
+                .findAllByReceiverIdAndDate(mentorId, date, activeStatuses);
 
         // 조회된 예약을 30분 단위로 변환
         Set<LocalTime> bookedSlots = new HashSet<>();
@@ -523,7 +528,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private List<SlotDto> calculateAvailableSlots(Set<LocalTime> operatingSlots, int exchangeDuration, Set<LocalTime> bookedSlots) {
         return operatingSlots.stream()
                 .sorted()
-                .map(start -> SlotDto.of(start, isPossibleSlot(start, exchangeDuration, bookedSlots, operatingSlots)))
+                // startTime이 exchangeDuration만큼 시간을 확보했는지 필터링
+                .filter(start -> isPossibleSlot(start, exchangeDuration, bookedSlots, operatingSlots))
+                .map(start -> SlotDto.of(start, exchangeDuration))
                 .toList();
     }
 
