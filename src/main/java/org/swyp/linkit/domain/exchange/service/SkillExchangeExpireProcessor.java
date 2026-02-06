@@ -8,18 +8,25 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
+import org.swyp.linkit.global.error.exception.ExchangeNotFoundException;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class SkillExchangeExpireProcessor {
 
+    private final SkillExchangeRepository skillExchangeRepository;
     private final CreditService creditService;
 
     // 새로운 트랜잭션 적용
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void expireSingleSkillExchange(SkillExchange skillExchange){
-        log.debug("거래 만료 처리 시작. skillExchangeId: {}", skillExchange.getId());
+    public void expireSingleSkillExchange(Long skillExchangeId){
+        log.debug("거래 만료 처리 시작. skillExchangeId: {}", skillExchangeId);
+
+        // 1. skillExchange 조회 (Requester, Receiver Fetch Join)
+        SkillExchange skillExchange = skillExchangeRepository.findByIdForExpire(skillExchangeId)
+                .orElseThrow(ExchangeNotFoundException::new);
 
         // pending -> expired 변경
         skillExchange.expire();

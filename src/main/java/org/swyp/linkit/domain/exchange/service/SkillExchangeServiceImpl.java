@@ -282,21 +282,21 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         LocalDate today = LocalDate.now();
 
         // 1. expired 처리 대상 목록 조회 (Requester, Receiver Fetch Join)
-        List<SkillExchange> expiredTargets = exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING);
-        if(expiredTargets.isEmpty()){
+        List<Long> expiredTargetIds = exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING);
+        if(expiredTargetIds.isEmpty()){
             log.info("만료 처리 대상 없음");
             return 0;
         }
 
         // 2. 각 거래 독립적인 트랜잭션으로 처리
         int successCount = 0;
-        for (SkillExchange exchange : expiredTargets) {
+        for (Long exchangeId : expiredTargetIds) {
             try {
                 // REQUIRES_NEW
-                exchangeExpireProcessor.expireSingleSkillExchange(exchange);
+                exchangeExpireProcessor.expireSingleSkillExchange(exchangeId);
                 successCount++;
             } catch (Exception e){
-                log.error("거래 만료 처리 실패. skillExchangeId: {}, errorMessage: {}", exchange.getId(), e.getMessage());
+                log.error("거래 만료 처리 실패. skillExchangeId: {}, errorMessage: {}", exchangeId, e.getMessage());
             }
         }
         return successCount;

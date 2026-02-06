@@ -116,16 +116,23 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
     Optional<SkillExchange> findByIdWithRequester(@Param("id") Long id);
 
     /**
-     * 거래 만료 처리해야할 목록 조회
-     * requester, receiver Fetch Join
+     * 거래 만료 처리해야할 Id 조회
+     */
+    @Query("SELECT se.id FROM SkillExchange se " +
+            "WHERE se.scheduledDate < :today " +
+            "AND se.exchangeStatus = :pending")
+    List<Long> findAllExpiredTargets(@Param("today") LocalDate today,
+                                     @Param("pending") ExchangeStatus pending);
+
+    /**
+     * 거래 만료 처리 대상 조회
+     * Requester, Receiver Fetch Join
      */
     @Query("SELECT se FROM SkillExchange se " +
             "JOIN FETCH se.requester " +
             "JOIN FETCH se.receiver " +
-            "WHERE se.scheduledDate < :today " +
-            "AND se.exchangeStatus = :pending")
-    List<SkillExchange> findAllExpiredTargets(@Param("today") LocalDate today,
-                                              @Param("pending") ExchangeStatus pending);
+            "WHERE se.id = :id")
+    Optional<SkillExchange> findByIdForExpire(@Param("id") Long id);
 
     /**
      *  skillExchangeId로 조회 및 Receiver, Requester Fetch Join
