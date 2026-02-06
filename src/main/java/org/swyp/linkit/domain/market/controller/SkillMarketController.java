@@ -34,16 +34,20 @@ public class SkillMarketController {
     @Operation(
             summary = "스킬 카드 목록 조회",
             description = "스킬 장터 메인 페이지에 표시될 노출 중인 스킬 카드 목록을 최신순으로 조회합니다. " +
-                    "카테고리 파라미터를 통해 특정 카테고리의 스킬만 조회할 수 있습니다."
+                    "카테고리 및 검색 키워드 파라미터를 통해 필터링할 수 있습니다."
     )
     @GetMapping(value = "/skills", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<List<SkillCardResponseDto>>> getSkillCards(
             @Parameter(description = "스킬 카테고리 (선택)", example = "DEVELOPMENT")
-            @RequestParam(required = false) SkillCategoryType category) {
+            @RequestParam(required = false) SkillCategoryType category,
 
-        log.info("[SkillMarket] GET /market/skills : category={}", category);
+            @Parameter(description = "검색 키워드 (선택)", example = "React")
+            @RequestParam(required = false) String searchKeyword) {
 
-        List<SkillCardResponseDto> skills = skillMarketService.getVisibleSkills(category);
+        log.info("[SkillMarket] GET /market/skills : category={}, searchKeyword={}",
+                category, searchKeyword);
+
+        List<SkillCardResponseDto> skills = skillMarketService.getVisibleSkills(category, searchKeyword);
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("스킬 카드 목록을 조회했습니다.", skills)
