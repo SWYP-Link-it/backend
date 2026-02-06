@@ -325,7 +325,7 @@ public class SettlementServiceImplIntegrationTest {
                 // then
                 assertThat(successCount).isEqualTo(1);
 
-                // 1. 성공 건 DB 검증
+                // 1. 실패 건 DB 검증
                 // settlement 상태 검증
                 assertThat(settlementRepository.findBySkillExchangeId(noneTargetExchange.getId()))
                         .isPresent()
@@ -359,7 +359,7 @@ public class SettlementServiceImplIntegrationTest {
                             assertThat(c.getBalance()).isEqualTo(receiverBeforeBalance + creditPrice);
                         });
 
-                // 2. 실패 건 DB 검증
+                // 2. 성공 건 DB 검증
                 assertThat(settlementRepository.findBySkillExchangeId(targetExchange.getId()))
                         .isPresent()
                         .get()
@@ -375,6 +375,8 @@ public class SettlementServiceImplIntegrationTest {
                             // settlement 상태 검증
                             assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.SETTLED);
                         });
+
+                cleanUp();
             }
 
         }
