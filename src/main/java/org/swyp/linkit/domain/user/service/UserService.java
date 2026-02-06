@@ -86,36 +86,34 @@ public class UserService {
     // 프로필 및 모든 스킬 삭제
     private void deleteProfileAndSkills(Long userId) {
         // 1. 프로필이 없으면 스킵
-        UserProfile userProfile = userProfileRepository.findByUserId(userId)
-                .orElse(null);
+        userProfileRepository.findByUserId(userId)
+                .ifPresentOrElse(
+                        userProfile -> {
+                            // 2. 모든 스킬의 이미지들을 NCP Object Storage에서 삭제
+                            List<UserSkill> userSkills = userProfile.getUserSkills();
+                            int totalImageCount = 0;
 
-        if (userProfile == null) {
-            log.info("프로필이 없는 사용자 탈퇴: userId={}", userId);
-            return;
-        }
+                            for (UserSkill userSkill : userSkills) {
+                                List<String> imageUrls = userSkill.getImages().stream()
+                                        .map(UserSkillImage::getImageUrl)
+                                        .toList();
 
-        // 2. 모든 스킬의 이미지들을 NCP Object Storage에서 삭제
-        List<UserSkill> userSkills = userProfile.getUserSkills();
-        int totalImageCount = 0;
+                                for (String imageUrl : imageUrls) {
+                                    imageUploadService.deleteImage(imageUrl);
+                                }
 
-        for (UserSkill userSkill : userSkills) {
-            List<String> imageUrls = userSkill.getImages().stream()
-                    .map(UserSkillImage::getImageUrl)
-                    .toList();
+                                totalImageCount += imageUrls.size();
+                                log.info("스킬 이미지 삭제: userId={}, skillId={}, imageCount={}",
+                                        userId, userSkill.getId(), imageUrls.size());
+                            }
 
-            for (String imageUrl : imageUrls) {
-                imageUploadService.deleteImage(imageUrl);
-            }
+                            // 3. 프로필 삭제
+                            userProfileRepository.delete(userProfile);
 
-            totalImageCount += imageUrls.size();
-            log.info("스킬 이미지 삭제: userId={}, skillId={}, imageCount={}",
-                    userId, userSkill.getId(), imageUrls.size());
-        }
-
-        // 3. 프로필 삭제
-        userProfileRepository.delete(userProfile);
-
-        log.info("프로필 및 이미지 삭제 완료: userId={}, skillCount={}, totalImageCount={}",
-                userId, userSkills.size(), totalImageCount);
+                            log.info("프로필 및 이미지 삭제 완료: userId={}, skillCount={}, totalImageCount={}",
+                                    userId, userSkills.size(), totalImageCount);
+                        },
+                        () -> log.info("프로필이 없는 사용자 탈퇴: userId={}", userId)
+                );
     }
 }
