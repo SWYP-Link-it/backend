@@ -43,7 +43,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Import(TestRedisConfig.class)
 @ActiveProfiles("test")
-@Transactional
 @SpringBootTest(properties = "scheduler.enabled=false")
 @DisplayName("SkillExchangeService 통합 테스트")
 public class SkillExchangeServiceImplIntegrationTest {
@@ -73,6 +72,7 @@ public class SkillExchangeServiceImplIntegrationTest {
     @Autowired
     private ChatRoomRepository chatRoomRepository;
 
+    @Transactional
     @Nested
     @DisplayName("2일 뒤 ~ 3달 까지의 멘토의 거래 가능 날짜 조회.")
     class GetAvailableDates {
@@ -160,6 +160,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("멘토의 날짜 별 거래 가능 시간 조회")
     class GetAvailableSlots {
@@ -257,7 +258,8 @@ public class SkillExchangeServiceImplIntegrationTest {
             }
         }
     }
-    
+
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 요청")
     class RequestSkillExchange {
@@ -431,6 +433,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 수락")
     class AcceptSkillExchange {
@@ -545,6 +548,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 거절")
     class RejectSkillExchange {
@@ -676,6 +680,7 @@ public class SkillExchangeServiceImplIntegrationTest {
 
     }
 
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 취소")
     class CancelSkillExchange {
@@ -972,6 +977,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 보낸 요청 목록 조회")
     class GetSentRequests {
@@ -1088,6 +1094,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("스킬 거래 받은 요청 목록 조회")
     class GetReceivedRequests {
@@ -1204,6 +1211,7 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
+    @Transactional
     @Nested
     @DisplayName("유저의 요청 관리에 읽지 않은 알림이 있는지 조회.")
     class GetNotification {
@@ -1249,7 +1257,8 @@ public class SkillExchangeServiceImplIntegrationTest {
             }
         }
     }
-    
+
+    // todo
     @Nested
     @DisplayName("거래 날짜 전날까지 수락되지 않은 요청 만료(거절).")
     class ExpirePendingRequests {
@@ -1266,6 +1275,7 @@ public class SkillExchangeServiceImplIntegrationTest {
                 LocalDate tomorrow = today.plusDays(1);
 
                 int exchangeDuration = 60;
+                int creditPrice = exchangeDuration / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
                 User requester = createSavedUser();
                 int requesterBalance = createSavedCredit(requester, 100).getBalance();
 
@@ -1275,83 +1285,140 @@ public class SkillExchangeServiceImplIntegrationTest {
                 createSavedUserProfile(receiver, mentorSkill);
 
                 // 어제 거래 및 PENDING -> 만료 대상
-                SkillExchange expiredTarget = createSavedExchange(requester, receiver, mentorSkill, yesterday,
+                SkillExchange targetExchange = createSavedExchange(requester, receiver, mentorSkill, yesterday,
                         LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                targetExchange.updateReceiverReadToTrue();
+                targetExchange.updateRequesterReadToTrue();
+                skillExchangeRepository.saveAndFlush(targetExchange);
 
-                // 내일 거래 및 PENDING -> 유지
-                SkillExchange validExchange = createSavedExchange(requester, receiver, mentorSkill, tomorrow,
+                // 내일 거래 및 PENDING -> 만료 대상 아님
+                SkillExchange noneTargetExchange = createSavedExchange(requester, receiver, mentorSkill, tomorrow,
                         LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
-
-                // Processor의 requires_new 로 인해 트랜잭션 종류 처리
-                TestTransaction.flagForCommit();
-                TestTransaction.end();
+                noneTargetExchange.updateReceiverReadToTrue();
+                noneTargetExchange.updateRequesterReadToTrue();
+                skillExchangeRepository.saveAndFlush(noneTargetExchange);
 
                 // when
-                TestTransaction.start();
+                System.out.println("=== 로직 시작 ==");
                 int successCount = skillExchangeService.expirePendingRequests();
 
-                em.flush();
-                em.clear();
-
                 // then
-                // 1건 성공
+                // 만료 처리된 데이터는 1건
                 assertThat(successCount).isEqualTo(1);
-                // 만료 대상 거래 만료 처리 검증
-                SkillExchange resultExpired = skillExchangeRepository.findById(expiredTarget.getId()).orElseThrow();
-                assertThat(resultExpired.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
-                assertThat(resultExpired.isRequesterRead()).isFalse();
-                assertThat(resultExpired.isReceiverRead()).isFalse();
 
-                // 내일 거래로 대상 아님 검증
-                SkillExchange resultValid = skillExchangeRepository.findById(validExchange.getId()).orElseThrow();
-                assertThat(resultValid.getExchangeStatus()).isEqualTo(ExchangeStatus.PENDING);
+                // 트랜잭션 종료로 인해 lazyLoading 사용 불가능
+                // DB 검증
+                // 1. 대상 건 검증
+                // skillExchange 상태 및 requester, receiver 미확인 처리 검증
+                assertThat(skillExchangeRepository.findById(targetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(se -> {
+                            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
+                            assertThat(se.isRequesterRead()).isFalse();
+                            assertThat(se.isReceiverRead()).isFalse();
+                        });
 
-                // 멘티의 크레딧 환불 여부 검증
+                // credit 환불 검증
                 assertThat(creditRepository.findByUserId(requester.getId()))
                         .isPresent()
                         .get()
                         .satisfies(credit -> {
-                            assertThat(credit.getBalance()).isEqualTo(requesterBalance + expiredTarget.getCreditPrice());
+                            assertThat(credit.getBalance()).isEqualTo(requesterBalance + creditPrice);
                         });
+
+                // 2. 대상 아닌 건 검증
+                // skillExchange 상태 및 requester, receiver 확인 처리 검증
+                assertThat(skillExchangeRepository.findById(noneTargetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(se -> {
+                            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.PENDING);
+                            assertThat(se.isRequesterRead()).isTrue();
+                            assertThat(se.isReceiverRead()).isTrue();
+                        });
+
+                cleanUp();
             }
         }
     
         @Nested
         @DisplayName("실패 케이스")
         class FailCases {
-            @Disabled
             @Test
             @DisplayName("여러 건 중 하나가 실패하더라도 REQUIRES_NEW에 의해 다른 건들은 정상 처리되어야 한다.")
-            void success_IndependentTransaction() {
+            public void success_IndependentTransaction() {
                 // given
-                LocalDate yesterday = LocalDate.now().minusDays(1);
+                LocalDate today = LocalDate.now();
+                LocalDate yesterday = today.minusDays(1);
 
                 int exchangeDuration = 60;
-                User requester1 = createSavedUser();
-                createSavedCredit(requester1, 100);
+                int creditPrice = exchangeDuration / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
+                User targetRequester = createSavedUser();
+                int requesterBalance = createSavedCredit(targetRequester, 100).getBalance();
 
-                User requester2 = createSavedUser();
+                User noneTargetRequester = createSavedUser();
+
                 User receiver = createSavedUser();
                 SkillCategory skillCategory = createSavedSkillCategory();
                 UserSkill mentorSkill = createUserSkill(skillCategory, exchangeDuration);
                 createSavedUserProfile(receiver, mentorSkill);
 
-
-                // 정상 만료 대상 2건 생성
-                SkillExchange target1 = createSavedExchange(requester1, receiver, mentorSkill, yesterday,
+                // 어제 거래 및 PENDING -> 만료 대상
+                SkillExchange targetExchange = createSavedExchange(targetRequester, receiver, mentorSkill, yesterday,
                         LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
-                // 해당 거래는 requester에게 credit 정보가 없기에 예외 발생
-                SkillExchange target2 = createSavedExchange(requester2, receiver, mentorSkill, yesterday,
-                        LocalTime.now().minusHours(2), LocalTime.now().minusHours(2).plusMinutes(exchangeDuration));
+                targetExchange.updateReceiverReadToTrue();
+                targetExchange.updateRequesterReadToTrue();
+                skillExchangeRepository.saveAndFlush(targetExchange);
 
-                // Processor의 requires_new 로 인해 트랜잭션 종류 처리
-                TestTransaction.flagForCommit();
-                TestTransaction.end();
+                // 어제 거래 및 PENDING -> 만료 대상. 하지만 requester의 credit 정보가 존재하지 않아 예외 발생
+                SkillExchange noneTargetExchange = createSavedExchange(noneTargetRequester, receiver, mentorSkill, yesterday,
+                        LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                noneTargetExchange.updateReceiverReadToTrue();
+                noneTargetExchange.updateRequesterReadToTrue();
+                skillExchangeRepository.saveAndFlush(noneTargetExchange);
 
-                // when & then
-                TestTransaction.start();
+                // when
+                System.out.println("=== 로직 시작 ==");
                 int successCount = skillExchangeService.expirePendingRequests();
+
+                // then
+                // 만료 처리된 데이터는 1건
                 assertThat(successCount).isEqualTo(1);
+
+                // 트랜잭션 종료로 인해 lazyLoading 사용 불가능
+                // DB 검증
+                // 1. 대상 건 검증
+                // skillExchange 상태 및 requester, receiver 미확인 처리 검증
+                assertThat(skillExchangeRepository.findById(targetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(se -> {
+                            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
+                            assertThat(se.isRequesterRead()).isFalse();
+                            assertThat(se.isReceiverRead()).isFalse();
+                        });
+
+                // credit 환불 검증
+                assertThat(creditRepository.findByUserId(targetRequester.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(credit -> {
+                            assertThat(credit.getBalance()).isEqualTo(requesterBalance + creditPrice);
+                        });
+
+                // 2. 대상 아닌 건 검증
+                // skillExchange 상태 및 requester, receiver 확인 처리 검증
+                assertThat(skillExchangeRepository.findById(noneTargetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(se -> {
+                            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.PENDING);
+                            assertThat(se.isRequesterRead()).isTrue();
+                            assertThat(se.isReceiverRead()).isTrue();
+                        });
+
+                cleanUp();
             }
         }
     }
@@ -1403,6 +1470,19 @@ public class SkillExchangeServiceImplIntegrationTest {
         availableSchedules.add(availableScheduleRepository.save(fri2));
 
         return availableSchedules;
+    }
+
+    private void cleanUp() {
+        settlementRepository.deleteAllInBatch();
+        creditHistoryRepository.deleteAllInBatch();
+        chatRoomRepository.deleteAllInBatch();
+        skillExchangeRepository.deleteAllInBatch();
+        userSkillRepository.deleteAllInBatch();
+        availableScheduleRepository.deleteAllInBatch();
+        userProfileRepository.deleteAllInBatch();
+        creditRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        skillCategoryRepository.deleteAllInBatch();
     }
 
     private void validateSkillExchangeDetailDtoMapping(SkillExchangeDetailDto dto, SkillExchange skillExchange, User targetUser, UserSkill mentorSkill, ChatRoom chatRoom) {

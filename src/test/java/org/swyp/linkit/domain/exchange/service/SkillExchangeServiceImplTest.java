@@ -1063,28 +1063,29 @@ class SkillExchangeServiceImplTest {
         UserSkill userSkill = createUserSkill(30);
 
         // expire 처리 대상 목록 조회 Mock
-        List<SkillExchange> expiredTargets = new ArrayList<>();
+        List<Long> expiredTargetIds = new ArrayList<>();
         for(int i = 1; i <= 10; i++){
             User requester = createUser();
             User receiver = createUser();
             SkillExchange skillExchange = SkillExchange.
                     create(requester, receiver, userSkill, yesterday, null, null, null);
+            ReflectionTestUtils.setField(skillExchange, "id", exchangeId++);
             skillExchange.updateReceiverReadToTrue();
             skillExchange.updateRequesterReadToTrue();
-            expiredTargets.add(skillExchange);
+            expiredTargetIds.add(skillExchange.getId());
         }
 
-        when(exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING)).thenReturn(expiredTargets);
-        doNothing().when(exchangeExpireProcessor).expireSingleSkillExchange(any(SkillExchange.class));
+        when(exchangeRepository.findAllExpiredTargets(today, ExchangeStatus.PENDING)).thenReturn(expiredTargetIds);
+        doNothing().when(exchangeExpireProcessor).expireSingleSkillExchange(any(Long.class));
 
         // when
         int resultCount = exchangeService.expirePendingRequests();
 
         // then
-        assertThat(resultCount).isEqualTo(expiredTargets.size());
+        assertThat(resultCount).isEqualTo(expiredTargetIds.size());
         // 호출 횟수 검증
         verify(exchangeRepository, times(1)).findAllExpiredTargets(today, ExchangeStatus.PENDING);
-        verify(exchangeExpireProcessor, times(expiredTargets.size())).expireSingleSkillExchange(any(SkillExchange.class));
+        verify(exchangeExpireProcessor, times(expiredTargetIds.size())).expireSingleSkillExchange(any(Long.class));
     }
 
 
