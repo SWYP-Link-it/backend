@@ -1,26 +1,26 @@
 package org.swyp.linkit.domain.settlement.service;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.swyp.linkit.domain.credit.service.CreditService;
+import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.settlement.entity.SettlementStatus;
+import org.swyp.linkit.domain.settlement.repository.SettlementRepository;
 import org.swyp.linkit.domain.user.entity.*;
 import org.swyp.linkit.global.error.exception.InvalidSettlementStatusException;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -30,8 +30,12 @@ class SettlementProcessorTest {
     @Mock
     CreditService creditService;
 
+    @Mock
+    SettlementRepository settlementRepository;
+
     @InjectMocks
     SettlementProcessor settlementProcessor;
+
 
     @Test
     @DisplayName("정산 처리 대상의 정산을 completed로 변경, 크레딧 지급, receiver의 가르친 횟수를 증가시킨다.")
@@ -44,12 +48,17 @@ class SettlementProcessorTest {
         receiverProfile.addUserSkill(receiverSkill);
 
         SkillExchange exchange = createExchange(requester, receiver, receiverSkill);
+        exchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
         Settlement settlement = createSettlement(exchange, receiver);
 
-        Integer timesTaught = receiverProfile.getTimesTaught();
+        Long settlementId = settlement.getId();
+        int timesTaught = receiverProfile.getTimesTaught();
+
+        // settlement 조회 Mock 처리
+        when(settlementRepository.findByIdForSettlement(settlementId)).thenReturn(Optional.of(settlement));
 
         // when
-        settlementProcessor.processSingleSettlement(settlement);
+        settlementProcessor.processSingleSettlement(settlementId);
 
         // then
         // settlement "PENDING" -> "COMPLETED"
@@ -71,13 +80,16 @@ class SettlementProcessorTest {
 
         SkillExchange exchange = createExchange(requester, receiver, receiverSkill);
         Settlement settlement = createSettlement(exchange, receiver);
+        Long settlementId = settlement.getId();
+
         // cancel로 변경
         settlement.cancel();
 
-        Integer timesTaught = receiverProfile.getTimesTaught();
+        // settlement 조회 Mock 처리
+        when(settlementRepository.findByIdForSettlement(settlementId)).thenReturn(Optional.of(settlement));
 
         // when && then
-        assertThatThrownBy(() -> settlementProcessor.processSingleSettlement(settlement))
+        assertThatThrownBy(() -> settlementProcessor.processSingleSettlement(settlementId))
                 .isInstanceOf(InvalidSettlementStatusException.class);
     }
 
