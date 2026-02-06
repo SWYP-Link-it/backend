@@ -16,8 +16,19 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
     Optional<Settlement> findBySkillExchangeId(Long skillExchangeId);
 
     /**
+     *  정산 처리 대상 Id 조회
+     */
+    @Query("SELECT s.id FROM Settlement s " +
+            "JOIN s.skillExchange se " +
+            "WHERE s.status = :pending " +
+            "AND (se.scheduledDate < :today OR (se.scheduledDate = :today AND se.endTime <= :nowTime))")
+    List<Long> findSettleTargets(@Param("pending") SettlementStatus pending,
+                                       @Param("today") LocalDate today,
+                                       @Param("nowTime") LocalTime nowTime);
+
+    /**
      *  정산 처리 대상 조회
-     *  SkillExchange, Requester, Receiver, ReceiverSkill, ReceiverProfile Fetch Join
+     *  SkillExchange, Receiver, Requester, ReceiverSkill, ReceiverSkill FetchJoin
      */
     @Query("SELECT s FROM Settlement s " +
             "JOIN FETCH s.skillExchange se " +
@@ -25,9 +36,6 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
             "JOIN FETCH se.requester " +
             "JOIN FETCH se.receiverSkill rs " +
             "JOIN FETCH rs.userProfile " +
-            "WHERE s.status = :pending " +
-            "AND (se.scheduledDate < :today OR (se.scheduledDate = :today AND se.endTime <= :nowTime))")
-    List<Settlement> findSettleTargets(@Param("pending") SettlementStatus pending,
-                                       @Param("today") LocalDate today,
-                                       @Param("nowTime") LocalTime nowTime);
+            "WHERE s.id = :id")
+    Optional<Settlement> findByIdForSettlement(@Param("id") Long id);
 }
