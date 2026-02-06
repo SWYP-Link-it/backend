@@ -87,7 +87,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "ORDER BY us.createdAt ASC")
     List<UserSkill> findVisibleSkillsWithImagesByUserId(@Param("userId") Long userId);
 
-    // 스킬명으로 노출 중인 스킬 검색 (완전 일치, 대소문자 무시)
+    // 키워드로 노출 중인 스킬 검색 (완전 일치, 대소문자 무시)
     @Query("SELECT us FROM UserSkill us " +
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
@@ -97,4 +97,17 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "ORDER BY us.createdAt DESC")
     List<UserSkill> searchVisibleSkillsByName(@Param("skillName") String skillName);
 
+    // 카테고리 + 키워드로 노출 중인 스킬 검색 (완전 일치, 대소문자 무시)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory sc " +
+            "WHERE us.isVisible = true " +
+            "AND sc.categoryType = :categoryType " +
+            "AND LOWER(us.skillName) = LOWER(:skillName) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> findVisibleSkillsByCategoryAndKeyword(
+            @Param("categoryType") SkillCategoryType categoryType,
+            @Param("skillName") String skillName
+    );
 }
