@@ -1,16 +1,16 @@
 package org.swyp.linkit.domain.settlement.service;
 
 import jakarta.persistence.EntityManager;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.transaction.TestTransaction;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.TestRedisConfig;
-import org.swyp.linkit.domain.chat.entity.ChatRoom;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
 import org.swyp.linkit.domain.credit.entity.Credit;
 import org.swyp.linkit.domain.credit.repository.CreditHistoryRepository;
@@ -23,18 +23,21 @@ import org.swyp.linkit.domain.settlement.entity.Settlement;
 import org.swyp.linkit.domain.settlement.entity.SettlementStatus;
 import org.swyp.linkit.domain.settlement.repository.SettlementRepository;
 import org.swyp.linkit.domain.user.entity.*;
-import org.swyp.linkit.domain.user.repository.*;
+import org.swyp.linkit.domain.user.repository.SkillCategoryRepository;
+import org.swyp.linkit.domain.user.repository.UserProfileRepository;
+import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 import org.swyp.linkit.global.error.exception.InvalidSettlementStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Import(TestRedisConfig.class)
 @ActiveProfiles("test")
-//@Transactional
 @SpringBootTest(properties = "scheduler.enabled=false")
 @DisplayName("SettlementService 통합 테스트")
 public class SettlementServiceImplIntegrationTest {
@@ -234,7 +237,7 @@ public class SettlementServiceImplIntegrationTest {
                 // 다음 날 스킬 거래
                 SkillExchange noneTargetExchange = createSavedExchange(requester, receiver, receiverSkill, today.plusDays(1),
                         now.minusHours(60), now);
-                targetExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
+                noneTargetExchange.updateExchangeStatus(ExchangeStatus.ACCEPTED);
                 createSavedSettlement(noneTargetExchange, receiver);
                 skillExchangeRepository.saveAndFlush(noneTargetExchange);
 
@@ -248,6 +251,7 @@ public class SettlementServiceImplIntegrationTest {
 
                 // 트랜잭션 종료로 인해 lazyLoading 사용 불가능
                 // DB 검증
+                // 1. 대상 건 검증
                 // settlement 상태 검증
                 assertThat(settlementRepository.findBySkillExchangeId(targetExchange.getId()))
                         .isPresent()
@@ -279,6 +283,24 @@ public class SettlementServiceImplIntegrationTest {
                         .get()
                         .satisfies(c -> {
                             assertThat(c.getBalance()).isEqualTo(receiverBeforeBalance + creditPrice);
+                        });
+
+                // 2. 대상 아닌 건 검증
+                // settlement 상태 검증
+                assertThat(settlementRepository.findBySkillExchangeId(noneTargetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(s -> {
+                            assertThat(s.getStatus()).isEqualTo(SettlementStatus.PENDING);
+                        });
+
+                // skillExchange 상태 검증
+                assertThat(skillExchangeRepository.findById(noneTargetExchange.getId()))
+                        .isPresent()
+                        .get()
+                        .satisfies(se -> {
+                            // settlement 상태 검증
+                            assertThat(se.getExchangeStatus()).isEqualTo(ExchangeStatus.ACCEPTED);
                         });
 
                 cleanUp();
@@ -381,6 +403,7 @@ public class SettlementServiceImplIntegrationTest {
 
         }
     }
+
     private void cleanUp() {
         settlementRepository.deleteAllInBatch();
         creditHistoryRepository.deleteAllInBatch();

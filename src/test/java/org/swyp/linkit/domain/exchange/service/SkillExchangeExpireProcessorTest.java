@@ -10,12 +10,14 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.user.entity.OAuthProvider;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -26,6 +28,9 @@ class SkillExchangeExpireProcessorTest {
 
     @Mock
     CreditService creditService;
+
+    @Mock
+    SkillExchangeRepository skillExchangeRepository;
 
     @InjectMocks
     SkillExchangeExpireProcessor exchangeExpireProcessor;
@@ -50,9 +55,15 @@ class SkillExchangeExpireProcessorTest {
                 start.plusHours(1),
                 null);
 
-        // when
+        // skillExchange 조회 Mock 처리
+        when(skillExchangeRepository.findByIdForExpire(skillExchange.getId())).thenReturn(Optional.of(skillExchange));
+
+        // credit 환불 Mock 처리
         doNothing().when(creditService).refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_EXPIRED);
-        exchangeExpireProcessor.expireSingleSkillExchange(skillExchange);
+
+        // when
+
+        exchangeExpireProcessor.expireSingleSkillExchange(skillExchange.getId());
 
         // then
         assertThat(skillExchange.getExchangeStatus()).isEqualTo(ExchangeStatus.EXPIRED);
