@@ -65,22 +65,17 @@ class SettlementRepositoryTest {
     }
 
     @Test
-    @DisplayName("정산 처리 대상인 settlement 조회_(Requester, Receiver, ReceiverSkill, ReceiverProfile Fetch Join)")
+    @DisplayName("정산 처리 대상인 settlement 조회")
     public void findSettleTargets() {
         // given
         SettlementStatus pendingStatus = SettlementStatus.PENDING;
-        Long exchangeId = pastExchange.getId();
 
         // when
         System.out.println("== 쿼리 시작 ==");
-        List<Settlement> sut = settlementRepository.findSettleTargets(pendingStatus, today, now);
+        List<Long> sut = settlementRepository.findSettleTargets(pendingStatus, today, now);
 
         // then
         assertThat(sut.size()).isEqualTo(1);
-        assertThat(sut.get(0).getSkillExchange().getId()).isEqualTo(exchangeId);
-        assertThat(sut.get(0).getReceiver().getId()).isEqualTo(receiver.getId());
-        assertThat(sut.get(0).getSkillExchange().getRequester().getId()).isEqualTo(requester.getId());
-        assertThat(sut.get(0).getSkillExchange().getReceiverSkill().getUserProfile().getUser().getId()).isEqualTo(receiver.getId());
     }
 
     private void testSetup(){

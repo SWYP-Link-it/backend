@@ -73,16 +73,6 @@ public class SkillExchangeServiceImplIntegrationTest {
     @Autowired
     private ChatRoomRepository chatRoomRepository;
 
-//    @BeforeEach
-//    void clearDatabase() {
-//        creditHistoryRepository.deleteAllInBatch();
-//        skillExchangeRepository.deleteAllInBatch();
-//        creditRepository.deleteAllInBatch();
-//        userSkillRepository.deleteAllInBatch();
-//        userProfileRepository.deleteAllInBatch();
-//        userRepository.deleteAllInBatch();
-//    }
-
     @Nested
     @DisplayName("2일 뒤 ~ 3달 까지의 멘토의 거래 가능 날짜 조회.")
     class GetAvailableDates {
