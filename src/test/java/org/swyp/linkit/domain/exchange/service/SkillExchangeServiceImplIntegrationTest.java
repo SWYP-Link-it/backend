@@ -1279,11 +1279,16 @@ public class SkillExchangeServiceImplIntegrationTest {
         }
     }
 
-    // todo
     @Nested
     @DisplayName("거래 날짜 전날까지 수락되지 않은 요청 만료(거절).")
     class ExpirePendingRequests {
-    
+        private final int exchangeDuration = 60;
+        private final LocalTime start = LocalTime.of(10, 0);
+        private final LocalTime end = start.plusMinutes(exchangeDuration);
+        private final LocalDate today = LocalDate.now();
+        private final LocalDate yesterday = today.minusDays(1);
+        private final LocalDate tomorrow = today.plusDays(1);
+
         @Nested
         @DisplayName("성공 케이스")
         class SuccessCases {
@@ -1291,13 +1296,6 @@ public class SkillExchangeServiceImplIntegrationTest {
             @DisplayName("만료 기한이 지난 PENDING 상태의 요청들을 만료 처리하고 크레딧을 환불한다")
             public void success() {
                 // given
-                LocalDate today = LocalDate.now();
-                LocalDate yesterday = today.minusDays(1);
-                LocalDate tomorrow = today.plusDays(1);
-                int exchangeDuration = 60;
-                LocalTime start = LocalTime.of(10, 0);
-                LocalTime end = start.plusMinutes(exchangeDuration);
-
                 int creditPrice = exchangeDuration / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
                 User requester = createSavedUser();
                 int requesterBalance = createSavedCredit(requester, 100).getBalance();
@@ -1309,14 +1307,14 @@ public class SkillExchangeServiceImplIntegrationTest {
 
                 // 오늘 거래 및 PENDING -> 만료 대상
                 SkillExchange targetExchange = createSavedExchange(requester, receiver, mentorSkill, today,
-                        LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                        start, end);
                 targetExchange.updateReceiverReadToTrue();
                 targetExchange.updateRequesterReadToTrue();
                 skillExchangeRepository.saveAndFlush(targetExchange);
 
                 // 내일 거래 및 PENDING -> 만료 대상 아님
                 SkillExchange noneTargetExchange = createSavedExchange(requester, receiver, mentorSkill, tomorrow,
-                        LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                        start, end);
                 noneTargetExchange.updateReceiverReadToTrue();
                 noneTargetExchange.updateRequesterReadToTrue();
                 skillExchangeRepository.saveAndFlush(noneTargetExchange);
@@ -1372,10 +1370,6 @@ public class SkillExchangeServiceImplIntegrationTest {
             @DisplayName("여러 건 중 하나가 실패하더라도 REQUIRES_NEW에 의해 다른 건들은 정상 처리되어야 한다.")
             public void success_IndependentTransaction() {
                 // given
-                LocalDate today = LocalDate.now();
-                LocalDate yesterday = today.minusDays(1);
-
-                int exchangeDuration = 60;
                 int creditPrice = exchangeDuration / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
                 User targetRequester = createSavedUser();
                 int requesterBalance = createSavedCredit(targetRequester, 100).getBalance();
@@ -1389,14 +1383,14 @@ public class SkillExchangeServiceImplIntegrationTest {
 
                 // 어제 거래 및 PENDING -> 만료 대상
                 SkillExchange targetExchange = createSavedExchange(targetRequester, receiver, mentorSkill, yesterday,
-                        LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                        start, end);
                 targetExchange.updateReceiverReadToTrue();
                 targetExchange.updateRequesterReadToTrue();
                 skillExchangeRepository.saveAndFlush(targetExchange);
 
                 // 어제 거래 및 PENDING -> 만료 대상. 하지만 requester의 credit 정보가 존재하지 않아 예외 발생
                 SkillExchange noneTargetExchange = createSavedExchange(noneTargetRequester, receiver, mentorSkill, yesterday,
-                        LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
+                        start, end);
                 noneTargetExchange.updateReceiverReadToTrue();
                 noneTargetExchange.updateRequesterReadToTrue();
                 skillExchangeRepository.saveAndFlush(noneTargetExchange);
