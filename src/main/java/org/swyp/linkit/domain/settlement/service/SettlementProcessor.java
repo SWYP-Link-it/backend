@@ -24,7 +24,7 @@ public class SettlementProcessor {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleSettlement(Long settlementId){
         log.info("정산 처리 시작. settlementId: {}", settlementId);
-        // 1. settlement 조회 (SkillExchange, Receiver, Requester, receiverSkill, userProfile Fetch Join)
+        // 1. settlement 조회 (SkillExchange, Receiver, Requester, userProfile Fetch Join)
         Settlement settlement = settlementRepository.findByIdForSettlement(settlementId)
                 .orElseThrow(SettlementNotFoundException::new);
 
@@ -37,7 +37,8 @@ public class SettlementProcessor {
         skillExchange.settled();
 
         // 가르친 횟수 증가
-        UserProfile receiverProfile = settlement.getSkillExchange().getReceiverSkill().getUserProfile();
+        // 정산 과정에서
+        UserProfile receiverProfile = settlement.getReceiver().getUserProfile();
         receiverProfile.incrementTimesTaught();
 
         // 크레딧 정산

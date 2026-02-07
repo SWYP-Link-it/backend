@@ -99,41 +99,46 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Transactional
     @Override
     public SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto) {
-        // 1. 멘티 조회 및 검증
+        // 1. 멘티, 멘토 조회 및 검증
         User mentee = userService.getUserById(requesterId);
+        User mentor = userService.getUserById(dto.getReceiverId());
 
         // 2. 멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, SkillMentorMissMatchException Exception
         UserSkill mentorSkill = getMentorSkillWithLockAndValidation(dto.getReceiverId(), dto.getReceiverSkillId());
-        User mentor = mentorSkill.getUserProfile().getUser();
 
-        // 3. 공개된 skill인지 검증
+        // 3. 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
+        if (!mentorSkill.getUserProfile().getUser().getId().equals(mentor.getId())) {
+            throw new SkillMentorMissMatchException();
+        }
+
+        // 4. 공개된 skill인지 검증
         if (!mentorSkill.getIsVisible()) {
             throw new SkillNotAvailableException();
         }
 
-        // 4. 본인 신청 방지
+        // 5. 본인 신청 방지
         if (requesterId.equals(dto.getReceiverId())) {
             throw new SelfExchangeNotAllowedException();
         }
 
-        // 5.멘티의 크레딧 잔액이 요청 금액보다 부족한지 검증 -> NotFoundCreditException
+        // 6.멘티의 크레딧 잔액이 요청 금액보다 부족한지 검증 -> NotFoundCreditException
         int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
         creditService.validateAvailableBalance(requesterId, amount);
 
-        // 6. 시작 시간, 종료 시간 계산
+        // 7. 시작 시간, 종료 시간 계산
         LocalTime startTime = dto.getStartTime();
         LocalTime endTime = startTime.plusMinutes(mentorSkill.getExchangeDuration());
 
-        // 7. 신청한 시간(startTime ~ endTime)이 가능한지 검증
+        // 8. 신청한 시간(startTime ~ endTime)이 가능한지 검증
         // 멘토의 가능 시간 조회 및 date로 필터링, 30분 단위로 변환
         Set<LocalTime> operatingSlots = getOperatingSlots(dto.getReceiverId(), dto.getRequestedDate());
         // date 기준 멘토의 예약 조회 및 30분 단위로 변환
         Set<LocalTime> bookedSlots = getBookedSlots(dto.getReceiverId(), dto.getRequestedDate());
 
-        // 8. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
+        // 9. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
         validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots, mentorSkill.getExchangeDuration());
 
-        // 9. SkillExchange 생성 및 save
+        // 10. SkillExchange 생성 및 save
         SkillExchange skillExchange = SkillExchange.create(
                 mentee,
                 mentor,
@@ -145,10 +150,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         );
         SkillExchange savedSkillExchange = exchangeRepository.save(skillExchange);
 
-        // 10. 멘티의 크레딧 차감 및 크레딧 사용 내역 생성
+        // 11. 멘티의 크레딧 차감 및 크레딧 사용 내역 생성
         creditService.useCreditForExchangeRequest(savedSkillExchange);
 
-        // 11. 응답 Dto 변환 및 return
+        // 12. 응답 Dto 변환 및 return
         return SkillExchangeResponseDto.from(savedSkillExchange);
     }
 
@@ -437,14 +442,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      * 비관적 락 적용
      */
     private UserSkill getMentorSkillWithLockAndValidation(Long mentorId, Long receiverSkillId) {
-        // 멘토의 스킬 존재 여부 조회 및 검증 -> UserSkillNotFoundException
+        // 멘토의 스킬 조회 및 검증 -> UserSkillNotFoundException
         // 비관적 락 적용
-        UserSkill mentorSkill = userSkillService.getUserSkillWithProfileAndUserAndLock(receiverSkillId);
-        // 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
-        if (!mentorSkill.getUserProfile().getUser().getId().equals(mentorId)) {
-            throw new SkillMentorMissMatchException();
-        }
-        return mentorSkill;
+        return userSkillService.getUserSkillWithProfileAndUserAndLock(receiverSkillId);
     }
 
     /**
