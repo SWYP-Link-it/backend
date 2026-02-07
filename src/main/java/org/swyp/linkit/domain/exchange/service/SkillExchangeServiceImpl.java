@@ -103,8 +103,8 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         User mentee = userService.getUserById(requesterId);
         User mentor = userService.getUserById(dto.getReceiverId());
 
-        // 2. 멘토의 스킬, 멘토 조회 및 존재 여부 검증 -> UserSkillNotFound, SkillMentorMissMatchException Exception
-        UserSkill mentorSkill = getMentorSkillWithLockAndValidation(dto.getReceiverId(), dto.getReceiverSkillId());
+        // 2. 멘토의 스킬 조회 및 존재 여부 검증 -> UserSkillNotFound
+        UserSkill mentorSkill = getMentorSkillWithLockAndValidation(dto.getReceiverSkillId());
 
         // 3. 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
         if (!mentorSkill.getUserProfile().getUser().getId().equals(mentor.getId())) {
@@ -441,7 +441,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      * 멘토의 스킬 존재 여부 검증
      * 비관적 락 적용
      */
-    private UserSkill getMentorSkillWithLockAndValidation(Long mentorId, Long receiverSkillId) {
+    private UserSkill getMentorSkillWithLockAndValidation(Long receiverSkillId) {
         // 멘토의 스킬 조회 및 검증 -> UserSkillNotFoundException
         // 비관적 락 적용
         return userSkillService.getUserSkillWithProfileAndUserAndLock(receiverSkillId);
