@@ -54,7 +54,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     @Override
     public List<UserSkillForExchangeDto> getSkills(Long mentorId) {
         // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
-        userService.getUserById(mentorId);
+        getMentorAndValidation(mentorId);
         // 2. 멘토의 공개된 스킬 조회
         return userSkillService.getSkillsForExchange(mentorId);
     }
