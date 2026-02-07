@@ -34,9 +34,8 @@ public class SkillExchange extends BaseTimeEntity {
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_skill_id", nullable = false)
-    private UserSkill receiverSkill;
+    @Column(nullable = false)
+    private Long receiverSkillId;
 
     @Column(nullable = false)
     private String skillName;
@@ -73,9 +72,10 @@ public class SkillExchange extends BaseTimeEntity {
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
+    private SkillExchange(Long receiverSkillId, String skillName, int exchangeDuration, LocalDate scheduledDate,
                           LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
                           int creditPrice, ExchangeStatus exchangeStatus, String message) {
+        this.receiverSkillId = receiverSkillId;
         this.skillName = skillName;
         this.exchangeDuration = exchangeDuration;
         this.scheduledDate = scheduledDate;
@@ -99,6 +99,7 @@ public class SkillExchange extends BaseTimeEntity {
         int price = receiverSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
 
         SkillExchange skillExchange = SkillExchange.builder()
+                .receiverSkillId(receiverSkill.getId())
                 .skillName(receiverSkill.getSkillName())
                 .exchangeDuration(receiverSkill.getExchangeDuration())
                 .scheduledDate(scheduledDate)
@@ -114,8 +115,6 @@ public class SkillExchange extends BaseTimeEntity {
         skillExchange.assignRequesterUser(requesterUser);
         // == receiverUser 연관관계 주입 ==
         skillExchange.assignReceiverUser(receiverUser);
-        // == receiverSkill 연관관계 주입 ==
-        skillExchange.assignReceiverSkill(receiverSkill);
         return skillExchange;
     }
 
@@ -130,11 +129,6 @@ public class SkillExchange extends BaseTimeEntity {
     // == receiverUser와 연관관계 설정 ==
     private void assignReceiverUser(User receiverUser) {
         this.receiver = receiverUser;
-    }
-
-    // == receiverSkill와 연관관계 설정 ==
-    private void assignReceiverSkill(UserSkill receiverSkill) {
-        this.receiverSkill = receiverSkill;
     }
 
     /**

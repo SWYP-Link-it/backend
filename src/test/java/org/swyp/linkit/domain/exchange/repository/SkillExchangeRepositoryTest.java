@@ -35,6 +35,8 @@ class SkillExchangeRepositoryTest {
     private User receiver;
     private LocalDate date;
 
+    private UserSkill receiverSkill;
+
     @BeforeEach
     void setup(){
         // requester, receiver 세팅
@@ -50,7 +52,7 @@ class SkillExchangeRepositoryTest {
         em.persist(skillCategory2);
 
         UserSkill requesterSkill = createUserSkill(skillCategory1);
-        UserSkill receiverSkill = createUserSkill(skillCategory2);
+        receiverSkill = createUserSkill(skillCategory2);
 
         UserProfile requesterProfile = createProfile(requester, requesterSkill);
         UserProfile receiverProfile = createProfile(receiver, receiverSkill);
@@ -95,9 +97,8 @@ class SkillExchangeRepositoryTest {
         assertThat(hasNoeActiveStatus).isFalse();
 
         SkillExchange firstExchange = sut.get(0);
-        assertEquals(receiverId, firstExchange.getReceiver().getId());
-        assertEquals(date, firstExchange.getScheduledDate());
-        assertNotNull(firstExchange.getReceiverSkill().getSkillName());
+        assertThat(firstExchange.getReceiver().getId()).isEqualTo(receiverId);
+        assertThat(firstExchange.getScheduledDate()).isEqualTo(date);
     }
 
     private User createUser() {

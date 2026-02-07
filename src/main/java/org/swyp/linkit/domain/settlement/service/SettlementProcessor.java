@@ -24,7 +24,7 @@ public class SettlementProcessor {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void processSingleSettlement(Long settlementId){
         log.info("정산 처리 시작. settlementId: {}", settlementId);
-        // 1. settlement 조회 (SkillExchange, Receiver, Requester, receiverSkill, userProfile Fetch Join)
+        // 1. settlement 조회 (SkillExchange, Receiver, Requester, userProfile Fetch Join)
         Settlement settlement = settlementRepository.findByIdForSettlement(settlementId)
                 .orElseThrow(SettlementNotFoundException::new);
 
@@ -37,8 +37,13 @@ public class SettlementProcessor {
         skillExchange.settled();
 
         // 가르친 횟수 증가
-        UserProfile receiverProfile = settlement.getSkillExchange().getReceiverSkill().getUserProfile();
-        receiverProfile.incrementTimesTaught();
+        // 정산 과정에서 회원 탈퇴로 Receiver의 Profile이 존재하지 않을 시 가르친 횟수 증가는 생략
+        // todo 추후 회원 탈퇴 로직 확실해질때 진행
+        UserProfile receiverProfile = settlement.getReceiver().getUserProfile();
+        if(receiverProfile != null){
+            receiverProfile.incrementTimesTaught();
+            log.warn("정산 대상자의 프로필이 존재하지 않아 가르친 횟수 증가를 생략합니다. userId: {}", settlement.getReceiver().getId());
+        }
 
         // 크레딧 정산
         creditService.settleCredit(settlement);

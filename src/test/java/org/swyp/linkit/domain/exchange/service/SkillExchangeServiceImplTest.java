@@ -296,6 +296,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
@@ -350,9 +352,25 @@ class SkillExchangeServiceImplTest {
 
             @Test
             @DisplayName("존재하지 않는 멘티로 인한 UserNotFoundException")
-            public void fail_UserNotFoundException() {
+            public void fail_mentee_UserNotFoundException() {
                 // given
                 doThrow(new UserNotFoundException()).when(userService).getUserById(mentee.getId());
+
+                SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
+                SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
+
+                // when && then
+                assertThatThrownBy(() -> exchangeService.requestSkillExchange(mentee.getId(), skillExchangeDto))
+                        .isInstanceOf(UserNotFoundException.class);
+            }
+
+            @Test
+            @DisplayName("존재하지 않는 멘토로 인한 UserNotFoundException")
+            public void fail_mentor_UserNotFoundException() {
+                // given
+                // 멘티 조회 Mock 처리
+                when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                doThrow(new UserNotFoundException()).when(userService).getUserById(mentor.getId());
 
                 SkillExchangeRequestDto requestDto = new SkillExchangeRequestDto(mentor.getId(), mentorSkill.getId(), "", date, startTime);
                 SkillExchangeDto skillExchangeDto = SkillExchangeDto.from(requestDto);
@@ -387,6 +405,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 다른 유저의 skill로 Mock 처리
                 User otherUser = createUser();
@@ -408,6 +428,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 미공개 skill로 Mock 처리
                 UserSkill unVisibleUserSkill = createUnVisibleUserSkill(60);
@@ -428,6 +450,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentor.getId())).thenReturn(mentor);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
@@ -446,6 +470,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
@@ -494,6 +520,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
@@ -542,6 +570,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
@@ -590,6 +620,8 @@ class SkillExchangeServiceImplTest {
                 // given
                 // 멘티 조회 Mock 처리
                 when(userService.getUserById(mentee.getId())).thenReturn(mentee);
+                // 멘토 조회 Mock 처리
+                when(userService.getUserById(mentor.getId())).thenReturn(mentor);
 
                 // 멘토 스킬 조회 Mock 처리
                 when(userSkillService.getUserSkillWithProfileAndUserAndLock(mentorSkill.getId())).thenReturn(mentorSkill);
