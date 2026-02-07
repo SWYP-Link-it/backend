@@ -24,18 +24,33 @@ public class SkillMarketService {
 
     // 노출 중인 스킬 카드 조회 (최신순)
     @Transactional(readOnly = true)
-    public List<SkillCardResponseDto> getVisibleSkills(SkillCategoryType category) {
+    public List<SkillCardResponseDto> getVisibleSkills(SkillCategoryType category, String searchKeyword) {
         List<UserSkill> skills;
 
-        if (category != null) {
-            // 카테고리별 조회
+        // 1. 카테고리 + 키워드 둘 다 있는 경우
+        if (category != null && searchKeyword != null && !searchKeyword.isBlank()) {
+            skills = userSkillRepository.findVisibleSkillsByCategoryAndKeyword(
+                    category,
+                    searchKeyword.trim()
+            );
+            log.info("카테고리+키워드 필터 조회: category={}, keyword={}, count={}",
+                    category.getDescription(), searchKeyword, skills.size());
+        }
+        // 2. 카테고리만 있는 경우
+        else if (category != null) {
             skills = userSkillRepository.findVisibleSkillsByCategory(category);
-            log.info("카테고리별 노출 중인 스킬 카드 조회: category={}, count={}",
+            log.info("카테고리별 스킬 조회: category={}, count={}",
                     category.getDescription(), skills.size());
-        } else {
-            // 전체 조회
+        }
+        // 3. 키워드만 있는 경우
+        else if (searchKeyword != null && !searchKeyword.isBlank()) {
+            skills = userSkillRepository.searchVisibleSkillsByName(searchKeyword.trim());
+            log.info("키워드 검색 (완전 일치): keyword={}, count={}", searchKeyword, skills.size());
+        }
+        // 4. 둘 다 없는 경우 (전체 조회)
+        else {
             skills = userSkillRepository.findAllVisibleSkills();
-            log.info("전체 노출 중인 스킬 카드 조회: count={}", skills.size());
+            log.info("전체 스킬 조회: count={}", skills.size());
         }
 
         return skills.stream()
