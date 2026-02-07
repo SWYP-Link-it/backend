@@ -28,14 +28,13 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
 
     /**
      *  정산 처리 대상 조회
-     *  SkillExchange, Receiver, Requester, ReceiverSkill, ReceiverSkill FetchJoin
+     *  SkillExchange, Receiver, Requester, ReceiverSkill, ReceiverProfile FetchJoin
      */
     @Query("SELECT s FROM Settlement s " +
             "JOIN FETCH s.skillExchange se " +
-            "JOIN FETCH s.receiver " +
+            "JOIN FETCH s.receiver rec " +
             "JOIN FETCH se.requester " +
-            "JOIN FETCH se.receiverSkill rs " +
-            "JOIN FETCH rs.userProfile " +
+            "JOIN FETCH rec.userProfile " +
             "WHERE s.id = :id")
     Optional<Settlement> findByIdForSettlement(@Param("id") Long id);
 }

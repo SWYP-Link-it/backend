@@ -15,12 +15,11 @@ public interface CreditHistoryRepository extends JpaRepository<CreditHistory, Lo
 
     /**
      *  userId, cursor, supplyType(add, use)로 cursor 기반 페이징
-     *  CreditHistory, TargetUser, SkillExchange, ReceiverSkill Fetch Join
+     *  CreditHistory, TargetUser, SkillExchange, Fetch Join
      */
     @Query("select ch FROM CreditHistory ch " +
             "left join fetch ch.targetUser " +
             "left join fetch ch.skillExchange se " +
-            "left join fetch se.receiverSkill " +
             "WHERE ch.user.id = :userId " +
             "AND (:supplyType IS NULL OR ch.supplyType = :supplyType) " +
             "AND (:cursorId IS NULL OR ch.id < :cursorId) " +
