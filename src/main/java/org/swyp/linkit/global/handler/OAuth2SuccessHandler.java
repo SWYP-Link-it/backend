@@ -23,6 +23,7 @@ import org.swyp.linkit.global.error.exception.UserNotFoundException;
 import org.swyp.linkit.global.util.CookieUtil;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Set;
 
 @Component
@@ -39,14 +40,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     @Value("${app.oauth2.authorized-redirect-uri}")
     private String defaultRedirectBase;
 
-    // 허용할 returnUrl origin 목록
-    private static final Set<String> ALLOWED_RETURN_URLS = Set.of(
+    // 허용할 origin 목록
+    private static final Set<String> ALLOWED_ORIGINS = Set.of(
             "http://localhost:3000",
-            "http://localhost:3000/",
             "http://127.0.0.1:3000",
-            "http://127.0.0.1:3000/",
-            "https://app.desklab.kr",
-            "https://app.desklab.kr/"
+            "https://app.desklab.kr"
     );
 
     @Override
@@ -88,8 +86,20 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             return defaultRedirectBase;
         }
 
-        // 2. 화이트리스트 검증 (오픈 리다이렉트 방지)
-        return ALLOWED_RETURN_URLS.contains(returnUrl) ? returnUrl : defaultRedirectBase;
+        // Origin 기반 검증으로 변경
+        return isAllowedReturnUrl(returnUrl) ? returnUrl : defaultRedirectBase;
+    }
+
+    // returnUrl의 origin이 허용된 목록에 있는지 검증
+    private boolean isAllowedReturnUrl(String returnUrl) {
+        try {
+            URI uri = new URI(returnUrl);
+            String origin = uri.getScheme() + "://" + uri.getAuthority();
+
+            return ALLOWED_ORIGINS.contains(origin);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     // 신규 회원 시 tempToken 발급
