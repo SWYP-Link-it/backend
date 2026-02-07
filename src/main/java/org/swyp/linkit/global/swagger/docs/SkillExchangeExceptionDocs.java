@@ -21,6 +21,12 @@ public class SkillExchangeExceptionDocs {
                 return ErrorCode.UNAUTHORIZED;
             }
         }
+        public static class MentorNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.EXCHANGE_MENTOR_NOT_FOUND;
+            }
+        }
     }
 
     /**

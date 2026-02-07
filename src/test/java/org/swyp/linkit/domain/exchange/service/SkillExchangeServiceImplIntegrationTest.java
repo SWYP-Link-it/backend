@@ -74,6 +74,26 @@ public class SkillExchangeServiceImplIntegrationTest {
 
     @Transactional
     @Nested
+    @DisplayName("멘토의 거래 가능 스킬 목록 조회.")
+    class GetSkills {
+        @Nested
+        @DisplayName("실패 케이스")
+        class FailCases {
+            @Test
+            @DisplayName("멘토가 존재하지 않으면 MentorNotFoundException 발생.")
+            public void fail_MentorNotFoundException() {
+                // given
+                Long mentorId = Long.MAX_VALUE;
+
+                // when && then
+                assertThatThrownBy(() -> skillExchangeService.getSkills(mentorId))
+                        .isInstanceOf(MentorNotFoundException.class);
+            }
+        }
+    }
+    
+    @Transactional
+    @Nested
     @DisplayName("2일 뒤 ~ 3달 까지의 멘토의 거래 가능 날짜 조회.")
     class GetAvailableDates {
 

@@ -15,7 +15,6 @@ import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
-import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
@@ -32,7 +31,6 @@ import java.util.List;
 public class SkillExchangeController {
 
     private final SkillExchangeService exchangeService;
-    private final UserSkillService userSkillService;
 
     /**
      * 멘토의 교환 가능 스킬 정보 조회
@@ -47,7 +45,7 @@ public class SkillExchangeController {
             @Parameter(description = "멘토의 사용자 ID", example = "1")
             @PathVariable Long mentorId) {
 
-        List<UserSkillForExchangeDto> responseDto = userSkillService.getSkillsForExchange(mentorId);
+        List<UserSkillForExchangeDto> responseDto = exchangeService.getSkills(mentorId);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
