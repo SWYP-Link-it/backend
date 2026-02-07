@@ -46,10 +46,9 @@ public class UserProfile extends BaseTimeEntity {
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserProfile(User user, String experienceDescription,
+    private UserProfile(String experienceDescription,
                         Integer timesTaught, ExchangeType exchangeType,
                         PreferredRegion preferredRegion, String detailedLocation) {
-        this.user = user;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
         this.exchangeType = exchangeType;
@@ -61,14 +60,22 @@ public class UserProfile extends BaseTimeEntity {
     public static UserProfile create(User user, String experienceDescription,
                                      ExchangeType exchangeType, PreferredRegion preferredRegion,
                                      String detailedLocation) {
-        return UserProfile.builder()
-                .user(user)
+        UserProfile userProfile = UserProfile.builder()
                 .experienceDescription(experienceDescription)
                 .timesTaught(0)
                 .exchangeType(exchangeType)
                 .preferredRegion(preferredRegion)
                 .detailedLocation(detailedLocation)
                 .build();
+
+        user.assignUserProfile(userProfile);
+
+        return userProfile;
+    }
+
+    // User 할당
+    protected void assignUser(User user) {
+        this.user = user;
     }
 
     // 사용자 프로필 수정
