@@ -96,10 +96,6 @@ public class UserProfileResponseDto {
 
         // 2. 각 요일별로 병합 처리
         groupedByDay.forEach((weekday, daySchedules) -> {
-            if (daySchedules.isEmpty()) {
-                return;
-            }
-
             // 첫 번째 스케줄로 시작
             LocalTime mergedStart = daySchedules.get(0).getStartTime();
             LocalTime mergedEnd = daySchedules.get(0).getEndTime();
