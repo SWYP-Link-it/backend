@@ -51,6 +51,19 @@ public class UserProfileService {
         return UserProfileResponseDto.from(userProfile);
     }
 
+    // 프로필 수정용 조회 (원본 데이터, 병합 없음)
+    public UserProfileResponseDto getProfileForEdit(Long userId) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+
+        // 2. 프로필 조회
+        UserProfile userProfile = userProfileRepository.findByUserId(userId)
+                .orElseThrow(UserProfileNotFoundException::new);
+
+        return UserProfileResponseDto.fromRaw(userProfile);
+    }
+
     // 프로필 생성
     @Transactional
     public UserProfileResponseDto createProfile(
