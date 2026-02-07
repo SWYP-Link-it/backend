@@ -116,7 +116,7 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      * 거래 만료 처리해야할 Id 조회
      */
     @Query("SELECT se.id FROM SkillExchange se " +
-            "WHERE se.scheduledDate < :today " +
+            "WHERE se.scheduledDate <= :today " +
             "AND se.exchangeStatus = :pending")
     List<Long> findAllExpiredTargets(@Param("today") LocalDate today,
                                      @Param("pending") ExchangeStatus pending);
