@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
+import org.swyp.linkit.domain.user.entity.Weekday;
 
 import java.time.LocalTime;
 
@@ -36,6 +37,19 @@ public class AvailableScheduleResponseDto {
                 .dayOfWeek(schedule.getDayOfWeek().getDescription())
                 .startTime(schedule.getStartTime())
                 .endTime(schedule.getEndTime())
+                .build();
+    }
+
+    // 병합된 스케줄용 생성 메서드 (ID는 null)
+    public static AvailableScheduleResponseDto of(
+            Weekday weekday,
+            LocalTime startTime,
+            LocalTime endTime) {
+        return AvailableScheduleResponseDto.builder()
+                .id(null)  // 병합된 스케줄은 ID 없음
+                .dayOfWeek(weekday.getDescription())
+                .startTime(startTime)
+                .endTime(endTime)
                 .build();
     }
 }
