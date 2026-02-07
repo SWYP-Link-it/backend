@@ -2,11 +2,17 @@ package org.swyp.linkit.domain.exchange.service;
 
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface SkillExchangeService {
 
+    /**
+     *  멘토의 거래 가능 스킬 목록 조회
+     */
+    List<UserSkillForExchangeDto> getSkills(Long mentorId);
     /**
      *  멘토의 거래 가능 날짜 조회
      */

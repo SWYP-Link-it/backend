@@ -17,6 +17,7 @@ import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
 import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
+import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.service.AvailableScheduleService;
@@ -45,6 +46,15 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final CreditService creditService;
     private final SettlementService settlementService;
     private final SkillExchangeExpireProcessor exchangeExpireProcessor;
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<UserSkillForExchangeDto> getSkills(Long mentorId) {
+        // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
+        userService.getUserById(mentorId);
+        // 2. 멘토의 공개된 스킬 조회
+        return userSkillService.getSkillsForExchange(mentorId);
+    }
 
     /**
      * 멘토의 거래 가능 날짜 조회
