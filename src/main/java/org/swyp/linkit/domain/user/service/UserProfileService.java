@@ -216,6 +216,9 @@ public class UserProfileService {
                 // 신규 생성
                 userSkillService.createUserSkill(userProfile.getId(), skillDto);
 
+                // DB에 즉시 반영
+                userProfileRepository.flush();
+
                 // 새로 생성한 스킬 조회
                 UserSkill createdSkill = userProfile.getUserSkills()
                         .get(userProfile.getUserSkills().size() - 1);
@@ -231,13 +234,16 @@ public class UserProfileService {
                 UserSkill existingSkill = existingSkillMap.get(skillDto.getId());
 
                 if (existingSkill != null) {
-                    // 기존 이미지 삭제
-                    existingSkill.getImages().forEach(image ->
-                            userSkillImageUploadService.deleteImage(image.getImageUrl()));
-                    existingSkill.clearImages();
+                    // 새 파일이 전달된 경우에만 이미지 교체
+                    if (skillImages != null && skillImages.containsKey(i)) {
+                        // 기존 이미지 삭제
+                        existingSkill.getImages().forEach(image ->
+                                userSkillImageUploadService.deleteImage(image.getImageUrl()));
+                        existingSkill.clearImages();
 
-                    // 새 이미지 업로드
-                    uploadSkillImages(existingSkill, skillImages, i, userId);
+                        // 새 이미지 업로드
+                        uploadSkillImages(existingSkill, skillImages, i, userId);
+                    }
                 }
             }
         }
@@ -304,6 +310,10 @@ public class UserProfileService {
             if (scheduleDto.getId() == null) {
                 // 신규 생성
                 availableScheduleService.createSchedule(user.getId(), scheduleDto);
+
+                // DB에 즉시 반영
+                userRepository.flush();
+
             } else {
                 // 기존 수정
                 availableScheduleService.updateSchedule(user.getId(), scheduleDto.getId(), scheduleDto);
