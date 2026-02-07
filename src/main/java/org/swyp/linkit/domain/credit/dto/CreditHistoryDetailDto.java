@@ -41,7 +41,7 @@ public class CreditHistoryDetailDto {
         return CreditHistoryDetailDto.builder()
                 .creditHistoryId(history.getId())
                 .targetUserId(targetUser == null ? null : targetUser.getId())
-                .skillId(skillExchange == null ? null : skillExchange.getReceiverSkill().getId())
+                .skillId(skillExchange == null ? null : skillExchange.getReceiverSkillId())
                 .targetProfileImageUrl(targetUser == null ? defaultProfileImageUrl : targetUser.getProfileImageUrl())
                 .targetNickname(targetUser == null ? "시스템" : targetUser.getNickname())
                 .contentName(history.getContentName())
