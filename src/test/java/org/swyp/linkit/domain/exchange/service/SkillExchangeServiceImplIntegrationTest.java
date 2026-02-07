@@ -309,6 +309,7 @@ public class SkillExchangeServiceImplIntegrationTest {
                         .satisfies(se -> {
                             assertThat(se.getRequester().getId()).isEqualTo(mentee.getId());
                             assertThat(se.getReceiver().getId()).isEqualTo(mentor.getId());
+                            assertThat(se.getReceiverSkillId()).isEqualTo(mentorSkill.getId());
                             assertThat(se.getSkillName()).isEqualTo(mentorSkill.getSkillName());
                             assertThat(se.getExchangeDuration()).isEqualTo(exchangeDuration);
                             assertThat(se.getScheduledDate()).isEqualTo(targetDate);
