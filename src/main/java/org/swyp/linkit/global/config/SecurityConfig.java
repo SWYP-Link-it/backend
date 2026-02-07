@@ -12,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.swyp.linkit.domain.auth.service.CustomOAuth2UserService;
+import org.swyp.linkit.global.auth.oauth.CustomAuthorizationRequestRepository;
 import org.swyp.linkit.global.handler.JwtAccessDeniedHandler;
 import org.swyp.linkit.global.handler.JwtAuthenticationEntryPoint;
 import org.swyp.linkit.global.handler.OAuth2FailureHandler;
@@ -30,6 +31,7 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
     private final JwtAccessDeniedHandler jwtAccessDeniedHandler;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CustomAuthorizationRequestRepository customAuthorizationRequestRepository;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,9 +42,9 @@ public class SecurityConfig {
                 // CORS 설정
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
-                // 세션 사용 안 함 (Stateless)
+                // JWT 기반 인증은 유지하되, OAuth2 로그인 플로우를 위해 세션은 필요 시에만 사용
                 .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 )
 
                 // 요청 권한 설정
@@ -76,6 +78,9 @@ public class SecurityConfig {
 
                 // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(customAuthorizationRequestRepository)
+                        )
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
