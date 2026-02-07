@@ -66,6 +66,25 @@ public class UserProfileController {
     }
 
     @Operation(
+            summary = "프로필 수정용 조회",
+            description = "프로필 수정 시 사용할 원본 데이터를 조회합니다. (시간대 병합 없음, ID 포함)"
+    )
+    @ApiErrorExceptionsExample(UserProfileExceptionDocs.GetProfile.class)
+    @GetMapping(value = "/{userId}/edit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> getProfileForEdit(
+            @Parameter(description = "조회할 사용자 ID", required = true)
+            @PathVariable Long userId) {
+
+        log.info("[UserProfile] GET /profile/{}/edit", userId);
+
+        UserProfileResponseDto profile = userProfileService.getProfileForEdit(userId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("프로필을 조회했습니다.", profile)
+        );
+    }
+
+    @Operation(
             summary = "프로필 생성",
             description = """
                 회원가입 후 프로필 정보를 등록합니다. (스킬, 가능 시간, 이미지 포함)

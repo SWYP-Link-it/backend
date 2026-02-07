@@ -72,6 +72,27 @@ public class UserProfileResponseDto {
                 .build();
     }
 
+    // 원본 데이터 반환 (병합 없음)
+    public static UserProfileResponseDto fromRaw(UserProfile userProfile) {
+        return UserProfileResponseDto.builder()
+                .id(userProfile.getId())
+                .userId(userProfile.getUser().getId())
+                .nickname(userProfile.getUser().getNickname())
+                .experienceDescription(userProfile.getExperienceDescription())
+                .timesTaught(userProfile.getTimesTaught())
+                .exchangeType(userProfile.getExchangeType())
+                .preferredRegion(userProfile.getPreferredRegion())
+                .detailedLocation(userProfile.getDetailedLocation())
+                .skills(userProfile.getUserSkills().stream()
+                        .map(UserSkillResponseDto::from)
+                        .collect(Collectors.toList()))
+                .availableSchedules(userProfile.getUser().getAvailableSchedules().stream()
+                        .map(AvailableScheduleResponseDto::from)
+                        .sorted(Comparator.comparing(dto -> Weekday.fromDescription(dto.getDayOfWeek())))
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
     // 연속된 시간대를 병합하여 반환
     private static List<AvailableScheduleResponseDto> mergeConsecutiveSchedules(
             List<AvailableSchedule> schedules) {
