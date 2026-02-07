@@ -42,8 +42,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     // 허용할 returnUrl origin 목록
     private static final Set<String> ALLOWED_RETURN_URLS = Set.of(
             "http://localhost:3000",
+            "http://localhost:3000/",
             "http://127.0.0.1:3000",
-            "https://app.desklab.kr"
+            "http://127.0.0.1:3000/",
+            "https://app.desklab.kr",
+            "https://app.desklab.kr/"
     );
 
     @Override
