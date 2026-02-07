@@ -1294,8 +1294,10 @@ public class SkillExchangeServiceImplIntegrationTest {
                 LocalDate today = LocalDate.now();
                 LocalDate yesterday = today.minusDays(1);
                 LocalDate tomorrow = today.plusDays(1);
-
                 int exchangeDuration = 60;
+                LocalTime start = LocalTime.of(10, 0);
+                LocalTime end = start.plusMinutes(exchangeDuration);
+
                 int creditPrice = exchangeDuration / SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
                 User requester = createSavedUser();
                 int requesterBalance = createSavedCredit(requester, 100).getBalance();
@@ -1305,8 +1307,8 @@ public class SkillExchangeServiceImplIntegrationTest {
                 UserSkill mentorSkill = createUserSkill(skillCategory, exchangeDuration);
                 createSavedUserProfile(receiver, mentorSkill);
 
-                // 어제 거래 및 PENDING -> 만료 대상
-                SkillExchange targetExchange = createSavedExchange(requester, receiver, mentorSkill, yesterday,
+                // 오늘 거래 및 PENDING -> 만료 대상
+                SkillExchange targetExchange = createSavedExchange(requester, receiver, mentorSkill, today,
                         LocalTime.now(), LocalTime.now().plusMinutes(exchangeDuration));
                 targetExchange.updateReceiverReadToTrue();
                 targetExchange.updateRequesterReadToTrue();
