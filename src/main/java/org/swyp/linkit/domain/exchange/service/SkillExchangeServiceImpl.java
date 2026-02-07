@@ -47,6 +47,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final SettlementService settlementService;
     private final SkillExchangeExpireProcessor exchangeExpireProcessor;
 
+    /**
+     *  멘토의 거래 가능 스킬 목록 조회
+     */
     @Transactional(readOnly = true)
     @Override
     public List<UserSkillForExchangeDto> getSkills(Long mentorId) {
