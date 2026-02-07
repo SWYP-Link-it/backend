@@ -37,9 +37,13 @@ public class SettlementProcessor {
         skillExchange.settled();
 
         // 가르친 횟수 증가
-        // 정산 과정에서
+        // 정산 과정에서 회원 탈퇴로 Receiver의 Profile이 존재하지 않을 시 가르친 횟수 증가는 생략
+        // todo 추후 회원 탈퇴 로직 확실해질때 진행
         UserProfile receiverProfile = settlement.getReceiver().getUserProfile();
-        receiverProfile.incrementTimesTaught();
+        if(receiverProfile != null){
+            receiverProfile.incrementTimesTaught();
+            log.warn("정산 대상자의 프로필이 존재하지 않아 가르친 횟수 증가를 생략합니다. userId: {}", settlement.getReceiver().getId());
+        }
 
         // 크레딧 정산
         creditService.settleCredit(settlement);
