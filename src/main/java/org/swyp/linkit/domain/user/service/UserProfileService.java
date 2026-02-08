@@ -184,8 +184,7 @@ public class UserProfileService {
         validateAllImages(skillImages);
 
         // 4. 스킬 거래 시간과 가능한 시간대 검증 (스킬/스케줄이 있을 때만)
-        if ((profileDto.getSkills() != null && !profileDto.getSkills().isEmpty()) &&
-                (profileDto.getAvailableSchedules() != null && !profileDto.getAvailableSchedules().isEmpty())) {
+        if (!profileDto.getSkills().isEmpty() && !profileDto.getAvailableSchedules().isEmpty()) {
             validateSkillDurationWithSchedules(
                     profileDto.getSkills(),
                     profileDto.getAvailableSchedules()
