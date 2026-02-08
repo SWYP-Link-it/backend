@@ -68,7 +68,7 @@ public class SkillExchange extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isReceiverRead;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
