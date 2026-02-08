@@ -26,8 +26,8 @@ public class SkillExchangeRequestDto {
     @Schema(description = "신청하려는 멘토의 스킬의 ID", example = "10")
     private Long mentorSkillId;
 
-    @Schema(description = "멘토에게 전달할 메시지 (최대 50자)", example = "안녕하세요! 잘 부탁드립니다.")
-    @Size(max = 50, message = "메시지는 50자 이내로 입력해주세요.")
+    @Schema(description = "멘토에게 전달할 메시지 (최대 200자)", example = "안녕하세요! 잘 부탁드립니다.")
+    @Size(max = 200, message = "메시지는 200자 이내로 입력해주세요.")
     private String message;
 
     @Schema(description = "달력에서 지정한 날짜", example = "2026-02-01")
