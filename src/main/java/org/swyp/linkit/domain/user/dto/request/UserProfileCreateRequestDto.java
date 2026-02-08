@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,10 @@ public class UserProfileCreateRequestDto {
 
     @Schema(description = "세부 위치 (최대 15자)", example = "강남역 부근")
     @Size(max = 15, message = "세부 위치는 15자 이하여야 합니다.")
+    @Pattern(
+            regexp = "^[a-zA-Z가-힣ㄱ-ㅎㅏ-ㅣ0-9 ]+$",
+            message = "세부 위치는 한글, 영어, 숫자만 입력 가능합니다."
+    )
     private String detailedLocation;
 
     @Schema(description = "등록할 스킬 목록")

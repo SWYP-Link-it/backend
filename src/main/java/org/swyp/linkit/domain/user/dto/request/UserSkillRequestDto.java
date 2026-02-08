@@ -38,8 +38,8 @@ public class UserSkillRequestDto {
     @NotNull(message = "스킬 숙련도는 필수입니다.")
     private SkillProficiency skillProficiency;
 
-    @Schema(description = "스킬 소개 (최대 100자)", example = "5년 경력의 기타리스트입니다.")
-    @Size(max = 100, message = "스킬 소개는 100자 이하여야 합니다.")
+    @Schema(description = "스킬 소개 (최대 500자)", example = "5년 경력의 기타리스트입니다.")
+    @Size(max = 500, message = "스킬 소개는 500자 이하여야 합니다.")
     private String skillDescription;
 
     @Schema(description = "스킬 거래 시간 (분 단위)", example = "60")
