@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.user.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,10 +17,13 @@ import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.entity.UserSkillImage;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.SkillDurationExceedsAvailableTimeException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 import org.swyp.linkit.global.error.exception.UserProfileAlreadyExistsException;
 import org.swyp.linkit.global.error.exception.UserProfileNotFoundException;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -83,7 +87,13 @@ public class UserProfileService {
         // 3. 이미지 사전 검증
         validateAllImages(skillImages);
 
-        // 4. UserProfile 생성
+        // 4. 스킬 거래 시간과 가능한 시간대 검증 (추가)
+        validateSkillDurationWithSchedules(
+                profileDto.getSkills(),
+                profileDto.getAvailableSchedules()
+        );
+
+        // 5. UserProfile 생성
         UserProfile userProfile = UserProfile.create(
                 user,
                 profileDto.getExperienceDescription(),
@@ -92,10 +102,10 @@ public class UserProfileService {
                 profileDto.getDetailedLocation()
         );
 
-        // 5. 저장 (스킬/스케줄 추가 전)
+        // 6. 저장 (스킬/스케줄 추가 전)
         UserProfile savedProfile = userProfileRepository.save(userProfile);
 
-        // 6. UserSkill 생성 및 이미지 업로드
+        // 7. UserSkill 생성 및 이미지 업로드
         List<UserSkillDto> skills = profileDto.getSkills();
         for (int i = 0; i < skills.size(); i++) {
             UserSkillDto skillDto = skills.get(i);
@@ -139,15 +149,15 @@ public class UserProfileService {
             }
         }
 
-        // 7. AvailableSchedule 생성 및 추가
+        // 8. AvailableSchedule 생성 및 추가
         profileDto.getAvailableSchedules().forEach(scheduleDto -> {
             availableScheduleService.createSchedule(userId, scheduleDto);
         });
 
-        // 8. 크레딧 1 지급
+        // 9. 크레딧 1 지급
         creditService.rewardCreditOnProfileSetup(user);
 
-        // 9. User 상태 변경 PROFILE_PENDING → ACTIVE
+        // 10. User 상태 변경 PROFILE_PENDING → ACTIVE
         user.completeProfile();
 
         return UserProfileResponseDto.fromRaw(savedProfile);
@@ -171,7 +181,13 @@ public class UserProfileService {
         // 3. 이미지 사전 검증
         validateAllImages(skillImages);
 
-        // 4. 기본 정보 수정
+        // 4. 스킬 거래 시간과 가능한 시간대 검증 (추가)
+        validateSkillDurationWithSchedules(
+                profileDto.getSkills(),
+                profileDto.getAvailableSchedules()
+        );
+
+        // 5. 기본 정보 수정
         userProfile.update(
                 profileDto.getExperienceDescription(),
                 profileDto.getExchangeType(),
@@ -179,14 +195,56 @@ public class UserProfileService {
                 profileDto.getDetailedLocation()
         );
 
-        // 5. 스킬 수정 (차이 계산)
+        // 6. 스킬 수정 (차이 계산)
         updateUserSkills(userProfile, profileDto.getSkills(), skillImages, userId);
 
-        // 6. 스케줄 수정 (차이 계산)
+        // 7. 스케줄 수정 (차이 계산)
         updateAvailableSchedules(user, profileDto.getAvailableSchedules());
 
-        // 7. ResponseDto 변환 및 반환
+        // 8. ResponseDto 변환 및 반환
         return UserProfileResponseDto.fromRaw(userProfile);
+    }
+
+    // 스킬 거래 시간과 가능한 시간대 검증
+    private void validateSkillDurationWithSchedules(
+            List<UserSkillDto> skills,
+            List<AvailableScheduleDto> schedules) {
+
+        if (skills == null || skills.isEmpty() || schedules == null || schedules.isEmpty()) {
+            return;
+        }
+
+        // 1. 가장 긴 스킬 거래 시간 찾기
+        int maxSkillDuration = skills.stream()
+                .map(UserSkillDto::getExchangeDuration)
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        // 2. 각 가능한 시간대의 실제 가용 시간(분) 계산
+        int maxAvailableMinutes = schedules.stream()
+                .map(schedule -> calculateAvailableMinutes(
+                        schedule.getStartTime(),
+                        schedule.getEndTime()
+                ))
+                .max(Integer::compareTo)
+                .orElse(0);
+
+        // 3. 가장 긴 스킬 거래 시간이 가장 긴 가용 시간보다 긴 경우 예외 발생
+        if (maxSkillDuration > maxAvailableMinutes) {
+            throw new SkillDurationExceedsAvailableTimeException();
+        }
+    }
+
+    // 시간대의 가용 시간(분) 계산
+    private int calculateAvailableMinutes(LocalTime startTime, LocalTime endTime) {
+        // endTime이 00:00(자정)인 경우, 24:00로 처리
+        if (endTime.equals(LocalTime.MIDNIGHT) && startTime.isAfter(LocalTime.MIDNIGHT)) {
+            // 24:00 - startTime (예: 23:00 ~ 24:00 = 60분)
+            return (int) Duration.between(startTime, LocalTime.MAX).toMinutes() + 1;
+        }
+
+        // 일반적인 경우
+        return (int) Duration.between(startTime, endTime).toMinutes();
     }
 
     // 스킬 차이 계산 및 반영 (이미지 포함)

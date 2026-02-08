@@ -69,6 +69,13 @@ public class UserProfileExceptionDocs {
             }
         }
 
+        public static class SkillDurationExceedsAvailableTimeException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_DURATION_EXCEEDS_AVAILABLE_TIME;
+            }
+        }
+
         public static class SkillCategoryNotFoundException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
@@ -106,6 +113,13 @@ public class UserProfileExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.USER_PROFILE_NOT_FOUND;
+            }
+        }
+
+        public static class SkillDurationExceedsAvailableTimeException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_DURATION_EXCEEDS_AVAILABLE_TIME;
             }
         }
 
