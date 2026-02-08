@@ -28,9 +28,9 @@ import org.swyp.linkit.global.error.exception.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.YearMonth;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.swyp.linkit.domain.exchange.entity.SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
 
@@ -64,25 +64,85 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional(readOnly = true)
     @Override
-    public AvailableDatesResponseDto getAvailableDates(Long mentorId, String yearMonth) {
-        // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
-        getMentorAndValidation(mentorId);
+    public AvailableDatesResponseDto getAvailableDates(Long mentorId, Long receiverSkillId, String yearMonth) {
 
-        // 2. 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환) 및 월별 필터링
-        List<String> filteredSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
-                .map(dto -> dto.getDate().toString())
-                .filter(date -> date.startsWith(yearMonth))
-                .distinct()
+        // 1. 멘토 존재 여부 검증 -> MentorNotFoundException
+        getMentorAndValidation(mentorId);
+        // 2. 멘토 스킬 조회 -> UserSkillNotFound SkillMentorMissMatch Exception
+        UserSkill mentorSkill = getMentorSkillAndValidation(mentorId, receiverSkillId);
+        int exchangeDuration = mentorSkill.getExchangeDuration();
+
+        // yearOfMonth로 변환
+        YearMonth targetMonth = YearMonth.parse(yearMonth);
+
+        // 3. 해당 월의 시작일과 종료일 계산
+        LocalDate startOfMonth = targetMonth.atDay(1);
+        LocalDate endOfMonth = targetMonth.atEndOfMonth();
+
+        // 4. 해당 월에 예약된 정보 조회
+        List<ExchangeStatus> activeStatuses = List.of(
+                ExchangeStatus.PENDING,
+                ExchangeStatus.ACCEPTED,
+                ExchangeStatus.COMPLETED,
+                ExchangeStatus.SETTLED
+        );
+        List<SkillExchange> monthlyExchanges = exchangeRepository.findAllByReceiverIdAndDateRange(
+                mentorId, startOfMonth, endOfMonth, activeStatuses
+        );
+
+        // 5. 날짜별로 예약된 슬롯들을 Map으로 그룹화
+        Map<LocalDate, Set<LocalTime>> bookedSlotsMap = monthlyExchanges.stream()
+                .collect(Collectors.groupingBy(
+                        SkillExchange::getScheduledDate,
+                        Collectors.flatMapping(se -> {
+
+                            Set<LocalTime> slots = new HashSet<>();
+
+                            LocalTime temp = se.getStartTime();
+                            while (temp.isBefore(se.getEndTime())) {
+                                slots.add(temp);
+                                // 30분 단위로 처리
+                                temp = temp.plusMinutes(30);
+                            }
+                            return slots.stream();
+                        }, Collectors.toSet())
+                ));
+
+        // 5. 멘토가 설정한 스케줄 조회
+        List<ExpandedScheduleDto> allExpandedSchedules = availableScheduleService.getExpandedSchedules(mentorId);
+
+        // 6. 당월 필터링 및 날짜별 그룹화 후 해당 날짜의 운영 슬롯 계산
+        List<LocalDate> availableDates = allExpandedSchedules.stream()
+                .filter(dto -> YearMonth.from(dto.getDate()).equals(targetMonth))
+                .collect(Collectors.groupingBy(ExpandedScheduleDto::getDate))
+                .entrySet().stream()
+                .filter(entry -> {
+                    LocalDate date = entry.getKey();
+                    List<ExpandedScheduleDto> dailyRules = entry.getValue();
+
+                    // 해당 날짜의 운영 슬롯 계산
+                    Set<LocalTime> operatingSlots = new HashSet<>();
+                    for (ExpandedScheduleDto rule : dailyRules) {
+                        LocalTime temp = rule.getStartTime();
+                        while (temp.isBefore(rule.getEndTime())) {
+                            operatingSlots.add(temp);
+                            // 30 분 단위로 처리
+                            temp = temp.plusMinutes(30);
+                        }
+                    }
+
+                    Set<LocalTime> bookedSlots = bookedSlotsMap.getOrDefault(date, Collections.emptySet());
+
+                    // 실제 예약 가능한 슬롯이 하나라도 있는지 확인 확인
+                    return operatingSlots.stream()
+                            .anyMatch(start -> isPossibleSlot(start, exchangeDuration, bookedSlots, operatingSlots));
+                })
+                .map(Map.Entry::getKey)
                 .sorted()
                 .toList();
 
-        // 3. 가능한 날짜가 존재 검증 -> ScheduleNotFoundException
-        if (filteredSchedules.isEmpty()) {
-            throw new ScheduleNotFoundException(yearMonth + "해당 월에 멘토의 스케줄이 존재하지 않습니다.");
-        }
-
-        // 4. 응답 Dto 변환
-        return AvailableDatesResponseDto.of(yearMonth, filteredSchedules);
+        return AvailableDatesResponseDto.of(yearMonth,
+                availableDates.stream().map(LocalDate::toString).toList());
     }
 
     /**
