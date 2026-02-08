@@ -602,10 +602,15 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             LocalTime start = expanded.getStartTime();
             LocalTime end = expanded.getEndTime();
 
-            while (start.isBefore(end)) {
+            while (start.isBefore(end) || (end.equals(LocalTime.MIDNIGHT) && !start.equals(LocalTime.MIDNIGHT))) {
                 totalOperatingSlots.add(start);
                 start = start.plusMinutes(30);
             }
+
+//            while (start.isBefore(end)) {
+//                totalOperatingSlots.add(start);
+//                start = start.plusMinutes(30);
+//            }
         }
         return totalOperatingSlots;
     }
