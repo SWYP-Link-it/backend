@@ -99,10 +99,8 @@ backend:
 
 # Scheduler
 schedules:
-#  cancel-cron: "0 0 0 * * *"
-  cancel-cron: "0 */5 * * * *"
-#  settle-cron: "0 0,30 * * * *"
-  settle-cron: "0 */5 * * * *"
+  cancel-cron: "0 0 0 * * *"
+  settle-cron: "0 0,30 * * * *"
 
 # NCP Object Storage
 ncp:
