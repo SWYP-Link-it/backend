@@ -16,7 +16,7 @@ public interface SkillExchangeService {
     /**
      *  멘토의 거래 가능 날짜 조회
      */
-    AvailableDatesResponseDto getAvailableDates(Long mentorId, String yearMonth);
+    AvailableDatesResponseDto getAvailableDates(Long mentorId, Long receiverSkillId, String yearMonth);
     /**
      *  멘토의 날짜 별 거래 가능 시간 조회
      */

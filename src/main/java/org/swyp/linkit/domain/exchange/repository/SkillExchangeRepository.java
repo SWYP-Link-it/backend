@@ -139,4 +139,19 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "JOIN FETCH se.requester " +
             "WHERE se.id = :id")
     Optional<SkillExchange> findByIdWithRequesterAndReceiver(@Param("id") Long id);
+
+
+    /**
+     *  멘토의 해당 월에 대한 가능 날짜 중 예약 된 현황 조회
+     */
+    @Query("SELECT se FROM SkillExchange se " +
+            "WHERE se.receiver.id = :mentorId " +
+            "AND se.scheduledDate BETWEEN :startDate AND :endDate " +
+            "AND se.exchangeStatus IN :statuses")
+    List<SkillExchange> findAllByReceiverIdAndDateRange(
+            @Param("mentorId") Long mentorId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<ExchangeStatus> statuses
+    );
 }

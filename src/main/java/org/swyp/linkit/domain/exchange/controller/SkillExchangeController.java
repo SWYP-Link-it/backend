@@ -62,10 +62,13 @@ public class SkillExchangeController {
             @Parameter(description = "멘토의 사용자 ID", example = "1")
             @PathVariable Long mentorId,
 
+            @Parameter(description = "조회하고자 하는 멘토의 스킬 ID", example = "10")
+            @RequestParam Long mentorSkillId,
+
             @Parameter(description = "조회할 년-월 (YYYY-MM)", example = "2026-01")
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month){
 
-        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, month.toString());
+        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, mentorSkillId, month.toString());
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 

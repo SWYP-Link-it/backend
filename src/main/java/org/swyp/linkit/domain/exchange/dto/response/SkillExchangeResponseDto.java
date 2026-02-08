@@ -15,7 +15,7 @@ public class SkillExchangeResponseDto {
     private Long skillExchangeId;
 
     @Schema(
-            description = "변경 완료된 스킬 거래 상태(대기중, 수락됨, 거절됨, 최소됨)",
+            description = "변경 완료된 스킬 거래 상태(대기중, 수락됨, 거절됨, 최소됨, 완료됨)",
             example = "대기중"
     )
     private String exchangeStatus;

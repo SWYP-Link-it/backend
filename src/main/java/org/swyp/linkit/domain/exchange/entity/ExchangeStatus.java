@@ -13,7 +13,7 @@ public enum ExchangeStatus {
     CANCELED("취소됨"),
     EXPIRED("거절됨"),
     COMPLETED("완료됨"),
-    SETTLED("정산 완료됨");
+    SETTLED("완료됨");
 
     private final String description;
 }
