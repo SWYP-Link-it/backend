@@ -150,7 +150,7 @@ public class UserProfileService {
         // 9. User 상태 변경 PROFILE_PENDING → ACTIVE
         user.completeProfile();
 
-        return UserProfileResponseDto.from(savedProfile);
+        return UserProfileResponseDto.fromRaw(savedProfile);
     }
 
     // 프로필 수정
@@ -186,7 +186,7 @@ public class UserProfileService {
         updateAvailableSchedules(user, profileDto.getAvailableSchedules());
 
         // 7. ResponseDto 변환 및 반환
-        return UserProfileResponseDto.from(userProfile);
+        return UserProfileResponseDto.fromRaw(userProfile);
     }
 
     // 스킬 차이 계산 및 반영 (이미지 포함)
