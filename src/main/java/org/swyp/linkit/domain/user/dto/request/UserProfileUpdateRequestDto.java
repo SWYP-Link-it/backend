@@ -25,7 +25,6 @@ public class UserProfileUpdateRequestDto {
     private String experienceDescription;
 
     @Schema(description = "교환 방식 (ONLINE, OFFLINE, BOTH)", example = "BOTH")
-    @NotNull(message = "교환 방식은 필수입니다.")
     private ExchangeType exchangeType;
 
     @Schema(description = "선호 지역 (오프라인 선택 시)", example = "SEOUL")
