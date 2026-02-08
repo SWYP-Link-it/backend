@@ -283,12 +283,14 @@ public class UserProfileService {
             LocalTime start = schedule.getStartTime();
             LocalTime end = schedule.getEndTime();
 
+            int duration;
             // 24:00 처리
             if (end.equals(LocalTime.MIDNIGHT) && start.isAfter(LocalTime.MIDNIGHT)) {
-                end = LocalTime.MAX;
+                duration = (int) Duration.between(start, LocalTime.MAX).toMinutes() + 1;
+                end = LocalTime.MAX; // 연속된 시간 계산을 위해 end도 변경
+            } else {
+                duration = (int) Duration.between(start, end).toMinutes();
             }
-
-            int duration = (int) Duration.between(start, end).toMinutes();
 
             // 연속된 시간대인지 확인
             if (currentEnd != null && start.equals(currentEnd)) {
