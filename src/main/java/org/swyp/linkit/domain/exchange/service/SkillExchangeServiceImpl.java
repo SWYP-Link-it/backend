@@ -156,12 +156,28 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         int exchangeDuration = mentorSkill.getExchangeDuration();
 
         // 2. 멘토의 가능 시간 조회 및 date로 필터링, 30분 단위로 변환
-        Set<LocalTime> operatingSlots = getOperatingSlots(mentorId, date);
+//        Set<LocalTime> operatingSlots = getOperatingSlots(mentorId, date);
+        // 멘토의 2일 뒤 ~ 3달 까지의 가능한 날짜 조회 (등록된 스케줄이 없다면 List.of() 반환), 멘토의 특정 날짜의 가능 스케줄 필터링
+        List<ExpandedScheduleDto> expandedSchedules = availableScheduleService.getExpandedSchedules(mentorId).stream()
+                .filter(dto -> dto.getDate().equals(date))
+                .toList();
+
+        Set<LocalTime> totalOperatingSlots = new HashSet<>();
+        for (ExpandedScheduleDto expanded : expandedSchedules) {
+            LocalTime start = expanded.getStartTime();
+            LocalTime end = expanded.getEndTime();
+
+            while (start.isBefore(end) || (end.equals(LocalTime.MIDNIGHT) && !start.equals(LocalTime.MIDNIGHT))) {
+                totalOperatingSlots.add(start);
+                start = start.plusMinutes(30);
+            }
+        }
+
         // 3. date 기준 멘토의 예약 조회 및 30분 단위로 변환
         Set<LocalTime> bookedSlots = getBookedSlots(mentorId, date);
 
         // 4. exchangeDuration 기준 예약 가능한 시간 처리
-        List<SlotDto> finalSlots = calculateAvailableSlots(operatingSlots, exchangeDuration, bookedSlots);
+        List<SlotDto> finalSlots = calculateAvailableSlots(totalOperatingSlots, exchangeDuration, bookedSlots);
 
         return AvailableSlotsResponseDto.of(date.toString(), finalSlots);
     }
