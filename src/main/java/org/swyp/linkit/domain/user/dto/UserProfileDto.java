@@ -3,10 +3,12 @@ package org.swyp.linkit.domain.user.dto;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import org.swyp.linkit.domain.user.dto.request.UserProfileRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileCreateRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileUpdateRequestDto;
 import org.swyp.linkit.domain.user.entity.ExchangeType;
 import org.swyp.linkit.domain.user.entity.PreferredRegion;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,7 +34,8 @@ public class UserProfileDto {
         this.availableSchedules = availableSchedules;
     }
 
-    public static UserProfileDto from(UserProfileRequestDto requestDto) {
+    // 생성용
+    public static UserProfileDto from(UserProfileCreateRequestDto requestDto) {
         List<UserSkillDto> skillDtos = requestDto.getSkills().stream()
                 .map(UserSkillDto::from)
                 .collect(Collectors.toList());
@@ -40,6 +43,30 @@ public class UserProfileDto {
         List<AvailableScheduleDto> scheduleDtos = requestDto.getAvailableSchedules().stream()
                 .map(AvailableScheduleDto::from)
                 .collect(Collectors.toList());
+
+        return UserProfileDto.builder()
+                .experienceDescription(requestDto.getExperienceDescription())
+                .exchangeType(requestDto.getExchangeType())
+                .preferredRegion(requestDto.getPreferredRegion())
+                .detailedLocation(requestDto.getDetailedLocation())
+                .skills(skillDtos)
+                .availableSchedules(scheduleDtos)
+                .build();
+    }
+
+    // 수정용
+    public static UserProfileDto from(UserProfileUpdateRequestDto requestDto) {
+        List<UserSkillDto> skillDtos = requestDto.getSkills() != null
+                ? requestDto.getSkills().stream()
+                .map(UserSkillDto::from)
+                .collect(Collectors.toList())
+                : new ArrayList<>();
+
+        List<AvailableScheduleDto> scheduleDtos = requestDto.getAvailableSchedules() != null
+                ? requestDto.getAvailableSchedules().stream()
+                .map(AvailableScheduleDto::from)
+                .collect(Collectors.toList())
+                : new ArrayList<>();
 
         return UserProfileDto.builder()
                 .experienceDescription(requestDto.getExperienceDescription())

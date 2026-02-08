@@ -22,7 +22,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.swyp.linkit.domain.user.dto.UserProfileDto;
-import org.swyp.linkit.domain.user.dto.request.UserProfileRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileCreateRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileUpdateRequestDto;
 import org.swyp.linkit.domain.user.dto.response.UserProfileResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.service.UserProfileService;
@@ -102,7 +103,7 @@ public class UserProfileController {
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
 
             @Parameter(description = "프로필 등록 정보 (JSON)", required = true)
-            @Valid @RequestPart("profile") UserProfileRequestDto profileRequest,
+            @Valid @RequestPart("profile") UserProfileCreateRequestDto profileRequest,
 
             @Parameter(description = "스킬 이미지 파일들 (key: skill-{스킬인덱스}-images)", required = false)
             @RequestParam(required = false) MultiValueMap<String, MultipartFile> files) {
@@ -132,6 +133,7 @@ public class UserProfileController {
                 - profile: application/json (프로필 JSON)
                 - 스킬 이미지: key = skill-{스킬인덱스}-images 형식으로 전송
                   예) skill-0-images, skill-1-images
+                - 스킬/시간대 목록을 빈 배열로 보내면 전체 삭제됩니다.
                 """
     )
     @ApiErrorExceptionsExample(UserProfileExceptionDocs.UpdateProfile.class)
@@ -141,7 +143,7 @@ public class UserProfileController {
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
 
             @Parameter(description = "프로필 수정 정보 (JSON)", required = true)
-            @Valid @RequestPart("profile") UserProfileRequestDto profileRequest,
+            @Valid @RequestPart("profile") UserProfileUpdateRequestDto profileRequest,
 
             @Parameter(description = "스킬 이미지 파일들 (key: skill-{스킬인덱스}-images)", required = false)
             @RequestParam(required = false) MultiValueMap<String, MultipartFile> files) {
