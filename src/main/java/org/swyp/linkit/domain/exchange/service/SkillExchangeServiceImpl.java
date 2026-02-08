@@ -124,9 +124,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                     Set<LocalTime> operatingSlots = new HashSet<>();
                     for (ExpandedScheduleDto rule : dailyRules) {
                         LocalTime temp = rule.getStartTime();
-                        while (temp.isBefore(rule.getEndTime())) {
+                        while (temp.isBefore(rule.getEndTime()) ||
+                                (rule.getEndTime().equals(LocalTime.MIDNIGHT) && !temp.equals(LocalTime.MIDNIGHT))) {
                             operatingSlots.add(temp);
-                            // 30 분 단위로 처리
                             temp = temp.plusMinutes(30);
                         }
                     }
