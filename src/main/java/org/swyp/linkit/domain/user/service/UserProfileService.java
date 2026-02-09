@@ -10,6 +10,7 @@ import org.swyp.linkit.domain.user.dto.UserProfileDto;
 import org.swyp.linkit.domain.user.dto.UserSkillDto;
 import org.swyp.linkit.domain.user.dto.response.UserProfileResponseDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
+import org.swyp.linkit.domain.user.entity.ExchangeType;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -17,6 +18,7 @@ import org.swyp.linkit.domain.user.entity.UserSkillImage;
 import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.global.error.exception.ExchangeTypeRequiredWithSkillsException;
 import org.swyp.linkit.global.error.exception.SkillDurationExceedsAvailableTimeException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 import org.swyp.linkit.global.error.exception.UserProfileAlreadyExistsException;
@@ -89,13 +91,16 @@ public class UserProfileService {
         // 3. 이미지 사전 검증
         validateAllImages(skillImages);
 
-        // 4. 스킬 거래 시간과 가능한 시간대 검증 (추가)
+        // 4. 스킬 거래 시간과 가능한 시간대 검증
         validateSkillDurationWithSchedules(
                 profileDto.getSkills(),
                 profileDto.getAvailableSchedules()
         );
 
-        // 5. UserProfile 생성
+        // 5. 스킬이 있는데 exchangeType이 null인 경우 검증
+        validateExchangeTypeWithSkills(profileDto.getSkills(), profileDto.getExchangeType());
+
+        // 6. UserProfile 생성
         UserProfile userProfile = UserProfile.create(
                 user,
                 profileDto.getExperienceDescription(),
@@ -191,26 +196,29 @@ public class UserProfileService {
             );
         }
 
-        // 5. 스킬 수정 (차이 계산)
+        // 5. 스킬이 있는데 exchangeType이 null인 경우 검증
+        validateExchangeTypeWithSkills(profileDto.getSkills(), profileDto.getExchangeType());
+
+        // 6. 스킬 수정 (차이 계산)
         updateUserSkills(userProfile, profileDto.getSkills(), skillImages, userId);
 
-        // 6. 스킬이 모두 삭제되었는지 확인
+        // 7. 스킬이 모두 삭제되었는지 확인
         boolean hasNoSkills = userProfile.getUserSkills().isEmpty();
 
         if (hasNoSkills) {
-            // 6-1. 스킬이 없으면 모든 스케줄 삭제
+            // 7-1. 스킬이 없으면 모든 스케줄 삭제
             List<AvailableSchedule> allSchedules = new ArrayList<>(user.getAvailableSchedules());
             allSchedules.forEach(user::removeAvailableSchedule);
 
-            // 6-2. 선호 지역 정보도 삭제
+            // 7-2. 선호 지역 정보 및 exchangeType도 null로 설정
             userProfile.update(
                     profileDto.getExperienceDescription(),
-                    profileDto.getExchangeType(),
-                    null,  // preferredRegion 삭제
-                    null   // detailedLocation 삭제
+                    null,
+                    null,
+                    null
             );
         } else {
-            // 6-3. 스킬이 있으면 기본 정보 및 스케줄 정상 수정
+            // 7-3. 스킬이 있으면 기본 정보 및 스케줄 정상 수정
             userProfile.update(
                     profileDto.getExperienceDescription(),
                     profileDto.getExchangeType(),
@@ -218,11 +226,11 @@ public class UserProfileService {
                     profileDto.getDetailedLocation()
             );
 
-            // 7. 스케줄 수정 (차이 계산)
+            // 8. 스케줄 수정 (차이 계산)
             updateAvailableSchedules(user, profileDto.getAvailableSchedules());
         }
 
-        // 8. ResponseDto 변환 및 반환
+        // 9. ResponseDto 변환 및 반환
         return UserProfileResponseDto.fromRaw(userProfile);
     }
 
@@ -265,6 +273,14 @@ public class UserProfileService {
         // 4. 가장 긴 스킬 거래 시간이 가장 긴 가용 시간보다 긴 경우 예외 발생
         if (maxSkillDuration > maxAvailableMinutes) {
             throw new SkillDurationExceedsAvailableTimeException();
+        }
+    }
+
+    // 스킬과 exchangeType 검증
+    private void validateExchangeTypeWithSkills(List<UserSkillDto> skills, ExchangeType exchangeType) {
+        // 스킬이 있는데 exchangeType이 null이면 예외 발생
+        if (skills != null && !skills.isEmpty() && exchangeType == null) {
+            throw new ExchangeTypeRequiredWithSkillsException();
         }
     }
 

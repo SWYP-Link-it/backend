@@ -32,7 +32,7 @@ public class UserProfile extends BaseTimeEntity {
     private Integer timesTaught;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "exchange_type", nullable = false, length = 20)
+    @Column(name = "exchange_type", length = 20)
     private ExchangeType exchangeType;
 
     @Enumerated(EnumType.STRING)
