@@ -41,11 +41,11 @@ public class SkillExchangeController {
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetReceiverSkillDetails.class)
     @GetMapping(value = "/mentors/{mentorId}/skills", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseDto<List<UserSkillForExchangeDto>>> getReceiverSkillDetails(
+    public ResponseEntity<ApiResponseDto<List<ReceiverSkillsResponseDto>>> getReceiverSkillDetails(
             @Parameter(description = "멘토의 사용자 ID", example = "1")
             @PathVariable Long mentorId) {
 
-        List<UserSkillForExchangeDto> responseDto = exchangeService.getSkills(mentorId);
+        List<ReceiverSkillsResponseDto> responseDto = exchangeService.getSkills(mentorId);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
