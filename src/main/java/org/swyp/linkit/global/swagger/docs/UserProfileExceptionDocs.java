@@ -76,13 +76,6 @@ public class UserProfileExceptionDocs {
             }
         }
 
-        public static class ExchangeTypeRequiredWithSkillsException implements SwaggerExampleExceptions {
-            @Override
-            public BaseErrorCode getErrorCode() {
-                return ErrorCode.EXCHANGE_TYPE_REQUIRED_WITH_SKILLS;
-            }
-        }
-
         public static class SkillCategoryNotFoundException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
@@ -134,6 +127,13 @@ public class UserProfileExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.EXCHANGE_TYPE_REQUIRED_WITH_SKILLS;
+            }
+        }
+
+        public static class SchedulesRequiredWithSkillsException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SCHEDULES_REQUIRED_WITH_SKILLS;
             }
         }
 

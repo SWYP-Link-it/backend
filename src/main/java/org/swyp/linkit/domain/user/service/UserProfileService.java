@@ -19,6 +19,7 @@ import org.swyp.linkit.domain.user.entity.Weekday;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.ExchangeTypeRequiredWithSkillsException;
+import org.swyp.linkit.global.error.exception.SchedulesRequiredWithSkillsException;
 import org.swyp.linkit.global.error.exception.SkillDurationExceedsAvailableTimeException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 import org.swyp.linkit.global.error.exception.UserProfileAlreadyExistsException;
@@ -97,10 +98,7 @@ public class UserProfileService {
                 profileDto.getAvailableSchedules()
         );
 
-        // 5. 스킬이 있는데 exchangeType이 null인 경우 검증
-        validateExchangeTypeWithSkills(profileDto.getSkills(), profileDto.getExchangeType());
-
-        // 6. UserProfile 생성
+        // 5. UserProfile 생성
         UserProfile userProfile = UserProfile.create(
                 user,
                 profileDto.getExperienceDescription(),
@@ -188,18 +186,21 @@ public class UserProfileService {
         // 3. 이미지 사전 검증
         validateAllImages(skillImages);
 
-        // 4. 스킬 거래 시간과 가능한 시간대 검증 (스킬/스케줄이 있을 때만)
-        if (!profileDto.getSkills().isEmpty() && !profileDto.getAvailableSchedules().isEmpty()) {
+        // 4. 스킬과 교환 정보 검증
+        validateExchangeTypeWithSkills(profileDto.getSkills(), profileDto.getExchangeType());
+
+        // 5. 스킬과 스케줄 검증
+        validateSchedulesWithSkills(profileDto.getSkills(), profileDto.getAvailableSchedules());
+
+        // 6. 스킬 거래 시간과 가능한 시간대 검증 (스킬/스케줄이 있을 때만)
+        if (!profileDto.getSkills().isEmpty()) {
             validateSkillDurationWithSchedules(
                     profileDto.getSkills(),
                     profileDto.getAvailableSchedules()
             );
         }
 
-        // 5. 스킬이 있는데 exchangeType이 null인 경우 검증
-        validateExchangeTypeWithSkills(profileDto.getSkills(), profileDto.getExchangeType());
-
-        // 6. 스킬 수정 (차이 계산)
+        // 7. 스킬 수정 (차이 계산)
         updateUserSkills(userProfile, profileDto.getSkills(), skillImages, userId);
 
         // 7. 스킬이 모두 삭제되었는지 확인
@@ -279,8 +280,16 @@ public class UserProfileService {
     // 스킬과 exchangeType 검증
     private void validateExchangeTypeWithSkills(List<UserSkillDto> skills, ExchangeType exchangeType) {
         // 스킬이 있는데 exchangeType이 null이면 예외 발생
-        if (skills != null && !skills.isEmpty() && exchangeType == null) {
+        if (!skills.isEmpty() && exchangeType == null) {
             throw new ExchangeTypeRequiredWithSkillsException();
+        }
+    }
+
+    // 스킬과 스케줄 검증
+    private void validateSchedulesWithSkills(List<UserSkillDto> skills, List<AvailableScheduleDto> schedules) {
+        // 스킬이 있는데 스케줄이 없으면 예외 발생
+        if (!skills.isEmpty() && schedules.isEmpty()) {
+            throw new SchedulesRequiredWithSkillsException();
         }
     }
 

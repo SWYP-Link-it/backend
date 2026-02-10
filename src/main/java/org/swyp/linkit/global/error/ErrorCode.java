@@ -75,8 +75,11 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("스킬 거래 시간이 가능한 시간대보다 긴 경우 발생합니다.")
     SKILL_DURATION_EXCEEDS_AVAILABLE_TIME(HttpStatus.BAD_REQUEST, "UP003", "스킬 거래 시간이 가능한 시간대보다 깁니다. 가능한 시간대를 추가하거나 스킬 거래 시간을 조정해주세요."),
 
+    @ExplainError("스킬이 있는데 가능한 시간대가 없는 경우 발생합니다.")
+    SCHEDULES_REQUIRED_WITH_SKILLS(HttpStatus.BAD_REQUEST, "UP004", "스킬이 있는 경우 가능한 시간대는 필수입니다."),
+
     @ExplainError("스킬이 있는데 교환 방식이 선택되지 않은 경우 발생합니다.")
-    EXCHANGE_TYPE_REQUIRED_WITH_SKILLS(HttpStatus.BAD_REQUEST, "UP004", "스킬이 있는 경우 교환 방식은 필수입니다."),
+    EXCHANGE_TYPE_REQUIRED_WITH_SKILLS(HttpStatus.BAD_REQUEST, "UP005", "스킬이 있는 경우 교환 방식은 필수입니다."),
 
     // 사용자 스킬
     @ExplainError("요청한 스킬 ID에 해당하는 스킬이 존재하지 않는 경우 발생합니다.")
