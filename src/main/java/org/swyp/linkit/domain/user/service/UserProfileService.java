@@ -280,7 +280,7 @@ public class UserProfileService {
     // 스킬과 exchangeType 검증
     private void validateExchangeTypeWithSkills(List<UserSkillDto> skills, ExchangeType exchangeType) {
         // 스킬이 있는데 exchangeType이 null이면 예외 발생
-        if (skills != null && !skills.isEmpty() && exchangeType == null) {
+        if (!skills.isEmpty() && exchangeType == null) {
             throw new ExchangeTypeRequiredWithSkillsException();
         }
     }
@@ -288,10 +288,8 @@ public class UserProfileService {
     // 스킬과 스케줄 검증
     private void validateSchedulesWithSkills(List<UserSkillDto> skills, List<AvailableScheduleDto> schedules) {
         // 스킬이 있는데 스케줄이 없으면 예외 발생
-        if (skills != null && !skills.isEmpty()) {
-            if (schedules == null || schedules.isEmpty()) {
-                throw new SchedulesRequiredWithSkillsException();
-            }
+        if (!skills.isEmpty() && schedules.isEmpty()) {
+            throw new SchedulesRequiredWithSkillsException();
         }
     }
 
