@@ -12,7 +12,7 @@ public interface SkillExchangeService {
     /**
      *  멘토의 거래 가능 스킬 목록 조회
      */
-    List<UserSkillForExchangeDto> getSkills(Long mentorId);
+    List<ReceiverSkillsResponseDto> getSkills(Long mentorId);
     /**
      *  멘토의 거래 가능 날짜 조회
      */

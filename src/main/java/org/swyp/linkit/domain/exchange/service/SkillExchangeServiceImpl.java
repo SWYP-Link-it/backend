@@ -52,11 +52,18 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<UserSkillForExchangeDto> getSkills(Long mentorId) {
+    public List<ReceiverSkillsResponseDto> getSkills(Long mentorId) {
         // 1. 멘토 존재 여부 검증 -> MentorNotFound Exception
-        getMentorAndValidation(mentorId);
+        User mentor = getMentorAndValidation(mentorId);
+        String nickname = mentor.getNickname();
+
         // 2. 멘토의 공개된 스킬 조회
-        return userSkillService.getSkillsForExchange(mentorId);
+        List<UserSkillForExchangeDto> availableMentorSkills = userSkillService.getSkillsForExchange(mentorId);
+
+        // 3. 응답 DTO 변환
+        return availableMentorSkills.stream()
+                .map(skill -> ReceiverSkillsResponseDto.of(skill, nickname))
+                .toList();
     }
 
     /**
@@ -552,9 +559,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     /**
      * 멘토 조회 및 존재 여부 검증 -> UserNotFoundException -> MentorNotFoundException
      */
-    private void getMentorAndValidation(Long mentorId) {
+    private User getMentorAndValidation(Long mentorId) {
         try {
-            userService.getUserById(mentorId);
+            return userService.getUserById(mentorId);
         } catch (UserNotFoundException e) {
             throw new MentorNotFoundException();
         }
