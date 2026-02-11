@@ -63,7 +63,7 @@ public class UserSkillRatingStat extends BaseTimeEntity {
                 .s1(0).s2(0).s3(0).s4(0).s5(0)
                 .build();
 
-        // 첫 평점 Update
+        // 각 평점 별 초기 Update 처리
         stat.incrementStarCount(initialRating);
         return stat;
     }
@@ -90,7 +90,8 @@ public class UserSkillRatingStat extends BaseTimeEntity {
     }
 
     // 평점 평균 계산
-    public int calculateAvgRating(){
-        return this.ratingSum / this.ratingCount;
+    public double calculateAvgRating(){
+        // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
+        return (double) this.ratingSum / this.ratingCount;
     }
 }
