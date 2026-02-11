@@ -8,28 +8,46 @@ import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 @AllArgsConstructor
 public class UserSkillRatingStatDto {
 
+    private Long userSkillId;
     // UserSkillRatingStat Entity가 존재하지 않을 시 null
-    private Long userSkillRatingId;
-    private int avgRating;
-    private int star1Count;
-    private int star2Count;
-    private int star3Count;
-    private int star4Count;
-    private int star5Count;
+    private Long userSkillRatingStatId;
+    private double avgRating;
+
+    // 각 평점 퍼센티지 (정수형)
+    private int star1Percentage;
+    private int star2Percentage;
+    private int star3Percentage;
+    private int star4Percentage;
+    private int star5Percentage;
 
     public static UserSkillRatingStatDto from(UserSkillRatingStat entity) {
-        if (entity == null) {
-            return new UserSkillRatingStatDto(null, 0, 0, 0, 0, 0, 0);
-        }
+        double rawAvg = entity.calculateAvgRating();
+
+        // 소수점 한 자리 까지 표현
+        double truncatedAvg = (int) (rawAvg * 10) / 10.0;
 
         return new UserSkillRatingStatDto(
+                entity.getUserSkillId(),
                 entity.getId(),
-                entity.calculateAvgRating(),
-                entity.getStar1Count(),
-                entity.getStar2Count(),
-                entity.getStar3Count(),
-                entity.getStar4Count(),
-                entity.getStar5Count()
+                truncatedAvg,
+                (int) entity.calculateStarPercentage(entity.getStar1Count()),
+                (int) entity.calculateStarPercentage(entity.getStar2Count()),
+                (int) entity.calculateStarPercentage(entity.getStar3Count()),
+                (int) entity.calculateStarPercentage(entity.getStar4Count()),
+                (int) entity.calculateStarPercentage(entity.getStar5Count())
+        );
+    }
+
+    public static UserSkillRatingStatDto empty(Long userSkillId) {
+        return new UserSkillRatingStatDto(
+                userSkillId,
+                null,
+                0.0,
+                0,
+                0,
+                0,
+                0,
+                0
         );
     }
 }
