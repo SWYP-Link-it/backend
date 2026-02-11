@@ -53,7 +53,8 @@ public class UserRatingStat extends BaseTimeEntity {
     }
 
     // 평점 평균 계산
-    public int calculateAvgRating(){
-        return this.ratingSum / this.ratingCount;
+    public double calculateAvgRating(){
+        // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
+        return (double) this.ratingSum / this.ratingCount;
     }
 }
