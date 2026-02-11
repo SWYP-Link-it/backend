@@ -35,7 +35,7 @@ public class UserSkill extends BaseTimeEntity {
     @JoinColumn(name = "skill_category_id", nullable = false)
     private SkillCategory skillCategory;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_skill_rating_stat_id", nullable = true, unique = true)
     private UserSkillRatingStat userSkillRatingStat;
 
