@@ -1,7 +1,6 @@
 package org.swyp.linkit.domain.review.service;
 
 import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
-import org.swyp.linkit.domain.review.entity.UserRatingStat;
 
 public interface UserRatingStatService {
 
@@ -9,8 +8,8 @@ public interface UserRatingStatService {
      *  유저 전체 평점 조회
      *
      *  [재영님 필독]
-     *  호출 시 UserRatingStat을 JOIN FETCH로 넘겨주세요.
-     *  Entity가 Null 일 경우 감안하여 로직 처리하고 UserRatingDto 반환하겠습니다.
+     *  평점 정보 존재 시 소수점 한 자리까지 표현됩니다.
+     *  평점 정보 존재 하지 않을 시 0.0 으로 처리됩니다.
      */
-    UserRatingStatDto getUserRating(UserRatingStat userRatingStat);
+    UserRatingStatDto getUserRating(Long userProfileId);
 }
