@@ -94,4 +94,10 @@ public class UserSkillRatingStat extends BaseTimeEntity {
         // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
         return (double) this.ratingSum / this.ratingCount;
     }
+
+    // 특정 평점 비율 계산
+    public double calculateStarPercentage(int starCount) {
+        // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
+        return (double) starCount / this.ratingCount * 100;
+    }
 }
