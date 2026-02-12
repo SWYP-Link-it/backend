@@ -76,4 +76,11 @@ public class Settlement extends BaseTimeEntity {
         }
         this.status = SettlementStatus.CANCELED;
     }
+
+    public void fail(){
+        if(!this.status.equals(SettlementStatus.PENDING)){
+            throw new InvalidSettlementStatusException("대기 중인 정산만 실패 처리할 수 있습니다.");
+        }
+        this.status = SettlementStatus.FAILED;
+    }
 }

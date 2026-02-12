@@ -2,7 +2,7 @@ package org.swyp.linkit.domain.exchange.service;
 
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
-import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
+import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -53,7 +53,10 @@ public interface SkillExchangeService {
      *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
      */
     int expirePendingRequests();
-
+    /**
+     *  스킬 거래 조회
+     */
+    SkillExchange getById(Long id);
 
 
 
