@@ -34,9 +34,8 @@ public class SkillExchange extends BaseTimeEntity {
     @JoinColumn(name = "receiver_id", nullable = false)
     private User receiver;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "receiver_skill_id", nullable = false)
-    private UserSkill receiverSkill;
+    @Column(nullable = false)
+    private Long receiverSkillId;
 
     @Column(nullable = false)
     private String skillName;
@@ -69,13 +68,14 @@ public class SkillExchange extends BaseTimeEntity {
     @Column(nullable = false)
     private boolean isReceiverRead;
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String message;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private SkillExchange(String skillName, int exchangeDuration, LocalDate scheduledDate,
+    private SkillExchange(Long receiverSkillId, String skillName, int exchangeDuration, LocalDate scheduledDate,
                           LocalTime startTime, LocalTime endTime, LocalDateTime requestDeadLine,
                           int creditPrice, ExchangeStatus exchangeStatus, String message) {
+        this.receiverSkillId = receiverSkillId;
         this.skillName = skillName;
         this.exchangeDuration = exchangeDuration;
         this.scheduledDate = scheduledDate;
@@ -99,6 +99,7 @@ public class SkillExchange extends BaseTimeEntity {
         int price = receiverSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
 
         SkillExchange skillExchange = SkillExchange.builder()
+                .receiverSkillId(receiverSkill.getId())
                 .skillName(receiverSkill.getSkillName())
                 .exchangeDuration(receiverSkill.getExchangeDuration())
                 .scheduledDate(scheduledDate)
@@ -114,8 +115,6 @@ public class SkillExchange extends BaseTimeEntity {
         skillExchange.assignRequesterUser(requesterUser);
         // == receiverUser 연관관계 주입 ==
         skillExchange.assignReceiverUser(receiverUser);
-        // == receiverSkill 연관관계 주입 ==
-        skillExchange.assignReceiverSkill(receiverSkill);
         return skillExchange;
     }
 
@@ -130,11 +129,6 @@ public class SkillExchange extends BaseTimeEntity {
     // == receiverUser와 연관관계 설정 ==
     private void assignReceiverUser(User receiverUser) {
         this.receiver = receiverUser;
-    }
-
-    // == receiverSkill와 연관관계 설정 ==
-    private void assignReceiverSkill(UserSkill receiverSkill) {
-        this.receiverSkill = receiverSkill;
     }
 
     /**
@@ -160,9 +154,22 @@ public class SkillExchange extends BaseTimeEntity {
     public void expire(){
         // expire 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
         if(!this.exchangeStatus.equals(ExchangeStatus.PENDING)){
-            return;
+            throw new InvalidExchangeStatusException("만료는 대기중 상태의 거래만 가능합니다.");
         }
         this.exchangeStatus = ExchangeStatus.EXPIRED;
+    }
+
+    // == ExchangeStatus 완료 처리 ==
+    public void complete(){
+        // 이미 완료된 경우, 멱등성을 위해 추가 처리 없이 반환
+        if(this.exchangeStatus == ExchangeStatus.COMPLETED) {
+            return;
+        }
+        // 완료 처리 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
+        if(!this.exchangeStatus.equals(ExchangeStatus.ACCEPTED)){
+            throw new InvalidExchangeStatusException("완료는 수락된 상태의 거래만 가능합니다.");
+        }
+        this.exchangeStatus = ExchangeStatus.COMPLETED;
     }
 
     // == ExchangeStatus 취소 처리 ==

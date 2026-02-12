@@ -21,6 +21,12 @@ public class SkillExchangeExceptionDocs {
                 return ErrorCode.UNAUTHORIZED;
             }
         }
+        public static class MentorNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.EXCHANGE_MENTOR_NOT_FOUND;
+            }
+        }
     }
 
     /**
@@ -41,10 +47,10 @@ public class SkillExchangeExceptionDocs {
             }
         }
 
-        public static class ScheduleNotFoundException implements SwaggerExampleExceptions {
+        public static class UserSkillNotFoundException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
-                return ErrorCode.EXCHANGE_SCHEDULE_NOT_FOUND;
+                return ErrorCode.USER_SKILL_NOT_FOUND;
             }
         }
     }

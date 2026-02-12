@@ -35,14 +35,14 @@ public class ChatRoomService {
      * 1:1 채팅방 생성 또는 조회 (멘토-멘티)
      */
     @Transactional
-    public ChatRoomDto createOrGetRoom(Long mentorId, Long menteeId) {
+    public ChatRoomDto createOrGetRoom(Long mentorId, Long menteeId, Long currentUserId) {
         validateUserIds(mentorId, menteeId);
 
         // 기존 채팅방 확인
         return chatRoomRepository.findByMentorIdAndMenteeId(mentorId, menteeId)
                 .map(room -> {
                     log.info("기존 채팅방 조회: roomId={}, mentorId={}, menteeId={}", room.getId(), mentorId, menteeId);
-                    return ChatRoomDto.from(room);
+                    return ChatRoomDto.fromWithCurrentUser(room, currentUserId, null);
                 })
                 .orElseGet(() -> {
                     // User 엔티티 조회 후 연관관계로 주입
@@ -52,7 +52,7 @@ public class ChatRoomService {
                     ChatRoom newRoom = ChatRoom.create(mentor, mentee);
                     chatRoomRepository.save(newRoom);
                     log.info("새로운 채팅방 생성: roomId={}, mentorId={}, menteeId={}", newRoom.getId(), mentorId, menteeId);
-                    return ChatRoomDto.from(newRoom);
+                    return ChatRoomDto.fromWithCurrentUser(newRoom, currentUserId, null);
                 });
     }
 
@@ -100,11 +100,20 @@ public class ChatRoomService {
     }
 
     /**
-     * 채팅방 ID로 DTO 조회
+     * 채팅방 ID로 DTO 조회 (현재 사용자 기준 상대방 정보 포함)
      */
-    public ChatRoomDto findDtoById(Long roomId) {
+    public ChatRoomDto findDtoById(Long roomId, Long currentUserId) {
         ChatRoom room = findById(roomId);
-        return ChatRoomDto.from(room);
+
+        // 마지막 메시지 내용 조회
+        String lastMessageContent = null;
+        if (room.getLastMessageId() != null) {
+            lastMessageContent = chatMessageRepository.findById(room.getLastMessageId())
+                    .map(ChatMessage::getContent)
+                    .orElse(null);
+        }
+
+        return ChatRoomDto.fromWithCurrentUser(room, currentUserId, lastMessageContent);
     }
 
     /**

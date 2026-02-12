@@ -15,7 +15,6 @@ import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
-import org.swyp.linkit.domain.user.service.UserSkillService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
@@ -32,7 +31,6 @@ import java.util.List;
 public class SkillExchangeController {
 
     private final SkillExchangeService exchangeService;
-    private final UserSkillService userSkillService;
 
     /**
      * 멘토의 교환 가능 스킬 정보 조회
@@ -43,11 +41,11 @@ public class SkillExchangeController {
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.GetReceiverSkillDetails.class)
     @GetMapping(value = "/mentors/{mentorId}/skills", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseDto<List<UserSkillForExchangeDto>>> getReceiverSkillDetails(
+    public ResponseEntity<ApiResponseDto<List<ReceiverSkillsResponseDto>>> getReceiverSkillDetails(
             @Parameter(description = "멘토의 사용자 ID", example = "1")
             @PathVariable Long mentorId) {
 
-        List<UserSkillForExchangeDto> responseDto = userSkillService.getSkillsForExchange(mentorId);
+        List<ReceiverSkillsResponseDto> responseDto = exchangeService.getSkills(mentorId);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
@@ -64,10 +62,13 @@ public class SkillExchangeController {
             @Parameter(description = "멘토의 사용자 ID", example = "1")
             @PathVariable Long mentorId,
 
+            @Parameter(description = "조회하고자 하는 멘토의 스킬 ID", example = "10")
+            @RequestParam Long mentorSkillId,
+
             @Parameter(description = "조회할 년-월 (YYYY-MM)", example = "2026-01")
             @RequestParam @DateTimeFormat(pattern = "yyyy-MM") YearMonth month){
 
-        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, month.toString());
+        AvailableDatesResponseDto responseDto = exchangeService.getAvailableDates(mentorId, mentorSkillId, month.toString());
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
@@ -154,7 +155,7 @@ public class SkillExchangeController {
      */
     @Operation(
             summary = "스킬 거래 받은 요청 내역 조회",
-            description = "스킬 거래 받은 요청 내역을 조회합니다."
+            description = "스킬 거래 받은 요청 내역을 조회합니다. (canReview 필드는 항상 false 입니다.)"
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.Paging.class)
     @GetMapping(value = "/request/received", produces = MediaType.APPLICATION_JSON_VALUE)

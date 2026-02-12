@@ -62,10 +62,17 @@ public class UserProfileExceptionDocs {
             }
         }
 
-        public static class UserProfileAlreadyExistsException implements SwaggerExampleExceptions {  // ✅ 추가
+        public static class UserProfileAlreadyExistsException implements SwaggerExampleExceptions {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.USER_PROFILE_ALREADY_EXISTS;
+            }
+        }
+
+        public static class SkillDurationExceedsAvailableTimeException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_DURATION_EXCEEDS_AVAILABLE_TIME;
             }
         }
 
@@ -106,6 +113,27 @@ public class UserProfileExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.USER_PROFILE_NOT_FOUND;
+            }
+        }
+
+        public static class SkillDurationExceedsAvailableTimeException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_DURATION_EXCEEDS_AVAILABLE_TIME;
+            }
+        }
+
+        public static class ExchangeTypeRequiredWithSkillsException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.EXCHANGE_TYPE_REQUIRED_WITH_SKILLS;
+            }
+        }
+
+        public static class SchedulesRequiredWithSkillsException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SCHEDULES_REQUIRED_WITH_SKILLS;
             }
         }
 

@@ -59,24 +59,35 @@ public class SettlementServiceImpl implements SettlementService {
         LocalDate today = LocalDate.now();
         LocalTime nowTime = LocalTime.now();
 
-        // 1. 정산 대상인 Settlement 조회 ( Requester, Receiver, ReceiverSkill, ReceiverProfile Fetch Join)
-        List<Settlement> settleTargets = settlementRepository.findSettleTargets(SettlementStatus.PENDING, today, nowTime);
-        if (settleTargets.isEmpty()) {
+        // 1. 정산 대상인 Settlement 조회
+        List<Long> settleTargetIds = settlementRepository.findSettleTargets(SettlementStatus.PENDING, today, nowTime);
+        if (settleTargetIds.isEmpty()) {
             log.info("정산 처리 대상 없음");
             return 0;
         }
+        log.info("정산 처리 대상 {}건.", settleTargetIds.size());
 
         // 2. 각 정산 독립적인 트랜잭션으로 처리
         int successCount = 0;
-        for (Settlement settlement : settleTargets) {
+        int failCount = 0;
+
+        for (Long settlementId : settleTargetIds) {
             try {
-                // REQUIRES_NEW
-                settlementProcessor.processSingleSettlement(settlement);
+                // 2.1. 스킬 거래 완료 처리 (ACCEPTED -> COMPLETED)
+                settlementProcessor.completeSingleSkillExchange(settlementId);
+
+                // 2.2. 정산 처리 (크레딧 지급, PENDING -> COMPLETED)
+                settlementProcessor.processSingleSettlement(settlementId);
+
                 successCount++;
+
             } catch (Exception e) {
-                log.error("정산 처리 실패. settlementId: {}, errorMessage: {}", settlement.getId(), e.getMessage());
+                failCount++;
+                log.error("정산 처리 실패. settlementId: {}, errorMessage: {}", settlementId, e.getMessage());
             }
         }
+
+        log.info("정산 처리 결과 - 성공: {}건, 실패: {}건", successCount, failCount);
         return successCount;
     }
 }

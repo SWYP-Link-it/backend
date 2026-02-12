@@ -1,5 +1,6 @@
 package org.swyp.linkit.domain.user.entity;
 
+import org.swyp.linkit.domain.review.entity.UserRatingStat;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -25,6 +26,10 @@ public class UserProfile extends BaseTimeEntity {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_rating_stat_id", nullable = true, unique = true)
+    private UserRatingStat userRatingStat;
+
     @Column(name = "experience_description", length = 100)
     private String experienceDescription;
 
@@ -32,7 +37,7 @@ public class UserProfile extends BaseTimeEntity {
     private Integer timesTaught;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "exchange_type", nullable = false, length = 20)
+    @Column(name = "exchange_type", length = 20)
     private ExchangeType exchangeType;
 
     @Enumerated(EnumType.STRING)
@@ -46,10 +51,9 @@ public class UserProfile extends BaseTimeEntity {
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserProfile(User user, String experienceDescription,
+    private UserProfile(String experienceDescription,
                         Integer timesTaught, ExchangeType exchangeType,
                         PreferredRegion preferredRegion, String detailedLocation) {
-        this.user = user;
         this.experienceDescription = experienceDescription;
         this.timesTaught = timesTaught;
         this.exchangeType = exchangeType;
@@ -61,14 +65,27 @@ public class UserProfile extends BaseTimeEntity {
     public static UserProfile create(User user, String experienceDescription,
                                      ExchangeType exchangeType, PreferredRegion preferredRegion,
                                      String detailedLocation) {
-        return UserProfile.builder()
-                .user(user)
+        UserProfile userProfile = UserProfile.builder()
                 .experienceDescription(experienceDescription)
                 .timesTaught(0)
                 .exchangeType(exchangeType)
                 .preferredRegion(preferredRegion)
                 .detailedLocation(detailedLocation)
                 .build();
+
+        user.assignUserProfile(userProfile);
+
+        return userProfile;
+    }
+
+    // UserRatingStat 연관관계 설정
+    public void assignUserRatingStat(UserRatingStat userRatingStat){
+        this.userRatingStat = userRatingStat;
+    }
+
+    // User 할당
+    protected void assignUser(User user) {
+        this.user = user;
     }
 
     // 사용자 프로필 수정

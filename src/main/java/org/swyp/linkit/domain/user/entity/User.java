@@ -53,6 +53,9 @@ public class User extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private UserProfile userProfile;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AvailableSchedule> availableSchedules = new ArrayList<>();
 
@@ -80,6 +83,14 @@ public class User extends BaseTimeEntity {
                 .nickname(nickname)
                 .userStatus(UserStatus.PROFILE_PENDING)
                 .build();
+    }
+
+    // UserProfile 연관관계 편의 메서드
+    public void assignUserProfile(UserProfile userProfile) {
+        this.userProfile = userProfile;
+        if (userProfile != null && userProfile.getUser() != this) {
+            userProfile.assignUser(this);
+        }
     }
 
     // 가능 일정 추가

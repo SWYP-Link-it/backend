@@ -24,9 +24,21 @@ public class SkillExchangeDetailsResponseDto {
     @Schema(description = "스킬 거래 요청 상세 목록")
     private List<SkillExchangeDetailDto> contents;
 
-    public static SkillExchangeDetailsResponseDto from(Slice<SkillExchangeDetailQuery> slice){
+    // 보낸 요청
+    public static SkillExchangeDetailsResponseDto ofSent(Slice<SkillExchangeDetailQuery> slice){
         List<SkillExchangeDetailDto> contents = slice.stream()
-                .map(SkillExchangeDetailDto::from)
+                .map(SkillExchangeDetailDto::ofSent)
+                .toList();
+        return new SkillExchangeDetailsResponseDto(
+                slice.hasNext(),
+                slice.hasNext() ? getNextCursor(slice) : null,
+                contents);
+    }
+
+    // 받은 요청
+    public static SkillExchangeDetailsResponseDto ofReceived(Slice<SkillExchangeDetailQuery> slice){
+        List<SkillExchangeDetailDto> contents = slice.stream()
+                .map(SkillExchangeDetailDto::ofReceived)
                 .toList();
         return new SkillExchangeDetailsResponseDto(
                 slice.hasNext(),

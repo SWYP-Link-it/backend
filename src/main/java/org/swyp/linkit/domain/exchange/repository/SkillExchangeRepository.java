@@ -18,10 +18,9 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
 
     /**
      *  date 기준 멘토의 활성화 된 스킬 거래 조회
-     *  receiverId, date, ExchangeStatus 로 SkillExchange, UserSkill Fetch Join
+     *  receiverId, date, ExchangeStatus 로 SkillExchange Fetch Join
      */
     @Query("SELECT se FROM SkillExchange se " +
-            "JOIN FETCH se.receiverSkill " +
             "WHERE se.receiver.id = :receiverId " +
             "AND se.scheduledDate = :date " +
             "AND se.exchangeStatus IN :activeStatuses")
@@ -34,12 +33,11 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      *  requesterId, cursor 기반 페이징
      */
     @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery" +
-            "(se.id, se.requester.id, r.id, rs.id, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
+            "(se.id, se.requester.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
             "se.exchangeDuration, se.isRequesterRead) " +
             "FROM SkillExchange se " +
             "JOIN se.receiver r " +
-            "JOIN se.receiverSkill rs " +
             "LEFT JOIN ChatRoom cr ON " +
             "  (cr.mentor.id = r.id AND cr.mentee.id = se.requester.id) OR " +
             "  (cr.mentor.id = se.requester.id AND cr.mentee.id = r.id) " +
@@ -56,12 +54,11 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      *  receiverId, cursor 기반 페이징
      */
     @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery" +
-            "(se.id, se.receiver.id, r.id, rs.id, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
+            "(se.id, se.receiver.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
             "se.exchangeDuration, se.isReceiverRead) " +
             "FROM SkillExchange se " +
             "JOIN se.requester r " +
-            "JOIN se.receiverSkill rs " +
             "LEFT JOIN ChatRoom cr ON " +
             "  (cr.mentor.id = r.id AND cr.mentee.id = se.receiver.id) OR " +
             "  (cr.mentor.id = se.receiver.id AND cr.mentee.id = r.id) " +
@@ -116,16 +113,23 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
     Optional<SkillExchange> findByIdWithRequester(@Param("id") Long id);
 
     /**
-     * 거래 만료 처리해야할 목록 조회
-     * requester, receiver Fetch Join
+     * 거래 만료 처리해야할 Id 조회
+     */
+    @Query("SELECT se.id FROM SkillExchange se " +
+            "WHERE se.scheduledDate <= :today " +
+            "AND se.exchangeStatus = :pending")
+    List<Long> findAllExpiredTargets(@Param("today") LocalDate today,
+                                     @Param("pending") ExchangeStatus pending);
+
+    /**
+     * 거래 만료 처리 대상 조회
+     * Requester, Receiver Fetch Join
      */
     @Query("SELECT se FROM SkillExchange se " +
             "JOIN FETCH se.requester " +
             "JOIN FETCH se.receiver " +
-            "WHERE se.scheduledDate < :today " +
-            "AND se.exchangeStatus = :pending")
-    List<SkillExchange> findAllExpiredTargets(@Param("today") LocalDate today,
-                                              @Param("pending") ExchangeStatus pending);
+            "WHERE se.id = :id")
+    Optional<SkillExchange> findByIdForExpire(@Param("id") Long id);
 
     /**
      *  skillExchangeId로 조회 및 Receiver, Requester Fetch Join
@@ -135,4 +139,19 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "JOIN FETCH se.requester " +
             "WHERE se.id = :id")
     Optional<SkillExchange> findByIdWithRequesterAndReceiver(@Param("id") Long id);
+
+
+    /**
+     *  멘토의 해당 월에 대한 가능 날짜 중 예약 된 현황 조회
+     */
+    @Query("SELECT se FROM SkillExchange se " +
+            "WHERE se.receiver.id = :mentorId " +
+            "AND se.scheduledDate BETWEEN :startDate AND :endDate " +
+            "AND se.exchangeStatus IN :statuses")
+    List<SkillExchange> findAllByReceiverIdAndDateRange(
+            @Param("mentorId") Long mentorId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("statuses") List<ExchangeStatus> statuses
+    );
 }

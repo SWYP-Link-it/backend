@@ -22,7 +22,8 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.swyp.linkit.domain.user.dto.UserProfileDto;
-import org.swyp.linkit.domain.user.dto.request.UserProfileRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileCreateRequestDto;
+import org.swyp.linkit.domain.user.dto.request.UserProfileUpdateRequestDto;
 import org.swyp.linkit.domain.user.dto.response.UserProfileResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.service.UserProfileService;
@@ -66,6 +67,25 @@ public class UserProfileController {
     }
 
     @Operation(
+            summary = "프로필 수정용 조회",
+            description = "프로필 수정 시 사용할 원본 데이터를 조회합니다. (시간대 병합 없음, ID 포함)"
+    )
+    @ApiErrorExceptionsExample(UserProfileExceptionDocs.GetProfile.class)
+    @GetMapping(value = "/{userId}/edit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> getProfileForEdit(
+            @Parameter(description = "조회할 사용자 ID", required = true)
+            @PathVariable Long userId) {
+
+        log.info("[UserProfile] GET /profile/{}/edit", userId);
+
+        UserProfileResponseDto profile = userProfileService.getProfileForEdit(userId);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("프로필을 조회했습니다.", profile)
+        );
+    }
+
+    @Operation(
             summary = "프로필 생성",
             description = """
                 회원가입 후 프로필 정보를 등록합니다. (스킬, 가능 시간, 이미지 포함)
@@ -83,7 +103,7 @@ public class UserProfileController {
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
 
             @Parameter(description = "프로필 등록 정보 (JSON)", required = true)
-            @Valid @RequestPart("profile") UserProfileRequestDto profileRequest,
+            @Valid @RequestPart("profile") UserProfileCreateRequestDto profileRequest,
 
             @Parameter(description = "스킬 이미지 파일들 (key: skill-{스킬인덱스}-images)", required = false)
             @RequestParam(required = false) MultiValueMap<String, MultipartFile> files) {
@@ -113,6 +133,7 @@ public class UserProfileController {
                 - profile: application/json (프로필 JSON)
                 - 스킬 이미지: key = skill-{스킬인덱스}-images 형식으로 전송
                   예) skill-0-images, skill-1-images
+                - 스킬/시간대 목록을 빈 배열로 보내면 전체 삭제됩니다.
                 """
     )
     @ApiErrorExceptionsExample(UserProfileExceptionDocs.UpdateProfile.class)
@@ -122,7 +143,7 @@ public class UserProfileController {
             @AuthenticationPrincipal CustomOAuth2User oAuth2User,
 
             @Parameter(description = "프로필 수정 정보 (JSON)", required = true)
-            @Valid @RequestPart("profile") UserProfileRequestDto profileRequest,
+            @Valid @RequestPart("profile") UserProfileUpdateRequestDto profileRequest,
 
             @Parameter(description = "스킬 이미지 파일들 (key: skill-{스킬인덱스}-images)", required = false)
             @RequestParam(required = false) MultiValueMap<String, MultipartFile> files) {

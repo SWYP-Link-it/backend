@@ -2,15 +2,21 @@ package org.swyp.linkit.domain.exchange.service;
 
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface SkillExchangeService {
 
     /**
+     *  멘토의 거래 가능 스킬 목록 조회
+     */
+    List<ReceiverSkillsResponseDto> getSkills(Long mentorId);
+    /**
      *  멘토의 거래 가능 날짜 조회
      */
-    AvailableDatesResponseDto getAvailableDates(Long mentorId, String yearMonth);
+    AvailableDatesResponseDto getAvailableDates(Long mentorId, Long receiverSkillId, String yearMonth);
     /**
      *  멘토의 날짜 별 거래 가능 시간 조회
      */
@@ -47,7 +53,10 @@ public interface SkillExchangeService {
      *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
      */
     int expirePendingRequests();
-
+    /**
+     *  스킬 거래 조회
+     */
+    SkillExchange getById(Long id);
 
 
 
