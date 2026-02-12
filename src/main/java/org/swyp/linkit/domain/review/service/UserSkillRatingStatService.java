@@ -17,4 +17,9 @@ public interface UserSkillRatingStatService {
      *  1 ~ 5 점의 비율은 정수형으로 처리됩니다.
      */
     UserSkillRatingStatDto getUserSkillRating(Long userSkillId);
+
+    /**
+     * userSkillRatingStat Decrease
+     */
+    void decreaseUserSkillRating(Long userSkillId, int rating);
 }

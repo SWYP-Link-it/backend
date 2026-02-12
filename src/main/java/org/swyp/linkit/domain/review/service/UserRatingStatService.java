@@ -16,4 +16,9 @@ public interface UserRatingStatService {
      *  평점 정보 존재 하지 않을 시 0.0 으로 처리됩니다.
      */
     UserRatingStatDto getUserRating(Long userId);
+
+    /**
+     * userRatingStat Decrease
+     */
+    void decreaseUserRating(Long userId, int rating);
 }
