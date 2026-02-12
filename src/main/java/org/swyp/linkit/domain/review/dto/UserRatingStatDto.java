@@ -17,7 +17,7 @@ public class UserRatingStatDto {
         double rawAvg = entity.calculateAvgRating();
 
         // 소수점 한 자리 까지 표현
-        double truncatedAvg = (int) Math.round(rawAvg * 10) / 10.0;
+        double truncatedAvg = Math.round(rawAvg * 10) / 10.0;
 
         return new UserRatingStatDto(entity.getUserId(), entity.getId(), truncatedAvg);
     }
