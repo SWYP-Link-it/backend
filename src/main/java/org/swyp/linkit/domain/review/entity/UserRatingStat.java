@@ -18,7 +18,7 @@ public class UserRatingStat extends BaseTimeEntity {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private Long userProfileId;
+    private Long userId;
 
     @Column(nullable = false)
     private Integer ratingSum;
@@ -27,16 +27,16 @@ public class UserRatingStat extends BaseTimeEntity {
     private Integer ratingCount;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserRatingStat(Long userProfileId, Integer ratingSum, int ratingCount) {
-        this.userProfileId = userProfileId;
+    private UserRatingStat(Long userId, Integer ratingSum, int ratingCount) {
+        this.userId = userId;
         this.ratingSum = ratingSum;
         this.ratingCount = ratingCount;
     }
 
     // == 생성 메서드 ==
-    public static UserRatingStat create(Long userProfileId, int initialRating) {
+    public static UserRatingStat create(Long userId, int initialRating) {
         return UserRatingStat.builder()
-                .userProfileId(userProfileId)
+                .userId(userId)
                 .ratingSum(initialRating)
                 .ratingCount(1)
                 .build();
