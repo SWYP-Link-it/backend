@@ -155,7 +155,7 @@ public class SkillExchangeController {
      */
     @Operation(
             summary = "스킬 거래 받은 요청 내역 조회",
-            description = "스킬 거래 받은 요청 내역을 조회합니다."
+            description = "스킬 거래 받은 요청 내역을 조회합니다. (canReview 필드는 항상 false 입니다.)"
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.Paging.class)
     @GetMapping(value = "/request/received", produces = MediaType.APPLICATION_JSON_VALUE)
