@@ -2,6 +2,7 @@ package org.swyp.linkit.domain.review.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
@@ -15,6 +16,33 @@ import java.util.Optional;
 public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatService {
 
     private final UserSkillRatingStatRepository userSkillRatingStatRepository;
+
+    /**
+     * userSkillRatingStat Update
+     * (초기에 동시 리뷰 작성으로 인한 테이블 중복 방지)
+     */
+    @Override
+    public void updateUserSkillRating(Long userSkillId, int rating) {
+        try{
+            // 조회 및 update 시도
+            userSkillRatingStatRepository.findByUserSkillId(userSkillId)
+                    .ifPresentOrElse(
+                            // 존재 시 update처리
+                            stat -> stat.updateRating(rating),
+                            () -> {
+                                // 존재하지 않는다면 생성, 저장
+                                userSkillRatingStatRepository.save(UserSkillRatingStat.create(userSkillId, rating));
+                                // unique 제약 조건 확인 위해 flush
+                                userSkillRatingStatRepository.flush();
+                            }
+                    );
+
+        } catch (DataIntegrityViolationException e){
+            // 다른 트랜잭션이 먼저 테이블을 생성했을 경우
+            userSkillRatingStatRepository.findByUserSkillId(userSkillId)
+                    .ifPresent(stat -> stat.updateRating(rating));
+        }
+    }
 
     /**
      * 유저 스킬 별 평점 조회
