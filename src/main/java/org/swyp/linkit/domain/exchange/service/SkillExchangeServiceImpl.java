@@ -90,8 +90,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         List<ExchangeStatus> activeStatuses = List.of(
                 ExchangeStatus.PENDING,
                 ExchangeStatus.ACCEPTED,
-                ExchangeStatus.COMPLETED,
-                ExchangeStatus.SETTLED
+                ExchangeStatus.COMPLETED
         );
         List<SkillExchange> monthlyExchanges = exchangeRepository.findAllByReceiverIdAndDateRange(
                 mentorId, startOfMonth, endOfMonth, activeStatuses
@@ -267,7 +266,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 exchangeRepository.findAllByRequesterIdWithReceiver(userId, cursorId, pageable);
 
         // 3. 응답 Dto 변환
-        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.from(slice);
+        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.ofSent(slice);
 
         // 4. bulkUpdate (isRequesterRead = false -> true)
         exchangeRepository.bulkUpdateRequesterReadStatus(userId);
@@ -288,7 +287,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 exchangeRepository.findAllByReceiverIdWithRequester(userId, cursorId, pageable);
 
         // 3. 응답 Dto 변환
-        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.from(slice);
+        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.ofReceived(slice);
 
         // 4.bulkUpdate (isReceiverRead = false -> true)
         exchangeRepository.bulkUpdateReceiverReadStatus(userId);
@@ -415,6 +414,16 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         return SkillExchangeNotificationResponseDto.of(hasUnreadSent, hasUnreadReceived);
     }
 
+    /**
+     *  스킬 거래 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public SkillExchange getById(Long id) {
+        // skillExchange 조회 (Requester Fetch Join)
+        return getSkillExchangeWithRequester(id);
+    }
+
     // == private Methods ==
 
     /**
@@ -422,7 +431,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     public SkillExchange getSkillExchangeWithReceiverAndRequester(Long skillExchangeId){
         return exchangeRepository.findByIdWithRequesterAndReceiver(skillExchangeId)
-                .orElseThrow(() -> new ExchangeNotFoundException());
+                .orElseThrow(ExchangeNotFoundException::new);
     }
 
     /**
@@ -495,7 +504,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     private SkillExchange getSkillExchangeWithReceiver(Long skillExchangeId) {
         return exchangeRepository.findByIdWithReceiver(skillExchangeId)
-                .orElseThrow(() -> new ExchangeNotFoundException());
+                .orElseThrow(ExchangeNotFoundException::new);
     }
 
     /**
@@ -503,7 +512,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     private SkillExchange getSkillExchangeWithRequester(Long skillExchangeId) {
         return exchangeRepository.findByIdWithRequester(skillExchangeId)
-                .orElseThrow(() -> new ExchangeNotFoundException());
+                .orElseThrow(ExchangeNotFoundException::new);
     }
 
     /**
@@ -575,8 +584,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         List<ExchangeStatus> activeStatuses = List.of(
                 ExchangeStatus.PENDING,
                 ExchangeStatus.ACCEPTED,
-                ExchangeStatus.COMPLETED,
-                ExchangeStatus.SETTLED
+                ExchangeStatus.COMPLETED
         );
         List<SkillExchange> bookedExchanges = exchangeRepository
                 .findAllByReceiverIdAndDate(mentorId, date, activeStatuses);
