@@ -29,7 +29,7 @@ public class CreditHistoryDetailDto {
     private String contentName;
     @Schema(description = "크레딧 사용 내역 생성 날짜", example = "2024-01-20T12:00:00")
     private LocalDateTime createdAt;
-    @Schema(description = "크레딧 사용 내역의 상세 구분(리워드, 요청, 취소, 거절, 만료, 정산)", example = "요청")
+    @Schema(description = "크레딧 사용 내역의 상세 구분(리워드, 요청, 취소, 거절, 정산)", example = "요청")
     private String statusLabel;
     @Schema(description = "크레딧 변동 금액 (증가: 양수, 사용: 음수)", example = "-2")
     private int changeAmount;

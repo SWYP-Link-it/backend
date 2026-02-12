@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 
 import java.util.ArrayList;
@@ -33,6 +34,10 @@ public class UserSkill extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "skill_category_id", nullable = false)
     private SkillCategory skillCategory;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_skill_rating_stat_id", nullable = true, unique = true)
+    private UserSkillRatingStat userSkillRatingStat;
 
     @Column(name = "skill_name", nullable = false, length = 100)
     private String skillName;
@@ -130,6 +135,11 @@ public class UserSkill extends BaseTimeEntity {
     // 스킬 장터 노출 토글
     public void toggleVisibility() {
         this.isVisible = !this.isVisible;
+    }
+
+    // UserSkillRatingStat 연관관계 설정
+    public void assignUserSkillRatingStat(UserSkillRatingStat userSkillRatingStat){
+        this.userSkillRatingStat = userSkillRatingStat;
     }
 
     // 사용자 프로필 연관관계 설정

@@ -1,5 +1,6 @@
 package org.swyp.linkit.domain.user.entity;
 
+import org.swyp.linkit.domain.review.entity.UserRatingStat;
 import org.swyp.linkit.global.common.domain.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -24,6 +25,10 @@ public class UserProfile extends BaseTimeEntity {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_rating_stat_id", nullable = true, unique = true)
+    private UserRatingStat userRatingStat;
 
     @Column(name = "experience_description", length = 100)
     private String experienceDescription;
@@ -71,6 +76,11 @@ public class UserProfile extends BaseTimeEntity {
         user.assignUserProfile(userProfile);
 
         return userProfile;
+    }
+
+    // UserRatingStat 연관관계 설정
+    public void assignUserRatingStat(UserRatingStat userRatingStat){
+        this.userRatingStat = userRatingStat;
     }
 
     // User 할당
