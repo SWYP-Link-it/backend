@@ -73,9 +73,6 @@ public class SettlementProcessor {
             log.error("정산 처리 중 오류 발생. settlementId: {}, error: {}",
                     settlementId, e.getMessage(), e);
 
-            // 정산 실패 처리
-            settlement.fail();
-
             // 외부에서 실패 카운트를 위해 예외 전파
             throw e;
         }
