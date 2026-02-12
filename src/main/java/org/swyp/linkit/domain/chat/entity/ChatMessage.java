@@ -34,21 +34,35 @@ public class ChatMessage extends BaseTimeEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type", nullable = false)
+    private MessageType messageType;
+
+    @Column(name = "file_url")
+    private String fileUrl;
+
     @Builder(access = AccessLevel.PRIVATE)
-    private ChatMessage(ChatRoom chatRoom, SenderRole senderRole, String content) {
+    private ChatMessage(ChatRoom chatRoom, SenderRole senderRole, String content,
+                        MessageType messageType, String fileUrl) {
         this.chatRoom = chatRoom;
         this.senderRole = senderRole;
-        this.content = content;
+        this.content = content != null ? content : "";
+        this.messageType = messageType != null ? messageType : MessageType.TEXT;
+        this.fileUrl = fileUrl;
     }
 
-    /**
-     * 채팅 메시지 생성
-     */
     public static ChatMessage create(ChatRoom chatRoom, User sender, SenderRole senderRole, String content) {
+        return create(chatRoom, sender, senderRole, content, MessageType.TEXT, null);
+    }
+
+    public static ChatMessage create(ChatRoom chatRoom, User sender, SenderRole senderRole, String content,
+                                     MessageType messageType, String fileUrl) {
         ChatMessage message = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .senderRole(senderRole)
                 .content(content)
+                .messageType(messageType)
+                .fileUrl(fileUrl)
                 .build();
         message.assignSender(sender);
         return message;
