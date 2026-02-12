@@ -24,17 +24,17 @@ public class UserSkillRatingStatDto {
         double rawAvg = entity.calculateAvgRating();
 
         // 소수점 한 자리 까지 표현
-        double truncatedAvg = (int) (rawAvg * 10) / 10.0;
+        double truncatedAvg = Math.round(rawAvg * 10) / 10.0;
 
         return new UserSkillRatingStatDto(
                 entity.getUserSkillId(),
                 entity.getId(),
                 truncatedAvg,
-                (int) entity.calculateStarPercentage(entity.getStar1Count()),
-                (int) entity.calculateStarPercentage(entity.getStar2Count()),
-                (int) entity.calculateStarPercentage(entity.getStar3Count()),
-                (int) entity.calculateStarPercentage(entity.getStar4Count()),
-                (int) entity.calculateStarPercentage(entity.getStar5Count())
+                (int) Math.round(entity.calculateStarPercentage(entity.getStar1Count())),
+                (int) Math.round(entity.calculateStarPercentage(entity.getStar2Count())),
+                (int) Math.round(entity.calculateStarPercentage(entity.getStar3Count())),
+                (int) Math.round(entity.calculateStarPercentage(entity.getStar4Count())),
+                (int) Math.round(entity.calculateStarPercentage(entity.getStar5Count()))
         );
     }
 

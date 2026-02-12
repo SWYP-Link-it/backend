@@ -8,7 +8,7 @@ import org.swyp.linkit.domain.review.entity.UserRatingStat;
 @AllArgsConstructor
 public class UserRatingStatDto {
 
-    private Long userProfileId;
+    private Long userId;
     // UserRatingStat Entity가 존재하지 않을 시 null
     private Long userRatingStatId;
     private double avgRating;
@@ -17,12 +17,12 @@ public class UserRatingStatDto {
         double rawAvg = entity.calculateAvgRating();
 
         // 소수점 한 자리 까지 표현
-        double truncatedAvg = (int) (rawAvg * 10) / 10.0;
+        double truncatedAvg = Math.round(rawAvg * 10) / 10.0;
 
-        return new UserRatingStatDto(entity.getUserProfileId(), entity.getId(), truncatedAvg);
+        return new UserRatingStatDto(entity.getUserId(), entity.getId(), truncatedAvg);
     }
 
-    public static UserRatingStatDto empty(Long userProfileId){
-        return new UserRatingStatDto(userProfileId, null, 0.0);
+    public static UserRatingStatDto empty(Long userId){
+        return new UserRatingStatDto(userId, null, 0.0);
     }
 }

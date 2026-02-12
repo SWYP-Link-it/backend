@@ -4,6 +4,10 @@ import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 
 public interface UserSkillRatingStatService {
 
+    /**
+     * userSkillRatingStat Update
+     */
+    void updateUserSkillRating(Long userSkillId, int rating);
 
     /**
      *  유저 스킬 별 평점 조회
