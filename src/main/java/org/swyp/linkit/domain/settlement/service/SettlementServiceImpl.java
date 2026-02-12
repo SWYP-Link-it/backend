@@ -65,18 +65,29 @@ public class SettlementServiceImpl implements SettlementService {
             log.info("정산 처리 대상 없음");
             return 0;
         }
+        log.info("정산 처리 대상 {}건.", settleTargetIds.size());
 
         // 2. 각 정산 독립적인 트랜잭션으로 처리
         int successCount = 0;
+        int failCount = 0;
+
         for (Long settlementId : settleTargetIds) {
             try {
-                // REQUIRES_NEW
+                // 2.1. 스킬 거래 완료 처리 (ACCEPTED -> COMPLETED)
+                settlementProcessor.completeSingleSkillExchange(settlementId);
+
+                // 2.2. 정산 처리 (크레딧 지급, PENDING -> COMPLETED)
                 settlementProcessor.processSingleSettlement(settlementId);
+
                 successCount++;
+
             } catch (Exception e) {
+                failCount++;
                 log.error("정산 처리 실패. settlementId: {}, errorMessage: {}", settlementId, e.getMessage());
             }
         }
+
+        log.info("정산 처리 결과 - 성공: {}건, 실패: {}건", successCount, failCount);
         return successCount;
     }
 }

@@ -159,13 +159,13 @@ public class SkillExchange extends BaseTimeEntity {
         this.exchangeStatus = ExchangeStatus.EXPIRED;
     }
 
-    // == ExchangeStatus 정산 처리 ==
-    public void settled(){
-        // settle 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
+    // == ExchangeStatus 완료 처리 ==
+    public void complete(){
+        // 완료 처리 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
         if(!this.exchangeStatus.equals(ExchangeStatus.ACCEPTED)){
-            throw new InvalidExchangeStatusException("정산은 수락된 상태의 거래만 가능합니다.");
+            throw new InvalidExchangeStatusException("완료는 수락된 상태의 거래만 가능합니다.");
         }
-        this.exchangeStatus = ExchangeStatus.SETTLED;
+        this.exchangeStatus = ExchangeStatus.COMPLETED;
     }
 
     // == ExchangeStatus 취소 처리 ==

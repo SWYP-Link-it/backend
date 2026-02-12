@@ -2,5 +2,5 @@ package org.swyp.linkit.domain.settlement.entity;
 
 public enum SettlementStatus {
 
-    PENDING, COMPLETED, CANCELED
+    PENDING, COMPLETED, FAILED, CANCELED
 }
