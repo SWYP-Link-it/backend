@@ -161,6 +161,10 @@ public class SkillExchange extends BaseTimeEntity {
 
     // == ExchangeStatus 완료 처리 ==
     public void complete(){
+        // 이미 완료된 경우, 멱등성을 위해 추가 처리 없이 반환
+        if(this.exchangeStatus == ExchangeStatus.COMPLETED) {
+            return;
+        }
         // 완료 처리 대상은 DB조회에서 걸러지지만 혹시모를 상황 대비
         if(!this.exchangeStatus.equals(ExchangeStatus.ACCEPTED)){
             throw new InvalidExchangeStatusException("완료는 수락된 상태의 거래만 가능합니다.");
