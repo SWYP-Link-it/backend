@@ -29,7 +29,7 @@ public class Review extends BaseTimeEntity {
     @Column(nullable = false)
     private Long revieweeId;
 
-    @Column(length = 500, nullable = false)
+    @Column(length = 500, nullable = true)
     private String content;
 
     @Column(nullable = false)
