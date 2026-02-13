@@ -5,11 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.entity.UserSkillImage;
 import org.swyp.linkit.domain.user.entity.UserStatus;
 import org.swyp.linkit.domain.user.entity.UserWithdrawalHistory;
-import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.domain.user.repository.UserWithdrawalHistoryRepository;
 import org.swyp.linkit.global.error.exception.AlreadyWithdrawnException;
@@ -18,13 +18,13 @@ import org.swyp.linkit.global.error.exception.SameNicknameException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
-    private final UserProfileRepository userProfileRepository;
     private final UserSkillImageUploadService imageUploadService;
     private final UserWithdrawalHistoryRepository withdrawalHistoryRepository;
 
@@ -75,8 +75,8 @@ public class UserService {
             throw new AlreadyWithdrawnException("이미 탈퇴한 사용자입니다.");
         }
 
-        // 3. 프로필 및 모든 스킬 삭제
-        deleteProfileAndSkills(userId);
+        // 3. 이미지 파일 삭제
+        deleteImagesFromStorage(user);
 
         // 4. 탈퇴 이력 저장
         UserWithdrawalHistory withdrawalHistory = UserWithdrawalHistory.create(user);
@@ -85,43 +85,37 @@ public class UserService {
         log.info("탈퇴 이력 저장: userId={}, oauthProvider={}, oauthId={}",
                 userId, user.getOauthProvider(), user.getOauthId());
 
-        // 5. 회원 탈퇴 처리
+        // 5. User 상태 변경
         user.withdraw();
 
         log.info("회원 탈퇴 완료: userId={}, nickname={}", userId, user.getNickname());
     }
 
-    // 프로필 및 모든 스킬 삭제
-    private void deleteProfileAndSkills(Long userId) {
-        // 1. 프로필이 없으면 스킵
-        userProfileRepository.findByUserId(userId)
-                .ifPresentOrElse(
-                        userProfile -> {
-                            // 2. 모든 스킬의 이미지들을 NCP Object Storage에서 삭제
-                            List<UserSkill> userSkills = userProfile.getUserSkills();
-                            int totalImageCount = 0;
+    // 이미지 파일 삭제
+    private void deleteImagesFromStorage(User user) {
+        UserProfile userProfile = user.getUserProfile();
 
-                            for (UserSkill userSkill : userSkills) {
-                                List<String> imageUrls = userSkill.getImages().stream()
-                                        .map(UserSkillImage::getImageUrl)
-                                        .toList();
+        if (userProfile == null) {
+            log.info("프로필이 없는 사용자 탈퇴: userId={}", user.getId());
+            return;
+        }
 
-                                for (String imageUrl : imageUrls) {
-                                    imageUploadService.deleteImage(imageUrl);
-                                }
+        // NCP Object Storage에서 이미지 파일만 삭제
+        List<UserSkill> userSkills = userProfile.getUserSkills();
+        for (UserSkill userSkill : userSkills) {
+            List<String> imageUrls = userSkill.getImages().stream()
+                    .map(UserSkillImage::getImageUrl)
+                    .toList();
 
-                                totalImageCount += imageUrls.size();
-                                log.info("스킬 이미지 삭제: userId={}, skillId={}, imageCount={}",
-                                        userId, userSkill.getId(), imageUrls.size());
-                            }
+            for (String imageUrl : imageUrls) {
+                imageUploadService.deleteImage(imageUrl);
+            }
 
-                            // 3. 프로필 삭제
-                            userProfileRepository.delete(userProfile);
+            log.info("스킬 이미지 삭제: userId={}, skillId={}, imageCount={}",
+                    user.getId(), userSkill.getId(), imageUrls.size());
+        }
 
-                            log.info("프로필 및 이미지 삭제 완료: userId={}, skillCount={}, totalImageCount={}",
-                                    userId, userSkills.size(), totalImageCount);
-                        },
-                        () -> log.info("프로필이 없는 사용자 탈퇴: userId={}", userId)
-                );
+        log.info("이미지 파일 삭제 완료: userId={}, skillCount={}",
+                user.getId(), userSkills.size());
     }
 }

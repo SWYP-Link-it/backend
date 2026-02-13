@@ -124,11 +124,4 @@ public class UserProfile extends BaseTimeEntity {
             userSkill.assignUserProfile(null);
         }
     }
-
-    // 모든 사용자 스킬 제거
-    public void clearUserSkills() {
-        for (UserSkill skill : new ArrayList<>(this.userSkills)) {
-            removeUserSkill(skill);
-        }
-    }
 }
