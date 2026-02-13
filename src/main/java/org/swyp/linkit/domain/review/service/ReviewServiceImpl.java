@@ -2,15 +2,20 @@ package org.swyp.linkit.domain.review.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.entity.Review;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
+import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.error.exception.ReviewAccessDeniedException;
 import org.swyp.linkit.global.error.exception.ReviewAlreadyExistsException;
@@ -110,6 +115,57 @@ public class ReviewServiceImpl implements ReviewService {
         reviewRepository.delete(review);
     }
 
+    /**
+     * 유저가 받은 리뷰 스킬별 페이징 조회
+     * skillId = Null 이면 모든 스킬에 대한 리뷰 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReviewDetailsResponseDto getReceivedReviews(Long userId, Long skillId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
+        Pageable pageable = PageRequest.of(0, size);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllByRevieweeId(userId, skillId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice);
+    }
+
+    /**
+     * 유저가 작성한 리뷰 페이징 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReviewDetailsResponseDto getWrittenReviews(Long userId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
+        Pageable pageable = PageRequest.of(0, size);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllByReviewerId(userId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice);
+    }
+
+    /**
+     * 스킬 별 리뷰 페이징 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReviewDetailsResponseDto getSkillReviews(Long skillId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
+        Pageable pageable = PageRequest.of(0, size);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllBySkillId(skillId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice);
+    }
 
     // == private Methods ==
 
