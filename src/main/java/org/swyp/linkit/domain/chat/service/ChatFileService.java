@@ -67,8 +67,11 @@ public class ChatFileService {
         String originalFilename = file.getOriginalFilename();
         String extension = "";
 
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        if (originalFilename != null) {
+            int dotIndex = originalFilename.lastIndexOf('.');
+            if (dotIndex > 0) {
+                extension = originalFilename.substring(dotIndex);
+            }
         }
 
         return String.format("%s%d/%s%s",
