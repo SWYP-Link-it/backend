@@ -1,10 +1,10 @@
 package org.swyp.linkit.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +19,12 @@ import org.swyp.linkit.global.auth.oauth.KakaoOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.NaverOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.OAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.PendingOAuth2UserInfo;
-import org.swyp.linkit.global.error.exception.InvalidUserStatusException;
 import org.swyp.linkit.global.error.exception.UnsupportedOAuthProviderException;
 
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -64,10 +64,23 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
+            // 탈퇴한 사용자는 신규 회원처럼 처리
             if (user.getUserStatus() == UserStatus.WITHDRAWN) {
-                throw new OAuth2AuthenticationException(
-                        new OAuth2Error("WITHDRAWN_USER", "탈퇴한 사용자입니다", null)
-                );
+                log.info("탈퇴한 사용자의 재가입 시도: userId={}, oauthProvider={}, oauthId={}",
+                        user.getId(), provider, oauthId);
+
+                // 신규 회원과 동일하게 PendingUser로 처리
+                PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()
+                        .oauthProvider(provider)
+                        .oauthId(oauthId)
+                        .email(email)
+                        .name(name)
+                        .profileImageUrl(profileImageUrl)
+                        .build();
+
+                String sessionId = pendingUserStorage.savePendingUser(pendingUserInfo.toJson());
+
+                return new PendingOAuth2UserInfo(sessionId, pendingUserInfo, oAuth2User.getAttributes());
             }
 
             return CustomOAuth2User.from(user, oAuth2User.getAttributes());
