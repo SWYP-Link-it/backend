@@ -116,9 +116,8 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 받은 리뷰 페이징 조회
+     * 유저가 받은 리뷰 스킬별 페이징 조회
      * skillId = Null 이면 모든 스킬에 대한 리뷰 조회
-     * todo skillId required = false
      */
     @Transactional(readOnly = true)
     @Override
@@ -135,7 +134,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 작성한 리뷰 페이징 조회
+     * 유저가 작성한 리뷰 페이징 조회
      */
     @Transactional(readOnly = true)
     @Override
@@ -152,8 +151,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 스킬 장터 스킬별 리뷰 페이징
-     * todo skillId Required = true
+     * 스킬 별 리뷰 페이징 조회
      */
     @Transactional(readOnly = true)
     @Override
