@@ -79,7 +79,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 3. 평점 수정된 경우 집계 테이블 update
         if(!review.getRating().equals(dto.getRating())){
-            updateRatingStatistics(review, dto.getRating());
+            changeRatingStatistics(review, dto.getRating());
         }
 
         // 4. 리뷰 수정
@@ -116,18 +116,14 @@ public class ReviewServiceImpl implements ReviewService {
     /**
      * 평점 통계 업데이트 (기존 평점 취소 후 새 평점 반영)
      */
-    private void updateRatingStatistics(Review review, Integer newRating) {
+    private void changeRatingStatistics(Review review, Integer newRating) {
         Integer oldRating = review.getRating();
         Long revieweeId = review.getRevieweeId();
         Long revieweeSkillId = review.getRevieweeSkillId();
 
-        // 1. 기존 평점 감소
-        userRatingService.decreaseUserRating(revieweeId, oldRating);
-        userSkillRatingService.decreaseUserSkillRating(revieweeSkillId, oldRating);
-
-        // 2. 새 평점 반영
-        userRatingService.updateUserRating(revieweeId, newRating);
-        userSkillRatingService.updateUserSkillRating(revieweeSkillId, newRating);
+        // 평점 수정 처리
+        userRatingService.changeUserRating(revieweeId, oldRating, newRating);
+        userSkillRatingService.changeUserSkillRating(revieweeSkillId, oldRating, newRating);
     }
 
     /**
