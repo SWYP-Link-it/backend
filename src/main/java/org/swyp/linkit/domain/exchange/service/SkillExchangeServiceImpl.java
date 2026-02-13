@@ -406,7 +406,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      *  요청 관리 네비바, 탭에 사용할 신규 알림 표시
      *
      */
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public SkillExchangeNotificationResponseDto getNotification(Long userId) {
         boolean hasUnreadSent = exchangeRepository.existsByRequester_IdAndIsRequesterReadFalse(userId);
