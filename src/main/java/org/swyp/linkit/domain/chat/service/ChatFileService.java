@@ -14,8 +14,7 @@ import org.swyp.linkit.global.error.exception.ChatFileTypeNotSupportedException;
 import org.swyp.linkit.global.error.exception.ChatFileUploadFailedException;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -24,7 +23,7 @@ import java.util.UUID;
 public class ChatFileService {
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    private static final List<String> ALLOWED_CONTENT_TYPES = Arrays.asList(
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "image/jpeg",
             "image/png",
             "image/gif",
