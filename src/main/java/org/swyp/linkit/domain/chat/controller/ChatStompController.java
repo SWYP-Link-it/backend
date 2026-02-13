@@ -40,10 +40,10 @@ public class ChatStompController {
         // 권한 체크 (room 참여자 여부)
         chatService.assertParticipant(senderId, roomId);
 
-        // 1) DB 저장
-        ChatMessage saved = chatService.saveMessage(roomId, senderId, dto.getText());
+        ChatMessage saved = chatService.saveMessage(
+                roomId, senderId, dto.getText(),
+                dto.getMessageType(), dto.getImageUrl());
 
-        // 2) Redis publish (모든 인스턴스 팬아웃)
         chatService.publishToRedis(saved);
     }
 

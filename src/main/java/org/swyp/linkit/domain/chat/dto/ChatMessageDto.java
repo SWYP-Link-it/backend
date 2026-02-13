@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.chat.entity.ChatMessage;
+import org.swyp.linkit.domain.chat.entity.MessageType;
 import org.swyp.linkit.domain.chat.entity.SenderRole;
 
 import java.time.ZoneOffset;
@@ -20,6 +21,8 @@ public class ChatMessageDto {
     private Long senderId;
     private SenderRole senderRole;
     private String content;
+    private MessageType messageType;
+    private String fileUrl;
     private Long createdAtEpochMs;
     private Boolean isMine;
 
@@ -30,6 +33,8 @@ public class ChatMessageDto {
                 .senderId(message.getSenderId())
                 .senderRole(message.getSenderRole())
                 .content(message.getContent())
+                .messageType(message.getMessageType())
+                .fileUrl(message.getFileUrl())
                 .createdAtEpochMs(message.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
                 .build();
     }
@@ -41,6 +46,8 @@ public class ChatMessageDto {
                 .senderId(message.getSenderId())
                 .senderRole(message.getSenderRole())
                 .content(message.getContent())
+                .messageType(message.getMessageType())
+                .fileUrl(message.getFileUrl())
                 .createdAtEpochMs(message.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
                 .isMine(message.getSenderId().equals(currentUserId))
                 .build();
