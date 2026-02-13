@@ -66,7 +66,22 @@ public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatServic
     @Transactional
     @Override
     public void decreaseUserSkillRating(Long userSkillId, int rating) {
+        // 1. userSkillRatingStat 조회 및 감소 처리
         userSkillRatingStatRepository.findByUserSkillId(userSkillId)
                 .ifPresent(stat -> stat.decreaseRating(rating));
+    }
+
+    /**
+     * userSkillRatingStat change
+     */
+    @Transactional
+    @Override
+    public void changeUserSkillRating(Long userSkillId, int oldRating, int newRating) {
+        // 1. userSkillRatingStat 조회 및 평점 수정 처리
+        userSkillRatingStatRepository.findByUserSkillId(userSkillId)
+                .ifPresent(stat -> {
+                    stat.decreaseRating(oldRating);
+                    stat.updateRating(newRating);
+                });
     }
 }

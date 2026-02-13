@@ -22,4 +22,9 @@ public interface UserSkillRatingStatService {
      * userSkillRatingStat Decrease
      */
     void decreaseUserSkillRating(Long userSkillId, int rating);
+
+    /**
+     * userSkillRatingStat change
+     */
+    void changeUserSkillRating(Long userSkillId, int oldRating, int newRating);
 }
