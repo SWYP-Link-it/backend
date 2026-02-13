@@ -57,6 +57,10 @@ public class ChatMessage extends BaseTimeEntity {
 
     public static ChatMessage create(ChatRoom chatRoom, User sender, SenderRole senderRole, String content,
                                      MessageType messageType, String fileUrl) {
+        if (messageType == MessageType.IMAGE && (fileUrl == null || fileUrl.isBlank())) {
+            throw new IllegalArgumentException("Image URL is required for IMAGE message type.");
+        }
+
         ChatMessage message = ChatMessage.builder()
                 .chatRoom(chatRoom)
                 .senderRole(senderRole)
