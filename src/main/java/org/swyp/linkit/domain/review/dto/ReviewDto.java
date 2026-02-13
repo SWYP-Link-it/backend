@@ -50,7 +50,7 @@ public class ReviewDto {
 
     public ReviewDto ofUpdate(Long reviewerId, Long reviewId, ReviewUpdateRequestDto dto){
         return ReviewDto.builder()
-                .id(reviewerId)
+                .id(reviewId)
                 .reviewerId(reviewerId)
                 .content(dto.getContent())
                 .rating(dto.getRating())
