@@ -137,7 +137,7 @@ public class User extends BaseTimeEntity {
     public void withdraw() {
         this.clearAvailableSchedules();
         this.userProfile = null;
-        this.oauthId = this.oauthId + "_deleted_" + System.currentTimeMillis();
+        this.oauthId = String.format("%s_deleted_%d_%d", this.oauthId, this.id, System.currentTimeMillis());
         this.userStatus = UserStatus.WITHDRAWN;
         this.deletedAt = LocalDateTime.now();
     }
