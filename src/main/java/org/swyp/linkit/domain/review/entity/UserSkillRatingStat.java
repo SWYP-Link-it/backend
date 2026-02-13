@@ -78,17 +78,6 @@ public class UserSkillRatingStat extends BaseTimeEntity {
         incrementStarCount(additionalRating);
     }
 
-    // 각 평점 별 Update (requestDto 에서 검증 하기에 따로 예외 던지지 않음)
-    private void incrementStarCount(int rating) {
-        switch (rating) {
-            case 1 -> this.star1Count++;
-            case 2 -> this.star2Count++;
-            case 3 -> this.star3Count++;
-            case 4 -> this.star4Count++;
-            case 5 -> this.star5Count++;
-        }
-    }
-
     // 평점 평균 계산
     public double calculateAvgRating(){
         // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
@@ -99,5 +88,36 @@ public class UserSkillRatingStat extends BaseTimeEntity {
     public double calculateStarPercentage(int starCount) {
         // 생성 시점에 ratingSum, ratingCount가 설정되기에 0으로 나누기 방어 로직 생략
         return (double) starCount / this.ratingCount * 100;
+    }
+
+    // 평점 감소
+    public void decreaseRating(int rating) {
+        if (this.ratingCount > 0) {
+            this.ratingSum -= rating;
+            this.ratingCount--;
+            decrementStarCount(rating);
+        }
+    }
+
+    // 각 평점 별 증가 (requestDto 에서 검증 하기에 따로 예외 던지지 않음)
+    private void incrementStarCount(int rating) {
+        switch (rating) {
+            case 1 -> this.star1Count++;
+            case 2 -> this.star2Count++;
+            case 3 -> this.star3Count++;
+            case 4 -> this.star4Count++;
+            case 5 -> this.star5Count++;
+        }
+    }
+
+    // 각 평점 별 감소
+    private void decrementStarCount(int rating) {
+        switch (rating) {
+            case 1 -> { if(this.star1Count > 0) this.star1Count--; }
+            case 2 -> { if(this.star2Count > 0) this.star2Count--; }
+            case 3 -> { if(this.star3Count > 0) this.star3Count--; }
+            case 4 -> { if(this.star4Count > 0) this.star4Count--; }
+            case 5 -> { if(this.star5Count > 0) this.star5Count--; }
+        }
     }
 }

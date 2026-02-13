@@ -49,6 +49,7 @@ public class UserRatingStatServiceImpl implements UserRatingStatService {
     /**
      *  유저 전체 평점 조회
      */
+    @Transactional(readOnly = true)
     @Override
     public UserRatingStatDto getUserRating(Long userId) {
         // 1. userRatingStat 조회
@@ -58,5 +59,30 @@ public class UserRatingStatServiceImpl implements UserRatingStatService {
         return userRatingStat
                 .map(UserRatingStatDto::from)
                 .orElseGet(() -> UserRatingStatDto.empty(userId));
+    }
+
+    /**
+     * userRatingStat decrease
+     */
+    @Transactional
+    @Override
+    public void decreaseUserRating(Long userId, int rating) {
+        // 1. userRatingStat 조회 및 감소 처리
+        userRatingStatRepository.findByUserId(userId)
+                .ifPresent(stat -> stat.decreaseRating(rating));
+    }
+
+    /**
+     * userRatingStat change (decrease, increase)
+     */
+    @Transactional
+    @Override
+    public void changeUserRating(Long userId, int oldRating, int newRating) {
+        // 1. userRatingStat 조회 및 평점 수정 처리
+        userRatingStatRepository.findByUserId(userId)
+                .ifPresent(stat -> {
+                    stat.decreaseRating(oldRating);
+                    stat.updateRating(newRating);
+                });
     }
 }

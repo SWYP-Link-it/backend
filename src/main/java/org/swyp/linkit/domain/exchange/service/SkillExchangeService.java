@@ -57,7 +57,4 @@ public interface SkillExchangeService {
      *  스킬 거래 조회
      */
     SkillExchange getById(Long id);
-
-
-
 }
