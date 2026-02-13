@@ -190,6 +190,19 @@ public enum ErrorCode implements BaseErrorCode {
 
     SETTLEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "SE002", "정산이 존재하지 않습니다."),
 
+    // 리뷰
+    @ExplainError("리뷰가 존재하지 않을 경우 발생합니다.")
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "RE001", "리뷰가 존재하지 않습니다."),
+
+    @ExplainError("리뷰에 대한 권한이 없는 경우 발생합니다.")
+    REVIEW_ACCESS_DENIED(HttpStatus.FORBIDDEN, "RE002", "리뷰에 대한 권한이 없습니다."),
+
+    @ExplainError("거래가 완료되지 않은 스킬 거래에 리뷰 작성을 요청할 경우 발생합니다.")
+    REVIEW_INVALID_STATUS(HttpStatus.BAD_REQUEST, "RE003", "거래가 완료된 스킬 거래에만 리뷰를 작성할 수 있습니다."),
+
+    @ExplainError("리뷰가 이미 존재하는 경우 발생합니다.")
+    REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "RE004", "리뷰가 이미 존재합니다."),
+
     // 알림
     @ExplainError("요청한 알림 ID에 해당하는 알림이 존재하지 않는 경우 발생합니다.")
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N001", "알림을 찾을 수 없습니다."),

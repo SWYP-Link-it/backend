@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.UserSkillRatingStatRepository;
@@ -21,6 +22,7 @@ public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatServic
      * userSkillRatingStat Update
      * (초기에 동시 리뷰 작성으로 인한 테이블 중복 방지)
      */
+    @Transactional
     @Override
     public void updateUserSkillRating(Long userSkillId, int rating) {
         try{
@@ -47,6 +49,7 @@ public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatServic
     /**
      * 유저 스킬 별 평점 조회
      */
+    @Transactional(readOnly = true)
     @Override
     public UserSkillRatingStatDto getUserSkillRating(Long userSkillId) {
         Optional<UserSkillRatingStat> userSkillRatingStat = userSkillRatingStatRepository.findByUserSkillId(userSkillId);
@@ -55,5 +58,30 @@ public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatServic
         return userSkillRatingStat
                 .map(UserSkillRatingStatDto::from)
                 .orElseGet(() -> UserSkillRatingStatDto.empty(userSkillId));
+    }
+
+    /**
+     * userSkillRatingStat Decrease
+     */
+    @Transactional
+    @Override
+    public void decreaseUserSkillRating(Long userSkillId, int rating) {
+        // 1. userSkillRatingStat 조회 및 감소 처리
+        userSkillRatingStatRepository.findByUserSkillId(userSkillId)
+                .ifPresent(stat -> stat.decreaseRating(rating));
+    }
+
+    /**
+     * userSkillRatingStat change
+     */
+    @Transactional
+    @Override
+    public void changeUserSkillRating(Long userSkillId, int oldRating, int newRating) {
+        // 1. userSkillRatingStat 조회 및 평점 수정 처리
+        userSkillRatingStatRepository.findByUserSkillId(userSkillId)
+                .ifPresent(stat -> {
+                    stat.decreaseRating(oldRating);
+                    stat.updateRating(newRating);
+                });
     }
 }
