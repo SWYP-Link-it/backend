@@ -37,7 +37,7 @@ public class ReviewDto {
         this.rating = rating;
     }
 
-    public ReviewDto ofCreate(Long reviewerId, ReviewRequestDto dto){
+    public static ReviewDto ofCreate(Long reviewerId, ReviewRequestDto dto){
         return ReviewDto.builder()
                 .skillExchangeId(dto.getSkillExchangeId())
                 .revieweeSkillId(dto.getSkillId())
@@ -48,7 +48,7 @@ public class ReviewDto {
                 .build();
     }
 
-    public ReviewDto ofUpdate(Long reviewerId, Long reviewId, ReviewUpdateRequestDto dto){
+    public static ReviewDto ofUpdate(Long reviewerId, Long reviewId, ReviewUpdateRequestDto dto){
         return ReviewDto.builder()
                 .id(reviewId)
                 .reviewerId(reviewerId)
