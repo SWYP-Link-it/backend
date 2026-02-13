@@ -62,7 +62,7 @@ public class Review extends BaseTimeEntity {
     /**
      *  비즈니스 메서드
      */
-    public void update(String newContent, int newRating){
+    public void update(String newContent, Integer newRating){
         this.content = newContent;
         this.rating = newRating;
     }
