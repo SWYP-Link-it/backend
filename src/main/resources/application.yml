@@ -111,3 +111,4 @@ ncp:
     secret-key: ${NCP_SECRET_KEY:dummy}
     bucket-name: ${NCP_BUCKET_NAME:link-it-dummy}
     skill-image-path: skill-images/
+    chat-image-path: chat-images/

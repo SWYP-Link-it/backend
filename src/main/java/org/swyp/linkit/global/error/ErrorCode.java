@@ -135,6 +135,16 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("멘토와 멘티가 동일한 사용자인 경우 발생합니다.")
     CHAT_SAME_USER(HttpStatus.BAD_REQUEST, "CH006", "멘토와 멘티는 서로 다른 사용자여야 합니다."),
 
+    // 채팅 파일 업로드
+    @ExplainError("채팅 파일 크기가 10MB를 초과하는 경우 발생합니다.")
+    CHAT_FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "CF001", "파일 용량은 최대 10MB까지 업로드할 수 있습니다."),
+
+    @ExplainError("지원하지 않는 채팅 파일 형식인 경우 발생합니다.")
+    CHAT_FILE_TYPE_NOT_SUPPORTED(HttpStatus.BAD_REQUEST, "CF002", "지원하지 않는 파일 형식입니다. JPEG, PNG, GIF, WEBP 파일만 업로드할 수 있습니다."),
+
+    @ExplainError("채팅 파일 업로드 중 서버 오류가 발생한 경우입니다.")
+    CHAT_FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CF003", "파일 업로드에 실패했습니다."),
+
     // 크레딧
     @ExplainError("사용자의 크레딧 정보가 존재하지 않는 경우 발생합니다.")
     NOT_FOUND_CREDIT(HttpStatus.NOT_FOUND, "CR001", "크레딧 정보를 찾을 수 없습니다."),
