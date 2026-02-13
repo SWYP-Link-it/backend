@@ -5,19 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.user.entity.User;
-import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.entity.UserSkillImage;
 import org.swyp.linkit.domain.user.entity.UserStatus;
+import org.swyp.linkit.domain.user.entity.UserWithdrawalHistory;
 import org.swyp.linkit.domain.user.repository.UserProfileRepository;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.domain.user.repository.UserWithdrawalHistoryRepository;
 import org.swyp.linkit.global.error.exception.AlreadyWithdrawnException;
 import org.swyp.linkit.global.error.exception.DuplicateNicknameException;
 import org.swyp.linkit.global.error.exception.SameNicknameException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.util.List;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,6 +26,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserProfileRepository userProfileRepository;
     private final UserSkillImageUploadService imageUploadService;
+    private final UserWithdrawalHistoryRepository withdrawalHistoryRepository;
 
     // 사용자 조회
     @Transactional(readOnly = true)
@@ -77,7 +78,14 @@ public class UserService {
         // 3. 프로필 및 모든 스킬 삭제
         deleteProfileAndSkills(userId);
 
-        // 4. 회원 탈퇴 처리
+        // 4. 탈퇴 이력 저장
+        UserWithdrawalHistory withdrawalHistory = UserWithdrawalHistory.create(user);
+        withdrawalHistoryRepository.save(withdrawalHistory);
+
+        log.info("탈퇴 이력 저장: userId={}, oauthProvider={}, oauthId={}",
+                userId, user.getOauthProvider(), user.getOauthId());
+
+        // 5. 회원 탈퇴 처리
         user.withdraw();
 
         log.info("회원 탈퇴 완료: userId={}, nickname={}", userId, user.getNickname());
