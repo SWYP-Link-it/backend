@@ -35,7 +35,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
         // 1. OAuth2 제공자로부터 사용자 정보 가져오기
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
@@ -49,7 +48,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // OAuth2 사용자 정보 처리
     private OAuth2User processOAuth2User(OAuthProvider provider, OAuth2User oAuth2User) {
-
         // 1. OAuth 제공자별 사용자 정보 추출
         OAuth2UserInfo oAuth2UserInfo = getOAuth2UserInfo(provider, oAuth2User.getAttributes());
 
@@ -69,24 +67,25 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 log.info("탈퇴한 사용자의 재가입 시도: userId={}, oauthProvider={}, oauthId={}",
                         user.getId(), provider, oauthId);
 
-                // 신규 회원과 동일하게 PendingUser로 처리
-                PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()
-                        .oauthProvider(provider)
-                        .oauthId(oauthId)
-                        .email(email)
-                        .name(name)
-                        .profileImageUrl(profileImageUrl)
-                        .build();
-
-                String sessionId = pendingUserStorage.savePendingUser(pendingUserInfo.toJson());
-
-                return new PendingOAuth2UserInfo(sessionId, pendingUserInfo, oAuth2User.getAttributes());
+                return createPendingUser(provider, oauthId, email, name, profileImageUrl, oAuth2User);
             }
 
             return CustomOAuth2User.from(user, oAuth2User.getAttributes());
         }
 
-        // 3. 신규 회원은 Redis에 임시 저장
+        return createPendingUser(provider, oauthId, email, name, profileImageUrl, oAuth2User);
+    }
+
+    // 임시 사용자 정보 생성 및 저장
+    private PendingOAuth2UserInfo createPendingUser(
+            OAuthProvider provider,
+            String oauthId,
+            String email,
+            String name,
+            String profileImageUrl,
+            OAuth2User oAuth2User) {
+
+        // 1. 신규 회원은 Redis에 임시 저장
         PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()
                 .oauthProvider(provider)
                 .oauthId(oauthId)
@@ -95,10 +94,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .profileImageUrl(profileImageUrl)
                 .build();
 
-        // 4. Redis에 JSON으로 저장하고 sessionId 받기
+        // 2. Redis에 JSON으로 저장하고 sessionId 받기
         String sessionId = pendingUserStorage.savePendingUser(pendingUserInfo.toJson());
 
-        // 5. PendingOAuth2UserInfo 반환
+        // 3. PendingOAuth2UserInfo 반환
         return new PendingOAuth2UserInfo(sessionId, pendingUserInfo, oAuth2User.getAttributes());
     }
 
