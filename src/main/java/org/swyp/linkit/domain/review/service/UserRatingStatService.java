@@ -21,4 +21,9 @@ public interface UserRatingStatService {
      * userRatingStat Decrease
      */
     void decreaseUserRating(Long userId, int rating);
+
+    /**
+     * userRatingStat change (decrease, increase)
+     */
+    void changeUserRating(Long userId, int oldRating, int newRating);
 }
