@@ -59,7 +59,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.reviewerId " + // 작성자 정보 조회
             "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
-            "WHERE (:skillId IS NULL OR r.revieweeSkillId = :skillId) " +
+            "WHERE r.revieweeSkillId = :skillId " +
             "AND (:cursorId IS NULL OR r.id < :cursorId) " +
             "ORDER BY r.id DESC")
     Slice<ReviewDetailQuery> findAllBySkillId(@Param("skillId") Long skillId,
