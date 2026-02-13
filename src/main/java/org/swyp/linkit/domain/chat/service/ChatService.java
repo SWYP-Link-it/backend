@@ -63,30 +63,32 @@ public class ChatService {
      */
     @Transactional
     public ChatMessage saveMessage(Long roomId, Long senderId, String content) {
+        return saveMessage(roomId, senderId, content, MessageType.TEXT, null);
+    }
+
+    @Transactional
+    public ChatMessage saveMessage(Long roomId, Long senderId, String content,
+                                   MessageType messageType, String fileUrl) {
         ChatRoom room = chatRoomRepository.findByIdWithUsers(roomId)
                 .orElseThrow(() -> new ChatRoomNotFoundException(roomId));
 
-        // 발신자 User 엔티티 조회
         User sender = findUserById(senderId);
 
-        // 발신자 역할 결정
         SenderRole senderRole = room.getMentorId().equals(senderId) ? SenderRole.MENTOR : SenderRole.MENTEE;
 
-        ChatMessage message = ChatMessage.create(room, sender, senderRole, content);
+        ChatMessage message = ChatMessage.create(room, sender, senderRole, content, messageType, fileUrl);
 
         ChatMessage saved = chatMessageRepository.save(message);
 
-        // 채팅방의 마지막 메시지 정보 업데이트
         room.updateLastMessage(saved.getId(), saved.getCreatedAt());
 
-        // 상대방의 읽지 않은 메시지 수 증가
         if (senderRole == SenderRole.MENTOR) {
             room.incrementUnreadMenteeCount();
         } else {
             room.incrementUnreadMentorCount();
         }
 
-        log.info("메시지 저장: roomId={}, senderId={}, messageId={}", roomId, senderId, saved.getId());
+        log.info("메시지 저장: roomId={}, senderId={}, messageId={}, type={}", roomId, senderId, saved.getId(), messageType);
         return saved;
     }
 
@@ -197,6 +199,8 @@ public class ChatService {
                 .senderId(message.getSenderId())
                 .senderRole(message.getSenderRole().name())
                 .text(message.getContent())
+                .messageType(message.getMessageType().name())
+                .imageUrl(message.getFileUrl())
                 .sentAtEpochMs(message.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
                 .system(false)
                 .build();

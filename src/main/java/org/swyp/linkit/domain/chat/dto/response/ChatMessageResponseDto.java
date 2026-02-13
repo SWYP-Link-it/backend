@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.swyp.linkit.domain.chat.dto.ChatMessageDto;
+import org.swyp.linkit.domain.chat.entity.MessageType;
 import org.swyp.linkit.domain.chat.entity.SenderRole;
 
 @Getter
@@ -30,6 +31,12 @@ public class ChatMessageResponseDto {
     @Schema(description = "메시지 내용", example = "안녕하세요!")
     private String content;
 
+    @Schema(description = "메시지 타입 (TEXT, IMAGE)", example = "TEXT")
+    private MessageType messageType;
+
+    @Schema(description = "파일 URL (IMAGE 타입일 때)", example = "https://kr.object.ncloudstorage.com/bucket/chat-images/1/uuid.png")
+    private String fileUrl;
+
     @Schema(description = "메시지 생성 시간 (epoch milliseconds)", example = "1705651200000")
     private Long createdAtEpochMs;
 
@@ -43,6 +50,8 @@ public class ChatMessageResponseDto {
                 .senderId(dto.getSenderId())
                 .senderRole(dto.getSenderRole())
                 .content(dto.getContent())
+                .messageType(dto.getMessageType())
+                .fileUrl(dto.getFileUrl())
                 .createdAtEpochMs(dto.getCreatedAtEpochMs())
                 .isMine(dto.getIsMine())
                 .build();
