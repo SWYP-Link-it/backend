@@ -6,6 +6,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
+import org.swyp.linkit.domain.review.service.UserRatingStatService;
 import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
 import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
@@ -23,7 +25,8 @@ public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
     private final SearchService searchService;
-    private final SearchKeywordStatRepository searchKeywordStatRepository; // 추가
+    private final SearchKeywordStatRepository searchKeywordStatRepository;
+    private final UserRatingStatService userRatingStatService;
 
     // 노출 중인 스킬 카드 조회 (최신순)
     @Transactional
@@ -77,7 +80,7 @@ public class SkillMarketService {
         log.debug("검색어 집계 (장터): keyword='{}', date={}", keyword, LocalDate.now());
     }
 
-    // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체)
+    // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체 + 유저 평점)
     @Transactional
     public SkillDetailDto getSkillDetail(Long skillId) {
         // 1. 메인 스킬 조회 (이미지 포함)
@@ -91,10 +94,13 @@ public class SkillMarketService {
         Long userId = mainSkill.getOwnerId();
         List<UserSkill> allUserSkills = userSkillRepository.findVisibleSkillsWithImagesByUserId(userId);
 
-        log.info("스킬 상세 정보 조회: skillId={}, userId={}, totalSkillsCount={}",
-                skillId, userId, allUserSkills.size());
+        // 4. 유저 평점 조회
+        UserRatingStatDto userRating = userRatingStatService.getUserRating(userId);
 
-        // 4. DTO 변환
-        return SkillDetailDto.from(mainSkill, allUserSkills);
+        log.info("스킬 상세 정보 조회: skillId={}, userId={}, totalSkillsCount={}, avgRating={}",
+                skillId, userId, allUserSkills.size(), userRating.getAvgRating());
+
+        // 5. DTO 변환
+        return SkillDetailDto.from(mainSkill, allUserSkills, userRating);
     }
 }
