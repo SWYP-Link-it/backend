@@ -20,7 +20,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * cursor 기반
      */
     @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
-            "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
+            "(r.id, u.nickname, s.skillName, s.id, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.revieweeId " + // 멘토의 정보 조회
             "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
@@ -37,7 +37,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      *  cursor 기반
      */
     @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
-            "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
+            "(r.id, u.nickname, s.skillName, s.id, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.reviewerId " + // 멘티의 정보 조회
             "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
@@ -55,7 +55,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      *  cursor 기반
      */
     @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
-            "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
+            "(r.id, u.nickname, s.skillName, s.id, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.reviewerId " + // 작성자 정보 조회
             "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
