@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
 import org.swyp.linkit.domain.user.dto.response.AvailableScheduleResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
@@ -62,6 +63,10 @@ public class SkillDetailDto {
     @Schema(description = "세부 위치", example = "강남역 부근")
     private String detailedLocation;
 
+    // 평점 정보
+    @Schema(description = "유저 평점 정보")
+    private UserRatingStatDto userRating;
+
     // 스케줄 정보
     @Schema(description = "교환 가능 시간대 목록")
     private List<AvailableScheduleResponseDto> availableSchedules;
@@ -70,7 +75,8 @@ public class SkillDetailDto {
     @Schema(description = "해당 사용자의 모든 스킬 목록 (등록 오래된 순)")
     private List<SkillSummaryDto> skills;
 
-    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills) {
+    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills,
+                                      UserRatingStatDto userRating) {
         UserProfile profile = userSkill.getUserProfile();
         User user = profile.getUser();
 
@@ -90,6 +96,9 @@ public class SkillDetailDto {
                 .exchangeType(profile.getExchangeType())
                 .preferredRegion(profile.getPreferredRegion())
                 .detailedLocation(profile.getDetailedLocation())
+
+                // 평점 정보
+                .userRating(userRating)
 
                 // 스케줄 정보 (병합된 버전)
                 .availableSchedules(mergeConsecutiveSchedules(user.getAvailableSchedules()))
