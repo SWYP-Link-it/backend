@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +13,7 @@ import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserStatus;
 import org.swyp.linkit.domain.user.repository.UserRepository;
+import org.swyp.linkit.domain.user.repository.UserWithdrawalHistoryRepository;
 import org.swyp.linkit.global.auth.jwt.JwtTokenProvider;
 import org.swyp.linkit.global.auth.jwt.dto.JwtTokenDto;
 import org.swyp.linkit.global.error.exception.DuplicateNicknameException;
@@ -19,6 +21,7 @@ import org.swyp.linkit.global.error.exception.InvalidUserStatusException;
 import org.swyp.linkit.global.error.exception.SessionExpiredException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -27,6 +30,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PendingUserStorage pendingUserStorage;
     private final CreditService creditService;
+    private final UserWithdrawalHistoryRepository withdrawalHistoryRepository;
 
     @Value("${app.default-profile-image}")
     private String defaultProfileImageUrl;
@@ -53,12 +57,19 @@ public class AuthService {
             throw new DuplicateNicknameException();
         }
 
-        // 5. User 엔티티 생성
+        // 5. 탈퇴 이력 확인
+        boolean hasWithdrawnBefore = withdrawalHistoryRepository.existsByOauthProviderAndOauthId(
+                pendingUserInfo.getOauthProvider(),
+                pendingUserInfo.getOauthId()
+        );
+
+        // 6. 프로필 이미지 설정
         String profileImageUrl = pendingUserInfo.getProfileImageUrl();
         if (profileImageUrl == null || profileImageUrl.isBlank()) {
             profileImageUrl = defaultProfileImageUrl;
         }
 
+        // 7. User 엔티티 생성
         User user = User.create(
                 pendingUserInfo.getOauthProvider(),
                 pendingUserInfo.getOauthId(),
@@ -68,17 +79,23 @@ public class AuthService {
                 request.getNickname()
         );
 
-        // 6. DB에 저장
+        // 8. DB에 저장
         User savedUser = userRepository.save(user);
 
-        // 7. 크레딧 생성 및 회원가입 리워드 지급
+        // 9. 크레딧 처리 - 최초 가입자만 크레딧 지급
         creditService.createCredit(savedUser);
-        creditService.rewardCreditOnSignupSetup(savedUser);
 
-        // 8. Redis에서 임시 데이터 삭제
+        if (!hasWithdrawnBefore) {
+            creditService.rewardCreditOnSignupSetup(savedUser);
+            log.info("최초 가입자 - 크레딧 지급: userId={}", savedUser.getId());
+        } else {
+            log.info("재가입 사용자 - 크레딧 지급 건너뜀: userId={}", savedUser.getId());
+        }
+
+        // 10. Redis에서 임시 데이터 삭제
         pendingUserStorage.deletePendingUser(sessionId);
 
-        // 9. 정식 JWT 토큰 발급
+        // 11. 정식 JWT 토큰 발급
         return jwtTokenProvider.generateTokenByUserId(savedUser.getId());
     }
 
