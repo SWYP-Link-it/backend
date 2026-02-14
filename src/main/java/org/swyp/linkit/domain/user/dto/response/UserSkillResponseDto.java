@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.SkillProficiency;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -50,6 +51,9 @@ public class UserSkillResponseDto {
     @Schema(description = "스킬 이미지 URL 목록", example = "[\"https://...\", \"https://...\"]")
     private List<String> imageUrls;
 
+    @Schema(description = "스킬별 평점 정보")
+    private UserSkillRatingStatDto skillRating;
+
     public static UserSkillResponseDto from(UserSkill userSkill) {
         return UserSkillResponseDto.builder()
                 .id(userSkill.getId())
@@ -65,6 +69,25 @@ public class UserSkillResponseDto {
                         .sorted(Comparator.comparing(UserSkillImage::getImageOrder))
                         .map(UserSkillImage::getImageUrl)
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    public static UserSkillResponseDto from(UserSkill userSkill, UserSkillRatingStatDto skillRating) {
+        return UserSkillResponseDto.builder()
+                .id(userSkill.getId())
+                .skillCategoryType(userSkill.getSkillCategory().getCategoryType())
+                .skillCategoryName(userSkill.getSkillCategory().getCategoryName())
+                .skillName(userSkill.getSkillName())
+                .skillTitle(userSkill.getSkillTitle())
+                .skillProficiency(userSkill.getSkillProficiency())
+                .skillDescription(userSkill.getSkillDescription())
+                .exchangeDuration(userSkill.getExchangeDuration())
+                .isVisible(userSkill.getIsVisible())
+                .imageUrls(userSkill.getImages().stream()
+                        .sorted(Comparator.comparing(UserSkillImage::getImageOrder))
+                        .map(UserSkillImage::getImageUrl)
+                        .collect(Collectors.toList()))
+                .skillRating(skillRating)
                 .build();
     }
 }
