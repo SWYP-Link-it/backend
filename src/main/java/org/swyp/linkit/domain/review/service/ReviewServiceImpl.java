@@ -11,6 +11,7 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.entity.Review;
@@ -21,6 +22,11 @@ import org.swyp.linkit.global.error.exception.ReviewAccessDeniedException;
 import org.swyp.linkit.global.error.exception.ReviewAlreadyExistsException;
 import org.swyp.linkit.global.error.exception.ReviewInvalidStatusException;
 import org.swyp.linkit.global.error.exception.ReviewNotFoundException;
+
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -129,8 +135,21 @@ public class ReviewServiceImpl implements ReviewService {
         Slice<ReviewDetailQuery> slice = reviewRepository.
                 findAllByRevieweeId(userId, skillId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        return ReviewDetailsResponseDto.from(slice);
+        // 3. 스킬 ID 목록 추출
+        Set<Long> skillIds = slice.getContent().stream()
+                .map(ReviewDetailQuery::skillId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 4. 스킬별 평점 일괄 조회
+        Map<Long, UserSkillRatingStatDto> skillRatingMap = skillIds.stream()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        userSkillRatingService::getUserSkillRating
+                ));
+
+        // 5. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice, skillRatingMap);
     }
 
     /**
@@ -142,12 +161,25 @@ public class ReviewServiceImpl implements ReviewService {
         // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
 
-        // 2. 받은 리뷰 커서 기반 페이징 조회
+        // 2. 작성한 리뷰 커서 기반 페이징 조회
         Slice<ReviewDetailQuery> slice = reviewRepository.
                 findAllByReviewerId(userId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        return ReviewDetailsResponseDto.from(slice);
+        // 3. 스킬 ID 목록 추출
+        Set<Long> skillIds = slice.getContent().stream()
+                .map(ReviewDetailQuery::skillId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // 4. 스킬별 평점 일괄 조회
+        Map<Long, UserSkillRatingStatDto> skillRatingMap = skillIds.stream()
+                .collect(Collectors.toMap(
+                        id -> id,
+                        userSkillRatingService::getUserSkillRating
+                ));
+
+        // 5. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice, skillRatingMap);
     }
 
     /**
@@ -159,12 +191,18 @@ public class ReviewServiceImpl implements ReviewService {
         // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
 
-        // 2. 받은 리뷰 커서 기반 페이징 조회
+        // 2. 스킬별 리뷰 커서 기반 페이징 조회
         Slice<ReviewDetailQuery> slice = reviewRepository.
                 findAllBySkillId(skillId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        return ReviewDetailsResponseDto.from(slice);
+        // 3. 해당 스킬의 평점 조회 (모든 리뷰가 같은 스킬이므로 한 번만 조회)
+        UserSkillRatingStatDto skillRating = userSkillRatingService.getUserSkillRating(skillId);
+
+        // 4. Map으로 변환 (동일한 스킬 ID로 매핑)
+        Map<Long, UserSkillRatingStatDto> skillRatingMap = Map.of(skillId, skillRating);
+
+        // 5. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice, skillRatingMap);
     }
 
     // == private Methods ==
