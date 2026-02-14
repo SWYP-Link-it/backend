@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.user.dto.response.AvailableScheduleResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
@@ -76,7 +77,7 @@ public class SkillDetailDto {
     private List<SkillSummaryDto> skills;
 
     public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills,
-                                      UserRatingStatDto userRating) {
+                                      UserRatingStatDto userRating, UserSkillRatingStatDto mainSkillRating) {
         UserProfile profile = userSkill.getUserProfile();
         User user = profile.getUser();
 
@@ -86,8 +87,8 @@ public class SkillDetailDto {
                 .profileImageUrl(user.getProfileImageUrl())
                 .nickname(user.getNickname())
 
-                // 메인 스킬 정보
-                .mainSkill(UserSkillResponseDto.from(userSkill))
+                // 메인 스킬 정보 (스킬별 평점 포함)
+                .mainSkill(UserSkillResponseDto.from(userSkill, mainSkillRating))
 
                 // 프로필 정보
                 .profileId(profile.getId())
