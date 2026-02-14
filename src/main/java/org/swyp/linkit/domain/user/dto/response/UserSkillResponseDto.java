@@ -54,25 +54,18 @@ public class UserSkillResponseDto {
     @Schema(description = "스킬별 평점 정보")
     private UserSkillRatingStatDto skillRating;
 
+    // 평점 정보 없이 생성
     public static UserSkillResponseDto from(UserSkill userSkill) {
-        return UserSkillResponseDto.builder()
-                .id(userSkill.getId())
-                .skillCategoryType(userSkill.getSkillCategory().getCategoryType())
-                .skillCategoryName(userSkill.getSkillCategory().getCategoryName())
-                .skillName(userSkill.getSkillName())
-                .skillTitle(userSkill.getSkillTitle())
-                .skillProficiency(userSkill.getSkillProficiency())
-                .skillDescription(userSkill.getSkillDescription())
-                .exchangeDuration(userSkill.getExchangeDuration())
-                .isVisible(userSkill.getIsVisible())
-                .imageUrls(userSkill.getImages().stream()
-                        .sorted(Comparator.comparing(UserSkillImage::getImageOrder))
-                        .map(UserSkillImage::getImageUrl)
-                        .collect(Collectors.toList()))
-                .build();
+        return buildDto(userSkill, null);
     }
 
+    // 평점 정보를 포함하여 생성
     public static UserSkillResponseDto from(UserSkill userSkill, UserSkillRatingStatDto skillRating) {
+        return buildDto(userSkill, skillRating);
+    }
+
+    // 공통 DTO 생성 로직
+    private static UserSkillResponseDto buildDto(UserSkill userSkill, UserSkillRatingStatDto skillRating) {
         return UserSkillResponseDto.builder()
                 .id(userSkill.getId())
                 .skillCategoryType(userSkill.getSkillCategory().getCategoryType())
