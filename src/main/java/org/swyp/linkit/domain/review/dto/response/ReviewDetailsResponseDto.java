@@ -5,9 +5,11 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.domain.Slice;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -23,9 +25,13 @@ public class ReviewDetailsResponseDto {
     @Schema(description = "리뷰 상세 목록")
     private List<ReviewDetailResponseDto> contents;
 
-    public static ReviewDetailsResponseDto from(Slice<ReviewDetailQuery> slice){
+    public static ReviewDetailsResponseDto from(Slice<ReviewDetailQuery> slice,
+                                                Map<Long, UserSkillRatingStatDto> skillRatingMap){
         List<ReviewDetailResponseDto> contents = slice.stream()
-                .map(ReviewDetailResponseDto::from)
+                .map(query -> ReviewDetailResponseDto.from(
+                        query,
+                        skillRatingMap.getOrDefault(query.skillId(), UserSkillRatingStatDto.empty(query.skillId()))
+                ))
                 .toList();
         return new ReviewDetailsResponseDto(
                 slice.hasNext(),
