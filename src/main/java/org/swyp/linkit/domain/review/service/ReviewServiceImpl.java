@@ -142,11 +142,8 @@ public class ReviewServiceImpl implements ReviewService {
                 .collect(Collectors.toSet());
 
         // 4. 스킬별 평점 일괄 조회
-        Map<Long, UserSkillRatingStatDto> skillRatingMap = skillIds.stream()
-                .collect(Collectors.toMap(
-                        id -> id,
-                        userSkillRatingService::getUserSkillRating
-                ));
+        Map<Long, UserSkillRatingStatDto> skillRatingMap =
+                userSkillRatingService.getUserSkillRatings(skillIds);
 
         // 5. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice, skillRatingMap);
@@ -172,11 +169,8 @@ public class ReviewServiceImpl implements ReviewService {
                 .collect(Collectors.toSet());
 
         // 4. 스킬별 평점 일괄 조회
-        Map<Long, UserSkillRatingStatDto> skillRatingMap = skillIds.stream()
-                .collect(Collectors.toMap(
-                        id -> id,
-                        userSkillRatingService::getUserSkillRating
-                ));
+        Map<Long, UserSkillRatingStatDto> skillRatingMap =
+                userSkillRatingService.getUserSkillRatings(skillIds);
 
         // 5. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice, skillRatingMap);
@@ -198,7 +192,7 @@ public class ReviewServiceImpl implements ReviewService {
         // 3. 해당 스킬의 평점 조회 (모든 리뷰가 같은 스킬이므로 한 번만 조회)
         UserSkillRatingStatDto skillRating = userSkillRatingService.getUserSkillRating(skillId);
 
-        // 4. Map으로 변환 (동일한 스킬 ID로 매핑)
+        // 4. Map으로 변환
         Map<Long, UserSkillRatingStatDto> skillRatingMap = Map.of(skillId, skillRating);
 
         // 5. 응답 Dto 변환

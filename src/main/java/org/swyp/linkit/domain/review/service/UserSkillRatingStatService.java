@@ -2,6 +2,9 @@ package org.swyp.linkit.domain.review.service;
 
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 
+import java.util.Map;
+import java.util.Set;
+
 public interface UserSkillRatingStatService {
 
     /**
@@ -27,4 +30,9 @@ public interface UserSkillRatingStatService {
      * userSkillRatingStat change
      */
     void changeUserSkillRating(Long userSkillId, int oldRating, int newRating);
+
+    /**
+     * 여러 스킬의 평점을 한 번에 조회
+     */
+    Map<Long, UserSkillRatingStatDto> getUserSkillRatings(Set<Long> userSkillIds);
 }
