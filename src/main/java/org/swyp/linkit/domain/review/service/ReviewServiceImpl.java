@@ -1,6 +1,8 @@
 package org.swyp.linkit.domain.review.service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -184,21 +186,33 @@ public class ReviewServiceImpl implements ReviewService {
         return ReviewDetailsResponseDto.from(slice);
     }
 
-    /**
-     * 유저가 받은 리뷰의 스킬 목록 및 스킬별 평점 조회
-     */
     @Transactional(readOnly = true)
     @Override
     public ReceivedReviewSkillsResponseDto getReceivedReviewSkills(Long userId) {
         // 1. 해당 유저가 받은 리뷰가 있는 스킬 목록 조회
         List<ReceivedReviewSkillQuery> skillQueries = reviewRepository.findReceivedReviewSkillsByUserId(userId);
         
-        // 2. 각 스킬의 평점 정보 조회 및 DTO 변환
+        if (skillQueries.isEmpty()) {
+            return ReceivedReviewSkillsResponseDto.from(Collections.emptyList());
+        }
+
+        // 2. 스킬 ID 목록 추출
+        List<Long> skillIds = skillQueries.stream()
+                .map(ReceivedReviewSkillQuery::skillId)
+                .toList();
+
+        // 3. 모든 스킬의 평점을 한 번에 조회
+        Map<Long, UserSkillRatingStatDto> ratingsMap = 
+                userSkillRatingService.getRatingsForSkills(skillIds);
+
+        // 4. DTO 변환
         List<ReceivedReviewSkillDto> skills = skillQueries.stream()
                 .map(query -> {
-                    // 스킬별 평점 조회
-                    UserSkillRatingStatDto ratingDto = userSkillRatingService.getUserSkillRating(query.skillId());
-                    
+                    UserSkillRatingStatDto ratingDto = ratingsMap.getOrDefault(
+                            query.skillId(),
+                            UserSkillRatingStatDto.empty(query.skillId())
+                    );
+
                     return ReceivedReviewSkillDto.of(
                             query.skillId(),
                             query.skillName(),
@@ -207,8 +221,8 @@ public class ReviewServiceImpl implements ReviewService {
                     );
                 })
                 .toList();
-        
-        // 3. 응답 DTO 변환
+
+        // 5. 응답 DTO 변환
         return ReceivedReviewSkillsResponseDto.from(skills);
     }
 

@@ -1,5 +1,8 @@
 package org.swyp.linkit.domain.review.service;
 
+import java.util.List;
+import java.util.Map;
+
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 
 public interface UserSkillRatingStatService {
@@ -17,6 +20,11 @@ public interface UserSkillRatingStatService {
      *  1 ~ 5 점의 비율은 정수형으로 처리됩니다.
      */
     UserSkillRatingStatDto getUserSkillRating(Long userSkillId);
+
+    /**
+     *  여러 스킬의 평점을 일괄 조회
+     */
+    Map<Long, UserSkillRatingStatDto> getRatingsForSkills(List<Long> skillIds);
 
     /**
      * userSkillRatingStat Decrease

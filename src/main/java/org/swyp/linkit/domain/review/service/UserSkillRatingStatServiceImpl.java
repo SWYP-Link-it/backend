@@ -1,7 +1,11 @@
 package org.swyp.linkit.domain.review.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +13,8 @@ import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.UserSkillRatingStatRepository;
 
-import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -58,6 +63,34 @@ public class UserSkillRatingStatServiceImpl implements UserSkillRatingStatServic
         return userSkillRatingStat
                 .map(UserSkillRatingStatDto::from)
                 .orElseGet(() -> UserSkillRatingStatDto.empty(userSkillId));
+    }
+
+    /**
+     * 여러 스킬의 평점을 일괄 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public Map<Long, UserSkillRatingStatDto> getRatingsForSkills(List<Long> skillIds) {
+        if (skillIds == null || skillIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // 한 번의 쿼리로 모든 평점 조회
+        List<UserSkillRatingStat> stats = userSkillRatingStatRepository.findByUserSkillIdIn(skillIds);
+
+        // Map으로 변환
+        Map<Long, UserSkillRatingStatDto> resultMap = stats.stream()
+                .collect(Collectors.toMap(
+                        UserSkillRatingStat::getUserSkillId,
+                        UserSkillRatingStatDto::from
+                ));
+
+        // 평점이 없는 스킬 ID는 빈 DTO로 채우기
+        skillIds.forEach(skillId -> {
+            resultMap.putIfAbsent(skillId, UserSkillRatingStatDto.empty(skillId));
+        });
+
+        return resultMap;
     }
 
     /**
