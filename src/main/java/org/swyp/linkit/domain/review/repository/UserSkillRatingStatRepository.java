@@ -10,6 +10,4 @@ public interface UserSkillRatingStatRepository extends JpaRepository<UserSkillRa
 
     Optional<UserSkillRatingStat> findByUserSkillId(Long userSkillId);
 
-    // 여러 스킬 ID로 일괄 조회
-    List<UserSkillRatingStat> findByUserSkillIdIn(List<Long> userSkillIds);
 }

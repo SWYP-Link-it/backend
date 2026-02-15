@@ -74,11 +74,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      *  유저가 받은 리뷰의 스킬 목록 조회
      */
     @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReceivedReviewSkillQuery(" +
-            "s.id, s.skillName, s.userSkillRatingStat.id) " +
+            "s.id, s.skillName) " +
             "FROM Review r " +
             "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
             "WHERE r.revieweeId = :userId " +
-            "GROUP BY s.id, s.skillName, s.userSkillRatingStat.id " +
+            "GROUP BY s.id, s.skillName" +
             "ORDER BY s.id ASC")
     List<ReceivedReviewSkillQuery> findReceivedReviewSkillsByUserId(@Param("userId") Long userId);
 }

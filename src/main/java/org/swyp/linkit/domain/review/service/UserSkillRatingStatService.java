@@ -22,11 +22,6 @@ public interface UserSkillRatingStatService {
     UserSkillRatingStatDto getUserSkillRating(Long userSkillId);
 
     /**
-     *  여러 스킬의 평점을 일괄 조회
-     */
-    Map<Long, UserSkillRatingStatDto> getRatingsForSkills(List<Long> skillIds);
-
-    /**
      * userSkillRatingStat Decrease
      */
     void decreaseUserSkillRating(Long userSkillId, int rating);
