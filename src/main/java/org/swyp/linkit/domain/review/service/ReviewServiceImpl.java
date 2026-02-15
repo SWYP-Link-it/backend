@@ -1,7 +1,5 @@
 package org.swyp.linkit.domain.review.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -21,6 +19,9 @@ import org.swyp.linkit.global.error.exception.ReviewAccessDeniedException;
 import org.swyp.linkit.global.error.exception.ReviewAlreadyExistsException;
 import org.swyp.linkit.global.error.exception.ReviewInvalidStatusException;
 import org.swyp.linkit.global.error.exception.ReviewNotFoundException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -129,8 +130,18 @@ public class ReviewServiceImpl implements ReviewService {
         Slice<ReviewDetailQuery> slice = reviewRepository.
                 findAllByRevieweeId(userId, skillId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        return ReviewDetailsResponseDto.from(slice);
+        // 3. 평균 평점 조회
+        Double avgRating;
+        if (skillId == null) {
+            // 전체 탭: 사용자 전체 평균 평점
+            avgRating = userRatingService.getUserRating(userId).getAvgRating();
+        } else {
+            // 스킬 탭: 해당 스킬의 평균 평점
+            avgRating = userSkillRatingService.getUserSkillRating(skillId).getAvgRating();
+        }
+
+        // 4. 응답 Dto 변환
+        return ReviewDetailsResponseDto.from(slice, avgRating);
     }
 
     /**
