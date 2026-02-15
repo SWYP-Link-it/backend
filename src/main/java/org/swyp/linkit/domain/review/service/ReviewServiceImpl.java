@@ -1,5 +1,7 @@
 package org.swyp.linkit.domain.review.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -9,10 +11,14 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
+import org.swyp.linkit.domain.review.dto.response.ReceivedReviewSkillDto;
+import org.swyp.linkit.domain.review.dto.response.ReceivedReviewSkillsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.entity.Review;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
+import org.swyp.linkit.domain.review.service.projection.ReceivedReviewSkillQuery;
 import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.global.error.exception.ReviewAccessDeniedException;
@@ -176,6 +182,34 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 3. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice);
+    }
+
+    /**
+     * 유저가 받은 리뷰의 스킬 목록 및 스킬별 평점 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReceivedReviewSkillsResponseDto getReceivedReviewSkills(Long userId) {
+        // 1. 해당 유저가 받은 리뷰가 있는 스킬 목록 조회
+        List<ReceivedReviewSkillQuery> skillQueries = reviewRepository.findReceivedReviewSkillsByUserId(userId);
+        
+        // 2. 각 스킬의 평점 정보 조회 및 DTO 변환
+        List<ReceivedReviewSkillDto> skills = skillQueries.stream()
+                .map(query -> {
+                    // 스킬별 평점 조회
+                    UserSkillRatingStatDto ratingDto = userSkillRatingService.getUserSkillRating(query.skillId());
+                    
+                    return ReceivedReviewSkillDto.of(
+                            query.skillId(),
+                            query.skillName(),
+                            ratingDto.getAvgRating(),
+                            ratingDto.getRatingCount()
+                    );
+                })
+                .toList();
+        
+        // 3. 응답 DTO 변환
+        return ReceivedReviewSkillsResponseDto.from(skills);
     }
 
     // == private Methods ==

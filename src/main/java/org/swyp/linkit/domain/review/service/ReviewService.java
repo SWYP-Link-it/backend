@@ -1,6 +1,7 @@
 package org.swyp.linkit.domain.review.service;
 
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.response.ReceivedReviewSkillsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 
@@ -36,5 +37,10 @@ public interface ReviewService {
      * 스킬별 리뷰 페이징 조회
      */
     ReviewDetailsResponseDto getSkillReviews(Long skillId, Long cursorId, int size);
+
+    /**
+     * 유저가 받은 리뷰의 스킬 목록 및 스킬별 평점 조회
+     */
+    ReceivedReviewSkillsResponseDto getReceivedReviewSkills(Long userId);
 
 }

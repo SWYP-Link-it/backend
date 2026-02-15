@@ -1,8 +1,9 @@
 package org.swyp.linkit.domain.review.dto;
 
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 
 @Getter
 @AllArgsConstructor
@@ -12,6 +13,7 @@ public class UserSkillRatingStatDto {
     // UserSkillRatingStat Entity가 존재하지 않을 시 null
     private Long userSkillRatingStatId;
     private double avgRating;
+    private int ratingCount;
 
     // 각 평점 퍼센티지 (정수형)
     private int star1Percentage;
@@ -30,6 +32,7 @@ public class UserSkillRatingStatDto {
                 entity.getUserSkillId(),
                 entity.getId(),
                 truncatedAvg,
+                entity.getRatingCount(),
                 (int) Math.round(entity.calculateStarPercentage(entity.getStar1Count())),
                 (int) Math.round(entity.calculateStarPercentage(entity.getStar2Count())),
                 (int) Math.round(entity.calculateStarPercentage(entity.getStar3Count())),
@@ -44,10 +47,7 @@ public class UserSkillRatingStatDto {
                 null,
                 0.0,
                 0,
-                0,
-                0,
-                0,
-                0
+                0, 0, 0, 0, 0
         );
     }
 }

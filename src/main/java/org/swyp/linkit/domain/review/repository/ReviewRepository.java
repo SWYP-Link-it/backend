@@ -1,11 +1,14 @@
 package org.swyp.linkit.domain.review.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.review.entity.Review;
+import org.swyp.linkit.domain.review.service.projection.ReceivedReviewSkillQuery;
 import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -65,4 +68,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Slice<ReviewDetailQuery> findAllBySkillId(@Param("skillId") Long skillId,
                                               @Param("cursorId") Long cursorId,
                                               Pageable pageable);
+        
+
+    /**
+     *  유저가 받은 리뷰의 스킬 목록 조회
+     */
+    @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReceivedReviewSkillQuery(" +
+            "s.id, s.skillName, s.userSkillRatingStat.id) " +
+            "FROM Review r " +
+            "LEFT JOIN UserSkill s ON r.revieweeSkillId = s.id " +
+            "WHERE r.revieweeId = :userId " +
+            "GROUP BY s.id, s.skillName, s.userSkillRatingStat.id " +
+            "ORDER BY s.id ASC")
+    List<ReceivedReviewSkillQuery> findReceivedReviewSkillsByUserId(@Param("userId") Long userId);
 }
