@@ -1,18 +1,20 @@
 package org.swyp.linkit.domain.user.dto.response;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.swyp.linkit.domain.review.dto.response.UserSkillRatingResponseDto;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.SkillProficiency;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.entity.UserSkillImage;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -50,6 +52,9 @@ public class UserSkillResponseDto {
     @Schema(description = "스킬 이미지 URL 목록", example = "[\"https://...\", \"https://...\"]")
     private List<String> imageUrls;
 
+    @Schema(description = "스킬별 평점 정보")
+    private UserSkillRatingResponseDto skillRating;
+
     public static UserSkillResponseDto from(UserSkill userSkill) {
         return UserSkillResponseDto.builder()
                 .id(userSkill.getId())
@@ -65,6 +70,7 @@ public class UserSkillResponseDto {
                         .sorted(Comparator.comparing(UserSkillImage::getImageOrder))
                         .map(UserSkillImage::getImageUrl)
                         .collect(Collectors.toList()))
+                .skillRating(UserSkillRatingResponseDto.from(userSkill.getUserSkillRatingStat()))
                 .build();
     }
 }
