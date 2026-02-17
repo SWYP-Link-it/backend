@@ -23,7 +23,6 @@ public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
     private final SearchService searchService;
-    private final SearchKeywordStatRepository searchKeywordStatRepository; // 추가
 
     // 노출 중인 스킬 카드 조회 (최신순)
     @Transactional
@@ -69,12 +68,6 @@ public class SkillMarketService {
         return skills.stream()
                 .map(SkillCardResponseDto::from)
                 .toList();
-    }
-
-    // 검색어 집계 (일별 카운트 증가)
-    private void recordSearchKeyword(String keyword) {
-        searchKeywordStatRepository.upsertIncrement(LocalDate.now(), keyword);
-        log.debug("검색어 집계 (장터): keyword='{}', date={}", keyword, LocalDate.now());
     }
 
     // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체)
