@@ -1,26 +1,28 @@
 package org.swyp.linkit.domain.search.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
-import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
-import org.swyp.linkit.domain.search.dto.response.PopularSkillDto;
-import org.swyp.linkit.domain.search.repository.SkillViewStatRepository;
-import org.swyp.linkit.domain.search.repository.projection.PopularKeywordView;
-import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
-import org.swyp.linkit.domain.search.repository.projection.PopularSkillView;
-import org.swyp.linkit.domain.user.entity.UserSkill;
-import org.swyp.linkit.domain.user.repository.UserSkillRepository;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
+import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
+import org.swyp.linkit.domain.search.dto.response.PopularSkillDto;
+import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
+import org.swyp.linkit.domain.search.repository.SkillViewStatRepository;
+import org.swyp.linkit.domain.search.repository.projection.PopularKeywordView;
+import org.swyp.linkit.domain.search.repository.projection.PopularSkillView;
+import org.swyp.linkit.domain.user.entity.UserSkill;
+import org.swyp.linkit.domain.user.repository.UserSkillRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -54,7 +56,8 @@ public class SearchService {
     }
 
     // 검색어 집계 (일별 카운트 증가)
-    private void recordSearchKeyword(String keyword) {
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void recordSearchKeyword(String keyword) {
         searchKeywordStatRepository.upsertIncrement(LocalDate.now(), keyword);
         log.debug("검색어 집계: keyword='{}', date={}", keyword, LocalDate.now());
     }
