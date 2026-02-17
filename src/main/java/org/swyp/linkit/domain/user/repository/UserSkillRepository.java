@@ -3,10 +3,13 @@ package org.swyp.linkit.domain.user.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
 import jakarta.persistence.LockModeType;
@@ -40,6 +43,30 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH up.user u " +
             "WHERE us.id = :id")
     Optional<UserSkill> findByIdWithProfileAndUserAndLock(@Param("id") Long id);
+
+		/**
+		 * 스킬 장터 목록 커서 기반 페이징 조회
+		 * - isVisible = true 인 스킬만 조회
+		 * - categoryType : null 이면 전체 카테고리 조회, 값이 있으면 해당 카테고리만 조회
+		 * - keyword : null 이면 전체 조회, 값이 있으면 skillName 또는 skillTitle 부분 일치 검색
+		 * - cursorId : null 이면 최신 데이터부터 조회 (첫 페이지), 값이 있으면 해당 id 미만 조회
+		 * - UserProfile, User, SkillCategory Fetch Join
+		 */
+		@Query("SELECT us FROM UserSkill us " +
+						"JOIN FETCH us.userProfile up " +
+						"JOIN FETCH up.user u " +
+						"JOIN FETCH us.skillCategory sc " +
+						"WHERE us.isVisible = true " +
+						"AND (:categoryType IS NULL OR sc.categoryType = :categoryType) " +
+						"AND (:keyword IS NULL OR LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+						"     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+						"AND (:cursorId IS NULL OR us.id < :cursorId) " +
+						"ORDER BY us.id DESC")
+		Slice<UserSkill> findVisibleSkillsWithCursor(
+						@Param("categoryType") SkillCategoryType categoryType,
+						@Param("keyword") String keyword,
+						@Param("cursorId") Long cursorId,
+						Pageable pageable);
 
     // 특정 사용자의 노출 중인 스킬 목록 조회 (교환 요청용)
     @Query("SELECT us FROM UserSkill us " +
