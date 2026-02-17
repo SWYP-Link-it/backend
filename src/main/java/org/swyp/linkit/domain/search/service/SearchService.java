@@ -85,13 +85,6 @@ public class SearchService {
         return popularKeywords;
     }
 
-    // 스킬 조회수 기록 (일별 집계)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordSkillView(Long skillId) {
-        skillViewStatRepository.upsertIncrement(LocalDate.now(), skillId);
-        log.debug("스킬 조회수 집계: skillId={}, date={}", skillId, LocalDate.now());
-    }
-
     // 최근 일주일 인기 스킬 Top 5
     @Transactional(readOnly = true)
     public List<PopularSkillDto> getPopularSkills() {

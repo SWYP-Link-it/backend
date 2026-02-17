@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
 import org.swyp.linkit.domain.search.service.SearchKeywordRecorder;
-import org.swyp.linkit.domain.search.service.SearchService;
+import org.swyp.linkit.domain.search.service.SkillViewRecorder;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
@@ -25,8 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
-		private final SearchService searchService;
     private final SearchKeywordRecorder searchKeywordRecorder;
+		private final SkillViewRecorder skillViewRecorder;
 
 		/**
 		 * 스킬 장터 목록 커서 기반 페이징 조회
@@ -68,8 +68,8 @@ public class SkillMarketService {
         UserSkill mainSkill = userSkillRepository.findVisibleSkillDetailById(skillId)
                 .orElseThrow(() -> new UserSkillNotFoundException("해당 스킬을 찾을 수 없거나 현재 노출 중이 아닙니다."));
 
-        // 2. 조회수 집계
-        searchService.recordSkillView(skillId);
+        // 2. 조회수 집계 (별도 트랜잭션)
+        skillViewRecorder.record(skillId);
 
         // 3. 해당 사용자의 모든 스킬 조회 (이미지 포함)
         Long userId = mainSkill.getOwnerId();
