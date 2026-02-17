@@ -1,20 +1,19 @@
 package org.swyp.linkit.domain.market.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
-import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
 import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 import org.swyp.linkit.global.error.exception.UserSkillNotFoundException;
 
-import java.time.LocalDate;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -71,7 +70,7 @@ public class SkillMarketService {
     }
 
     // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체)
-    @Transactional
+    @Transactional(readOnly = true)
     public SkillDetailDto getSkillDetail(Long skillId) {
         // 1. 메인 스킬 조회 (이미지 포함)
         UserSkill mainSkill = userSkillRepository.findVisibleSkillDetailById(skillId)

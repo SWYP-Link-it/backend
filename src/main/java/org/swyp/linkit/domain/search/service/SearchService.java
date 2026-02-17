@@ -92,7 +92,7 @@ public class SearchService {
     }
 
     // 스킬 조회수 기록 (일별 집계)
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void recordSkillView(Long skillId) {
         skillViewStatRepository.upsertIncrement(LocalDate.now(), skillId);
         log.debug("스킬 조회수 집계: skillId={}, date={}", skillId, LocalDate.now());
