@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
 import org.swyp.linkit.domain.search.dto.response.PopularSkillDto;
+import org.swyp.linkit.domain.search.service.SearchRankingService;
 import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
@@ -29,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SearchController {
 
     private final SearchService searchService;
+		private final SearchRankingService searchRankingService;
 
 		@Operation(
 						summary = "스킬 검색",
@@ -69,7 +71,7 @@ public class SearchController {
 
         log.info("[Search] GET /search/keywords/popular");
 
-        List<PopularKeywordDto> popularKeywords = searchService.getPopularKeywords();
+        List<PopularKeywordDto> popularKeywords = searchRankingService.getPopularKeywords();
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("인기 검색어 Top 5를 조회했습니다.", popularKeywords)
@@ -85,7 +87,7 @@ public class SearchController {
 
         log.info("[Search] GET /search/skills/popular");
 
-        List<PopularSkillDto> popularSkills = searchService.getPopularSkills();
+        List<PopularSkillDto> popularSkills = searchRankingService.getPopularSkills();
 
         return ResponseEntity.ok(
                 ApiResponseDto.success("인기 스킬 Top 5를 조회했습니다.", popularSkills)
