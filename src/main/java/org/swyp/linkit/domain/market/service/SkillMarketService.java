@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
+import org.swyp.linkit.domain.search.service.SearchKeywordRecorder;
 import org.swyp.linkit.domain.search.service.SearchService;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
@@ -24,7 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
-    private final SearchService searchService;
+		private final SearchService searchService;
+    private final SearchKeywordRecorder searchKeywordRecorder;
 
 		/**
 		 * 스킬 장터 목록 커서 기반 페이징 조회
@@ -43,7 +45,7 @@ public class SkillMarketService {
 
 				// 2. 검색어 집계 (keyword 가 있을 때만, 별도 트랜잭션)
 				if (trimmedKeyword != null) {
-						searchService.recordSearchKeyword(trimmedKeyword);
+						searchKeywordRecorder.record(trimmedKeyword);
 				}
 
 				// 3. 커서 기반 페이징 조회

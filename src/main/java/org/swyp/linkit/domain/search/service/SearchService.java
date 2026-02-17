@@ -34,6 +34,7 @@ public class SearchService {
     private final UserSkillRepository userSkillRepository;
     private final SearchKeywordStatRepository searchKeywordStatRepository;
     private final SkillViewStatRepository skillViewStatRepository;
+		private final SearchKeywordRecorder searchKeywordRecorder;
 
     /**
      * 스킬명으로 노출 중인 스킬 커서 기반 페이징 검색
@@ -52,7 +53,7 @@ public class SearchService {
         String trimmedKeyword = keyword.trim();
 
         // 검색어 집계 (별도 트랜잭션)
-        recordSearchKeyword(trimmedKeyword);
+        searchKeywordRecorder.record(trimmedKeyword);
 
         // 커서 기반 페이징 검색
         Pageable pageable = PageRequest.of(0, size);
@@ -64,13 +65,6 @@ public class SearchService {
                 slice.getNumberOfElements(), slice.hasNext());
 
         return SkillCardPageResponseDto.of(slice);
-    }
-
-    // 검색어 집계 (일별 카운트 증가)
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void recordSearchKeyword(String keyword) {
-        searchKeywordStatRepository.upsertIncrement(LocalDate.now(), keyword);
-        log.debug("검색어 집계: keyword='{}', date={}", keyword, LocalDate.now());
     }
 
     // 최근 일주일 인기 검색어 Top 5
