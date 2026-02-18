@@ -1,6 +1,10 @@
 package org.swyp.linkit.domain.user.repository;
 
-import jakarta.persistence.LockModeType;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -8,8 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
-import java.util.List;
-import java.util.Optional;
+import jakarta.persistence.LockModeType;
 
 public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
 
@@ -41,7 +44,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "WHERE us.id = :id")
     Optional<UserSkill> findByIdWithProfileAndUserAndLock(@Param("id") Long id);
 
-    // 노출 중인 스킬 목록 조회 (최신순)
+		// 노출 중인 스킬 목록 조회 (최신순)
     @Query("SELECT us FROM UserSkill us " +
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
@@ -59,6 +62,56 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "AND sc.categoryType = :categoryType " +
             "ORDER BY us.createdAt DESC")
     List<UserSkill> findVisibleSkillsByCategory(@Param("categoryType") SkillCategoryType categoryType);
+
+		// 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory " +
+            "WHERE us.isVisible = true " +
+            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> searchVisibleSkillsByName(@Param("keyword") String keyword);
+
+		// 카테고리 + 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory sc " +
+            "WHERE us.isVisible = true " +
+            "AND sc.categoryType = :categoryType " +
+            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> findVisibleSkillsByCategoryAndKeyword(
+            @Param("categoryType") SkillCategoryType categoryType,
+            @Param("keyword") String keyword
+    );
+
+		/**
+		 * 스킬 장터 목록 커서 기반 페이징 조회
+		 * - isVisible = true 인 스킬만 조회
+		 * - categoryType : null 이면 전체 카테고리 조회, 값이 있으면 해당 카테고리만 조회
+		 * - keyword : null 이면 전체 조회, 값이 있으면 skillName 또는 skillTitle 부분 일치 검색
+		 * - cursorId : null 이면 최신 데이터부터 조회 (첫 페이지), 값이 있으면 해당 id 미만 조회
+		 * - UserProfile, User, SkillCategory Fetch Join
+		 */
+		@Query("SELECT us FROM UserSkill us " +
+						"JOIN FETCH us.userProfile up " +
+						"JOIN FETCH up.user u " +
+						"JOIN FETCH us.skillCategory sc " +
+						"WHERE us.isVisible = true " +
+						"AND (:categoryType IS NULL OR sc.categoryType = :categoryType) " +
+						"AND (:keyword IS NULL OR LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+						"     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+						"AND (:cursorId IS NULL OR us.id < :cursorId) " +
+						"ORDER BY us.id DESC")
+		Slice<UserSkill> findVisibleSkillsWithCursor(
+						@Param("categoryType") SkillCategoryType categoryType,
+						@Param("keyword") String keyword,
+						@Param("cursorId") Long cursorId,
+						Pageable pageable);
 
     // 특정 사용자의 노출 중인 스킬 목록 조회 (교환 요청용)
     @Query("SELECT us FROM UserSkill us " +
@@ -87,29 +140,4 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "ORDER BY us.createdAt ASC")
     List<UserSkill> findVisibleSkillsWithImagesByUserId(@Param("userId") Long userId);
 
-    // 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
-    @Query("SELECT us FROM UserSkill us " +
-            "JOIN FETCH us.userProfile up " +
-            "JOIN FETCH up.user u " +
-            "JOIN FETCH us.skillCategory " +
-            "WHERE us.isVisible = true " +
-            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "ORDER BY us.createdAt DESC")
-    List<UserSkill> searchVisibleSkillsByName(@Param("keyword") String keyword);
-
-    // 카테고리 + 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
-    @Query("SELECT us FROM UserSkill us " +
-            "JOIN FETCH us.userProfile up " +
-            "JOIN FETCH up.user u " +
-            "JOIN FETCH us.skillCategory sc " +
-            "WHERE us.isVisible = true " +
-            "AND sc.categoryType = :categoryType " +
-            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "ORDER BY us.createdAt DESC")
-    List<UserSkill> findVisibleSkillsByCategoryAndKeyword(
-            @Param("categoryType") SkillCategoryType categoryType,
-            @Param("keyword") String keyword
-    );
 }
