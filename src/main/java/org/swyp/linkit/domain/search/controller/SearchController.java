@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
+import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.search.dto.response.PopularKeywordDto;
 import org.swyp.linkit.domain.search.dto.response.PopularSkillDto;
 import org.swyp.linkit.domain.search.service.SearchRankingService;
@@ -33,12 +34,30 @@ public class SearchController {
 		private final SearchRankingService searchRankingService;
 
 		@Operation(
+            summary = "스킬 검색",
+            description = "스킬명으로 노출 중인 스킬을 검색합니다. 검색 키워드와 완전히 일치하는 스킬만 반환됩니다."
+    )
+    @GetMapping(value = "/skills", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<List<SkillCardResponseDto>>> searchSkills(
+            @Parameter(description = "검색 키워드 (완전 일치)", required = true, example = "React")
+            @RequestParam String keyword) {
+
+        log.info("[Search] GET /search/skills : keyword={}", keyword);
+
+        List<SkillCardResponseDto> skills = searchService.searchSkills(keyword);
+
+        return ResponseEntity.ok(
+                ApiResponseDto.success("스킬 검색 결과를 조회했습니다.", skills)
+        );
+    }
+
+		@Operation(
 						summary = "스킬 검색",
 						description = "스킬명으로 노출 중인 스킬을 검색합니다. " +
 										"첫 요청은 cursorId 없이, 이후 요청은 응답의 nextCursorId 를 cursorId 로 전달해주세요."
 		)
-		@GetMapping(value = "/skills", produces = MediaType.APPLICATION_JSON_VALUE)
-		public ResponseEntity<ApiResponseDto<SkillCardPageResponseDto>> searchSkills(
+		@GetMapping(value = "/skills/v2", produces = MediaType.APPLICATION_JSON_VALUE)
+		public ResponseEntity<ApiResponseDto<SkillCardPageResponseDto>> searchSkillsV2(
 						@Parameter(description = "스킬 카테고리 (선택)", example = "DEVELOPMENT")
 						@RequestParam(required = false) SkillCategoryType category,
 
@@ -55,7 +74,7 @@ public class SearchController {
 								keyword, category, cursorId, size);
 
 				SkillCardPageResponseDto response = searchService
-								.searchSkills(category, keyword, cursorId, size);
+								.searchSkillsV2(category, keyword, cursorId, size);
 
 				return ResponseEntity.ok(
 								ApiResponseDto.success("스킬 검색 결과를 조회했습니다.", response)

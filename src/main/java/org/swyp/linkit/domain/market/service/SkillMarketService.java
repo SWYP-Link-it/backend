@@ -8,6 +8,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
+import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
 import org.swyp.linkit.domain.search.service.SearchKeywordRecorder;
 import org.swyp.linkit.domain.search.service.SkillViewRecorder;
@@ -28,6 +29,53 @@ public class SkillMarketService {
     private final SearchKeywordRecorder searchKeywordRecorder;
 		private final SkillViewRecorder skillViewRecorder;
 
+		// 노출 중인 스킬 카드 조회 (최신순)
+    @Transactional
+    public List<SkillCardResponseDto> getVisibleSkills(SkillCategoryType category, String searchKeyword) {
+        List<UserSkill> skills;
+
+        // 1. 카테고리 + 키워드 둘 다 있는 경우
+        if (category != null && searchKeyword != null && !searchKeyword.isBlank()) {
+            String trimmedKeyword = searchKeyword.trim();
+
+            // 검색어 집계 추가
+            searchKeywordRecorder.record(trimmedKeyword);
+
+            skills = userSkillRepository.findVisibleSkillsByCategoryAndKeyword(
+                    category,
+                    trimmedKeyword
+            );
+            log.info("카테고리+키워드 필터 조회: category={}, keyword={}, count={}",
+                    category.getDescription(), trimmedKeyword, skills.size());
+        }
+        // 2. 카테고리만 있는 경우
+        else if (category != null) {
+            skills = userSkillRepository.findVisibleSkillsByCategory(category);
+            log.info("카테고리별 스킬 조회: category={}, count={}",
+                    category.getDescription(), skills.size());
+        }
+        // 3. 키워드만 있는 경우
+        else if (searchKeyword != null && !searchKeyword.isBlank()) {
+            String trimmedKeyword = searchKeyword.trim();
+
+            // 검색어 집계 추가
+            searchKeywordRecorder.record(trimmedKeyword);
+
+            skills = userSkillRepository.searchVisibleSkillsByName(trimmedKeyword);
+            log.info("키워드 검색 (완전 일치): keyword={}, count={}", trimmedKeyword, skills.size());
+        }
+        // 4. 둘 다 없는 경우 (전체 조회)
+        else {
+            skills = userSkillRepository.findAllVisibleSkills();
+            log.info("전체 스킬 조회: count={}", skills.size());
+        }
+
+        return skills.stream()
+                .map(SkillCardResponseDto::from)
+                .toList();
+    }
+
+
 		/**
 		 * 스킬 장터 목록 커서 기반 페이징 조회
 		 * - category, keyword 는 선택적 필터
@@ -36,7 +84,7 @@ public class SkillMarketService {
 		 * - 검색어 집계는 SearchService 에 위임 (별도 트랜잭션)
 		 */
 		@Transactional(readOnly = true)
-		public SkillCardPageResponseDto getVisibleSkills(SkillCategoryType category, String searchKeyword,
+		public SkillCardPageResponseDto getVisibleSkillsV2(SkillCategoryType category, String searchKeyword,
 																											Long cursorId, int size) {
 				// 1. keyword trim 처리
 				String trimmedKeyword = (searchKeyword != null && !searchKeyword.isBlank())

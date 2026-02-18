@@ -44,6 +44,51 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "WHERE us.id = :id")
     Optional<UserSkill> findByIdWithProfileAndUserAndLock(@Param("id") Long id);
 
+		// 노출 중인 스킬 목록 조회 (최신순)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory " +
+            "WHERE us.isVisible = true " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> findAllVisibleSkills();
+
+    // 카테고리별 노출 중인 스킬 목록 조회 (최신순)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory sc " +
+            "WHERE us.isVisible = true " +
+            "AND sc.categoryType = :categoryType " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> findVisibleSkillsByCategory(@Param("categoryType") SkillCategoryType categoryType);
+
+		// 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory " +
+            "WHERE us.isVisible = true " +
+            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> searchVisibleSkillsByName(@Param("keyword") String keyword);
+
+		// 카테고리 + 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH up.user u " +
+            "JOIN FETCH us.skillCategory sc " +
+            "WHERE us.isVisible = true " +
+            "AND sc.categoryType = :categoryType " +
+            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
+            "ORDER BY us.createdAt DESC")
+    List<UserSkill> findVisibleSkillsByCategoryAndKeyword(
+            @Param("categoryType") SkillCategoryType categoryType,
+            @Param("keyword") String keyword
+    );
+
 		/**
 		 * 스킬 장터 목록 커서 기반 페이징 조회
 		 * - isVisible = true 인 스킬만 조회
@@ -94,16 +139,5 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "AND us.isVisible = true " +
             "ORDER BY us.createdAt ASC")
     List<UserSkill> findVisibleSkillsWithImagesByUserId(@Param("userId") Long userId);
-
-    // 키워드로 노출 중인 스킬 검색 (부분 일치, 대소문자 무시, 스킬명 또는 제목)
-    @Query("SELECT us FROM UserSkill us " +
-            "JOIN FETCH us.userProfile up " +
-            "JOIN FETCH up.user u " +
-            "JOIN FETCH us.skillCategory " +
-            "WHERE us.isVisible = true " +
-            "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
-            "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "ORDER BY us.createdAt DESC")
-    List<UserSkill> searchVisibleSkillsByName(@Param("keyword") String keyword);
 
 }
