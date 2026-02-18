@@ -49,6 +49,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "ORDER BY us.createdAt DESC")
     List<UserSkill> findAllVisibleSkills();
@@ -58,6 +59,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND sc.categoryType = :categoryType " +
             "ORDER BY us.createdAt DESC")
@@ -68,6 +70,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
@@ -79,6 +82,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND sc.categoryType = :categoryType " +
             "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -101,6 +105,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
 						"JOIN FETCH us.userProfile up " +
 						"JOIN FETCH up.user u " +
 						"JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
 						"WHERE us.isVisible = true " +
 						"AND (:categoryType IS NULL OR sc.categoryType = :categoryType) " +
 						"AND (:keyword IS NULL OR LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +

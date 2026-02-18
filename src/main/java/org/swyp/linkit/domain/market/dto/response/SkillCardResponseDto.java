@@ -1,11 +1,13 @@
 package org.swyp.linkit.domain.market.dto.response;
 
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
+import org.swyp.linkit.domain.user.entity.UserSkill;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.swyp.linkit.domain.user.entity.UserSkill;
 
 @Getter
 @Builder
@@ -28,13 +30,20 @@ public class SkillCardResponseDto {
     @Schema(description = "스킬명", example = "React")
     private String skillName;
 
+		@Schema(description = "평균 평점", example = "3.6")
+		private double avgRating;
+
     public static SkillCardResponseDto from(UserSkill userSkill) {
-        return SkillCardResponseDto.builder()
+				UserSkillRatingStat ratingStat = userSkill.getUserSkillRatingStat();
+				double avgRating = (ratingStat != null) ? ratingStat.calculateAvgRating() : 0.0;
+        
+				return SkillCardResponseDto.builder()
                 .skillId(userSkill.getId())
                 .profileImageUrl(userSkill.getOwnerProfileImageUrl())
                 .nickname(userSkill.getOwnerNickname())
                 .skillTitle(userSkill.getSkillTitle())
                 .skillName(userSkill.getSkillName())
+								.avgRating(avgRating)
                 .build();
     }
 }
