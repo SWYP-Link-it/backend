@@ -1,17 +1,22 @@
 package org.swyp.linkit.domain.review.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
 import org.swyp.linkit.domain.review.dto.request.ReviewRequestDto;
 import org.swyp.linkit.domain.review.dto.request.ReviewUpdateRequestDto;
+import org.swyp.linkit.domain.review.dto.response.ReceivedReviewRatingInfoResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.service.ReviewService;
@@ -19,6 +24,11 @@ import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
 import org.swyp.linkit.global.swagger.docs.ReviewExceptionDocs;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -94,6 +104,23 @@ public class ReviewController {
             reviewService.deleteReview(reviewId, auth2User.getUserId());
 
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", null));
+    }
+
+    /**
+     * 받은 리뷰 페이지 - 유저 전체 평점 및 스킬별 평점 탭 목록 조회
+     */
+    @Operation(
+            summary = "받은 리뷰 평점 및 스킬 탭 목록 조회",
+            description = "받은 리뷰 페이지 진입 시 유저 전체 평점과 스킬별 평점 탭 목록을 조회합니다."
+    )
+    @GetMapping(value = "/received/rating-info", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<ReceivedReviewRatingInfoResponseDto>> getReceivedReviewRatingInfo(
+            @AuthenticationPrincipal CustomOAuth2User auth2User) {
+
+        ReceivedReviewRatingInfoResponseDto responseDto =
+                reviewService.getReceivedReviewRatingInfo(auth2User.getUserId());
+
+        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
     /**
