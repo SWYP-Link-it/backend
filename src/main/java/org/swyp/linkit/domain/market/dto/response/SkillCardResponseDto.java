@@ -35,7 +35,9 @@ public class SkillCardResponseDto {
 
     public static SkillCardResponseDto from(UserSkill userSkill) {
 				UserSkillRatingStat ratingStat = userSkill.getUserSkillRatingStat();
-				double avgRating = (ratingStat != null) ? ratingStat.calculateAvgRating() : 0.0;
+				double avgRating = (ratingStat != null)
+				? Math.round(ratingStat.calculateAvgRating() * 10) / 10.0
+				: 0.0;
         
 				return SkillCardResponseDto.builder()
                 .skillId(userSkill.getId())
