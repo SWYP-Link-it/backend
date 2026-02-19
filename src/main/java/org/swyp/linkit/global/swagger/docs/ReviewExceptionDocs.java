@@ -103,6 +103,24 @@ public class ReviewExceptionDocs {
         }
     }
 
+    /**
+     * GetReview
+     */
+    public static class GetReview{
+        public static class UnauthorizedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.UNAUTHORIZED;
+            }
+        }
+
+        public static class ReviewNotFoundException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.REVIEW_NOT_FOUND;
+            }
+        }
+    }
 
     /**
      * GetReceivedReviews

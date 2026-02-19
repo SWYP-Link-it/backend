@@ -20,7 +20,7 @@ import org.swyp.linkit.domain.review.dto.response.SkillRatingInfoDto;
 import org.swyp.linkit.domain.review.entity.Review;
 import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
-import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
+import org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.repository.UserSkillRepository;
@@ -124,6 +124,20 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 4. 리뷰 삭제 처리
         reviewRepository.delete(review);
+    }
+
+    /**
+     *  리뷰 단건 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReviewResponseDto getReview(Long userId, Long reviewId) {
+        // 1. 리뷰 조회 및 존재 여부 검증
+        Review review = reviewRepository.findByReviewerIdAndId(userId, reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException("reviewId= " + reviewId + "userId= " + userId));
+
+        // 2. 응답 Dto 변환
+        return ReviewResponseDto.from(review);
     }
 
     /**

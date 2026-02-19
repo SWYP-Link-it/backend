@@ -23,6 +23,11 @@ public interface ReviewService {
     void deleteReview(Long reviewId, Long reviewerId);
 
     /**
+     *  리뷰 단건 조회
+     */
+    ReviewResponseDto getReview(Long userId, Long reviewId);
+
+    /**
      * 유저가 받은 리뷰 스킬별 페이징 조회
      * skillId = Null 이면 모든 스킬에 대한 리뷰 조회
      */
