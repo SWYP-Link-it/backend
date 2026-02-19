@@ -126,9 +126,10 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "ORDER BY us.createdAt")
     List<UserSkill> findVisibleSkillsByUserId(@Param("userId") Long userId);
 
-    // 특정 사용자의 모든 스킬 목록 조회
+    // 특정 사용자의 모든 스킬 목록 조회 (스킬 평점 포함)
     @Query("SELECT us FROM UserSkill us " +
             "JOIN FETCH us.userProfile up " +
+            "LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE up.user.id = :userId " +
             "ORDER BY us.createdAt ASC")
     List<UserSkill> findAllSkillsByUserId(@Param("userId") Long userId);

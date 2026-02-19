@@ -18,6 +18,7 @@ import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.dto.response.SkillRatingInfoDto;
 import org.swyp.linkit.domain.review.entity.Review;
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
 import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
@@ -186,13 +187,16 @@ public class ReviewServiceImpl implements ReviewService {
         // 1. 유저 전체 평점 조회
         UserRatingStatDto userRatingStat = userRatingService.getUserRating(userId);
 
-        // 2. 유저의 모든 스킬 목록 조회 (노출 여부 무관)
+        // 2. 유저의 모든 스킬 목록 조회 (노출 여부 무관, 스킬 평점 포함)
         List<UserSkill> skills = userSkillRepository.findAllSkillsByUserId(userId);
 
         // 3. 스킬별 평점 조회 후 DTO 변환
         List<SkillRatingInfoDto> skillRatingInfos = skills.stream()
                 .map(skill -> {
-                    UserSkillRatingStatDto skillRatingStat = userSkillRatingService.getUserSkillRating(skill.getId());
+                    UserSkillRatingStat ratingStat = skill.getUserSkillRatingStat();
+                    UserSkillRatingStatDto skillRatingStat = (ratingStat != null)
+                            ? UserSkillRatingStatDto.from(ratingStat)
+                            : UserSkillRatingStatDto.empty(skill.getId());
                     return SkillRatingInfoDto.of(skill, skillRatingStat);
                 })
                 .toList();
