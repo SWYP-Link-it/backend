@@ -208,7 +208,7 @@ public class ReviewController {
                 - 스킬 거래 장터 상세 조회 시 스킬별 리뷰 페이징 조회에 사용됩니다.
                 """
     )
-    @GetMapping(value = "/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "skills/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
 
     public ResponseEntity<ApiResponseDto<ReviewDetailsResponseDto>> getSkillReviews(
             @Parameter(description = "조회하고자 하는 유저의 스킬 ID", example = "3")
