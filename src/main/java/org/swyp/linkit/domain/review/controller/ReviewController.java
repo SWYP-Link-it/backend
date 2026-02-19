@@ -94,7 +94,6 @@ public class ReviewController {
     )
     @ApiErrorExceptionsExample(ReviewExceptionDocs.DeleteReview.class)
     @DeleteMapping(value = "/{reviewId}", produces = MediaType.APPLICATION_JSON_VALUE)
-
     public ResponseEntity<ApiResponseDto<ReviewResponseDto>> deleteReview(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
 
@@ -120,6 +119,22 @@ public class ReviewController {
         ReceivedReviewRatingInfoResponseDto responseDto =
                 reviewService.getReceivedReviewRatingInfo(auth2User.getUserId());
 
+        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
+    }
+
+    /**
+     * 리뷰 단건 조회
+     */
+    @Operation(summary = "리뷰 단건 조회", description = "리뷰를 조회합니다.")
+    @ApiErrorExceptionsExample(ReviewExceptionDocs.GetReview.class)
+    @GetMapping(value = "/{reviewId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseDto<ReviewResponseDto>> getReview(
+            @AuthenticationPrincipal CustomOAuth2User auth2User,
+
+            @Parameter(description = "리뷰 ID", example = "1")
+            @PathVariable Long reviewId){
+
+        ReviewResponseDto responseDto = reviewService.getReview(auth2User.getUserId(), reviewId);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
@@ -193,7 +208,7 @@ public class ReviewController {
                 - 스킬 거래 장터 상세 조회 시 스킬별 리뷰 페이징 조회에 사용됩니다.
                 """
     )
-    @GetMapping(value = "/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "skills/{skillId}", produces = MediaType.APPLICATION_JSON_VALUE)
 
     public ResponseEntity<ApiResponseDto<ReviewDetailsResponseDto>> getSkillReviews(
             @Parameter(description = "조회하고자 하는 유저의 스킬 ID", example = "3")

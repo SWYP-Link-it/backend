@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
-import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.swagger.annotation.ApiErrorExceptionsExample;
@@ -139,14 +140,14 @@ public class SkillExchangeController {
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.Paging.class)
     @GetMapping(value = "/request/sent", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseDto<SkillExchangeDetailsResponseDto>> getSentRequests(
+    public ResponseEntity<ApiResponseDto<SentExchangeDetailsResponseDto>> getSentRequests(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
             @Parameter(description = "다음 페이지 조회를 위한 커서 ID", example = "5")
             @RequestParam(required = false) Long nextCursor,
             @Parameter(description = "조회할 데이터 개수", example = "5")
             @RequestParam(required = false, defaultValue = "5") int size){
 
-        SkillExchangeDetailsResponseDto responseDto = exchangeService.getSentRequests(auth2User.getUserId(), nextCursor, size);
+        SentExchangeDetailsResponseDto responseDto = exchangeService.getSentRequests(auth2User.getUserId(), nextCursor, size);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 
@@ -159,14 +160,14 @@ public class SkillExchangeController {
     )
     @ApiErrorExceptionsExample(SkillExchangeExceptionDocs.Paging.class)
     @GetMapping(value = "/request/received", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseDto<SkillExchangeDetailsResponseDto>> getReceived(
+    public ResponseEntity<ApiResponseDto<ReceivedExchangeDetailsResponseDto>> getReceived(
             @AuthenticationPrincipal CustomOAuth2User auth2User,
             @Parameter(description = "다음 페이지 조회를 위한 커서 ID", example = "5")
             @RequestParam(required = false) Long nextCursor,
             @Parameter(description = "조회할 데이터 개수", example = "5")
             @RequestParam(required = false, defaultValue = "5") int size){
 
-        SkillExchangeDetailsResponseDto responseDto = exchangeService.getReceivedRequests(auth2User.getUserId(), nextCursor, size);
+        ReceivedExchangeDetailsResponseDto responseDto = exchangeService.getReceivedRequests(auth2User.getUserId(), nextCursor, size);
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 

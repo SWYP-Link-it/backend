@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.data.domain.Slice;
-import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
+import org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery;
 
 import java.util.List;
 

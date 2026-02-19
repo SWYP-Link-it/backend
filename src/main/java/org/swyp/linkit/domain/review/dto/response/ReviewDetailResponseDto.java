@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
+import org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;

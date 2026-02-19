@@ -1,4 +1,4 @@
-package org.swyp.linkit.domain.review.service.projection;
+package org.swyp.linkit.domain.review.repository.projection;
 
 import java.time.LocalDateTime;
 

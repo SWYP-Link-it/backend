@@ -7,8 +7,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
-import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,9 +16,8 @@ import java.time.temporal.ChronoUnit;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
-@Schema(description = "스킬 거래 요청 상세 내역")
-public class SkillExchangeDetailDto {
-
+@Schema(description = "받은 스킬 거래 상세 내역")
+public class ReceivedExchangeDetailDto {
     @Schema(description = "스킬 거래 식별자(ID)", example = "1")
     private Long skillExchangeId;
 
@@ -59,9 +57,6 @@ public class SkillExchangeDetailDto {
     @Schema(description = "스킬 거래 시간", example = "60")
     private int exchangeDuration;
 
-    @Schema(description = "리뷰 작성 가능 여부 (스킬 거래 요청자 한정)", example = "false")
-    private boolean canReview;
-
     @Schema(
             description = "새로운 상태 업데이트 여부 (true: 신규 알림 있음/빨간 점 표시, false: 확인 완료)",
             example = "true"
@@ -74,11 +69,8 @@ public class SkillExchangeDetailDto {
         return isNew;
     }
 
-    // 보낸 요청
-    public static SkillExchangeDetailDto ofSent(SkillExchangeDetailQuery result) {
-        boolean canReviewStatus = result.exchangeStatus() == ExchangeStatus.COMPLETED;
-
-        return SkillExchangeDetailDto.builder()
+    public static ReceivedExchangeDetailDto from(ReceivedDetailQuery result){
+        return ReceivedExchangeDetailDto.builder()
                 .skillExchangeId(result.skillExchangeId())
                 .targetUserId(result.targetUserId())
                 .skillId(result.skillId())
@@ -92,29 +84,6 @@ public class SkillExchangeDetailDto {
                 .requestedDate(result.createdAt().toLocalDate())
                 .exchangeDateTime(result.exchangeDate().atTime(result.exchangeTime()).truncatedTo(ChronoUnit.SECONDS))
                 .exchangeDuration(result.exchangeDuration())
-                .canReview(canReviewStatus)
-                .isNew(!result.isRead())
-                .build();
-    }
-
-    // 받은 요청
-    public static SkillExchangeDetailDto ofReceived(SkillExchangeDetailQuery result) {
-
-        return SkillExchangeDetailDto.builder()
-                .skillExchangeId(result.skillExchangeId())
-                .targetUserId(result.targetUserId())
-                .skillId(result.skillId())
-                .chatRoomId(result.chatRoomId())
-                .targetProfileImageUrl(result.targetProfileImageUrl())
-                .targetNickname(result.targetNickname())
-                .skillName(result.skillName())
-                .exchangeStatus(result.exchangeStatus().getDescription())
-                .creditPrice(result.creditPrice())
-                .message(result.message())
-                .requestedDate(result.createdAt().toLocalDate())
-                .exchangeDateTime(result.exchangeDate().atTime(result.exchangeTime()).truncatedTo(ChronoUnit.SECONDS))
-                .exchangeDuration(result.exchangeDuration())
-                .canReview(false)
                 .isNew(!result.isRead())
                 .build();
     }

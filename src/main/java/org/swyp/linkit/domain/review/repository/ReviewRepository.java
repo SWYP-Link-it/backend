@@ -6,7 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.review.entity.Review;
-import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
+import org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery;
+
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -16,10 +18,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     boolean existsBySkillExchangeIdAndReviewerId(Long skillExchangeId, Long reviewerId);
 
     /**
+     * Review 단건 조회(reviewerId, reviewId)
+     */
+    Optional<Review> findByReviewerIdAndId(Long reviewerId, Long id);
+
+    /**
      * 작성한 Review 페이징 조회
      * cursor 기반
      */
-    @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
+    @Query("SELECT new org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery" +
             "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.revieweeId " + // 멘토의 정보 조회
@@ -36,7 +43,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      *  skillId = NULL 이면 모든 Review 조회
      *  cursor 기반
      */
-    @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
+    @Query("SELECT new org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery" +
             "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.reviewerId " + // 멘티의 정보 조회
@@ -54,7 +61,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      *  스킬 별 Review 페이징 조회
      *  cursor 기반
      */
-    @Query("SELECT new org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery" +
+    @Query("SELECT new org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery" +
             "(r.id, u.nickname, s.skillName, r.content, r.rating, r.createdAt) " +
             "FROM Review r " +
             "LEFT JOIN User u ON u.id = r.reviewerId " + // 작성자 정보 조회

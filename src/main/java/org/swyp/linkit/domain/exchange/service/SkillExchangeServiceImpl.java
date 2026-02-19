@@ -11,10 +11,13 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
-import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
+import org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery;
+import org.swyp.linkit.domain.exchange.repository.projection.SentDetailQuery;
 import org.swyp.linkit.domain.settlement.service.SettlementService;
 import org.swyp.linkit.domain.user.dto.ExpandedScheduleDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillForExchangeDto;
@@ -257,16 +260,16 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
-    public SkillExchangeDetailsResponseDto getSentRequests(Long userId, Long cursorId, int size) {
+    public SentExchangeDetailsResponseDto getSentRequests(Long userId, Long cursorId, int size) {
         // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
 
         // 2. 스킬 거래 요청 내역 커서 기반 페이징 조회
-        Slice<SkillExchangeDetailQuery> slice =
+        Slice<SentDetailQuery> slice =
                 exchangeRepository.findAllByRequesterIdWithReceiver(userId, cursorId, pageable);
 
         // 3. 응답 Dto 변환
-        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.ofSent(slice);
+        SentExchangeDetailsResponseDto responseDto = SentExchangeDetailsResponseDto.from(slice);
 
         // 4. bulkUpdate (isRequesterRead = false -> true)
         exchangeRepository.bulkUpdateRequesterReadStatus(userId);
@@ -278,16 +281,16 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      */
     @Transactional
     @Override
-    public SkillExchangeDetailsResponseDto getReceivedRequests(Long userId, Long cursorId, int size) {
+    public ReceivedExchangeDetailsResponseDto getReceivedRequests(Long userId, Long cursorId, int size) {
         // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
 
         // 2. 스킬 거래 요청 내역 커서 기반 페이징 조회
-        Slice<SkillExchangeDetailQuery> slice =
+        Slice<ReceivedDetailQuery> slice =
                 exchangeRepository.findAllByReceiverIdWithRequester(userId, cursorId, pageable);
 
         // 3. 응답 Dto 변환
-        SkillExchangeDetailsResponseDto responseDto = SkillExchangeDetailsResponseDto.ofReceived(slice);
+        ReceivedExchangeDetailsResponseDto responseDto = ReceivedExchangeDetailsResponseDto.from(slice);
 
         // 4.bulkUpdate (isReceiverRead = false -> true)
         exchangeRepository.bulkUpdateReceiverReadStatus(userId);
