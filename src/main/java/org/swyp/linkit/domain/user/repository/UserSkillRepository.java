@@ -49,6 +49,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "ORDER BY us.createdAt DESC")
     List<UserSkill> findAllVisibleSkills();
@@ -58,6 +59,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND sc.categoryType = :categoryType " +
             "ORDER BY us.createdAt DESC")
@@ -68,6 +70,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
             "     OR LOWER(us.skillTitle) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
@@ -79,6 +82,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +
             "JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
             "WHERE us.isVisible = true " +
             "AND sc.categoryType = :categoryType " +
             "AND (LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -101,6 +105,7 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
 						"JOIN FETCH us.userProfile up " +
 						"JOIN FETCH up.user u " +
 						"JOIN FETCH us.skillCategory sc " +
+						"LEFT JOIN FETCH us.userSkillRatingStat " +
 						"WHERE us.isVisible = true " +
 						"AND (:categoryType IS NULL OR sc.categoryType = :categoryType) " +
 						"AND (:keyword IS NULL OR LOWER(us.skillName) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -120,6 +125,14 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "AND us.isVisible = true " +
             "ORDER BY us.createdAt")
     List<UserSkill> findVisibleSkillsByUserId(@Param("userId") Long userId);
+
+    // 특정 사용자의 모든 스킬 목록 조회 (스킬 평점 포함)
+    @Query("SELECT us FROM UserSkill us " +
+            "JOIN FETCH us.userProfile up " +
+            "LEFT JOIN FETCH us.userSkillRatingStat " +
+            "WHERE up.user.id = :userId " +
+            "ORDER BY us.createdAt ASC")
+    List<UserSkill> findAllSkillsByUserId(@Param("userId") Long userId);
 
     // 스킬 ID로 노출 중인 스킬 상세 조회 (프로필, 사용자, 이미지 포함)
     @Query("SELECT us FROM UserSkill us " +

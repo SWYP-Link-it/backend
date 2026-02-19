@@ -1,7 +1,7 @@
 package org.swyp.linkit.domain.review.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -11,16 +11,26 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
+import org.swyp.linkit.domain.review.dto.response.ReceivedReviewRatingInfoResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
+import org.swyp.linkit.domain.review.dto.response.SkillRatingInfoDto;
 import org.swyp.linkit.domain.review.entity.Review;
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
 import org.swyp.linkit.domain.review.service.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.user.entity.UserSkill;
+import org.swyp.linkit.domain.user.repository.UserSkillRepository;
 import org.swyp.linkit.global.error.exception.ReviewAccessDeniedException;
 import org.swyp.linkit.global.error.exception.ReviewAlreadyExistsException;
 import org.swyp.linkit.global.error.exception.ReviewInvalidStatusException;
 import org.swyp.linkit.global.error.exception.ReviewNotFoundException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +41,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final SkillExchangeService skillExchangeService;
     private final UserRatingStatService userRatingService;
     private final UserSkillRatingStatService userSkillRatingService;
+    private final UserSkillRepository userSkillRepository;
 
     /**
      * 리뷰 작성
@@ -165,6 +176,32 @@ public class ReviewServiceImpl implements ReviewService {
 
         // 3. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice);
+    }
+
+    /**
+     * 받은 리뷰 페이지 - 유저 전체 평점 및 스킬별 평점 탭 목록 조회
+     */
+    @Transactional(readOnly = true)
+    @Override
+    public ReceivedReviewRatingInfoResponseDto getReceivedReviewRatingInfo(Long userId) {
+        // 1. 유저 전체 평점 조회
+        UserRatingStatDto userRatingStat = userRatingService.getUserRating(userId);
+
+        // 2. 유저의 모든 스킬 목록 조회 (노출 여부 무관, 스킬 평점 포함)
+        List<UserSkill> skills = userSkillRepository.findAllSkillsByUserId(userId);
+
+        // 3. 스킬별 평점 조회 후 DTO 변환
+        List<SkillRatingInfoDto> skillRatingInfos = skills.stream()
+                .map(skill -> {
+                    UserSkillRatingStat ratingStat = skill.getUserSkillRatingStat();
+                    UserSkillRatingStatDto skillRatingStat = (ratingStat != null)
+                            ? UserSkillRatingStatDto.from(ratingStat)
+                            : UserSkillRatingStatDto.empty(skill.getId());
+                    return SkillRatingInfoDto.of(skill, skillRatingStat);
+                })
+                .toList();
+
+        return ReceivedReviewRatingInfoResponseDto.of(userRatingStat.getAvgRating(), skillRatingInfos);
     }
 
     // == private Methods ==
