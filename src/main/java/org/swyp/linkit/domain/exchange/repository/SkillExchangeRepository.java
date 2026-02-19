@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
+import org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery;
+import org.swyp.linkit.domain.exchange.repository.projection.SentDetailQuery;
 import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
 
 import java.time.LocalDate;
@@ -32,10 +34,11 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      *  보낸 요청 조회
      *  requesterId, cursor 기반 페이징
      */
-    @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery" +
+    @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SentDetailQuery" +
             "(se.id, se.requester.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
-            "se.exchangeDuration, se.isRequesterRead) " +
+            "se.exchangeDuration, se.isRequesterRead, " +
+            "(SELECT rv.id FROM Review rv WHERE rv.skillExchangeId = se.id AND rv.reviewerId = se.requester.id)) " +
             "FROM SkillExchange se " +
             "JOIN se.receiver r " +
             "LEFT JOIN ChatRoom cr ON " +
@@ -44,16 +47,16 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "WHERE se.requester.id = :requesterId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
-    Slice<SkillExchangeDetailQuery> findAllByRequesterIdWithReceiver(@Param("requesterId") Long requesterId,
-                                                                     @Param("cursorId") Long cursorId,
-                                                                     Pageable pageable);
+    Slice<SentDetailQuery> findAllByRequesterIdWithReceiver(@Param("requesterId") Long requesterId,
+                                                            @Param("cursorId") Long cursorId,
+                                                            Pageable pageable);
 
 
     /**
      *  받은 요청 조회
      *  receiverId, cursor 기반 페이징
      */
-    @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery" +
+    @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery" +
             "(se.id, se.receiver.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
             "se.exchangeDuration, se.isReceiverRead) " +
@@ -65,9 +68,9 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "WHERE se.receiver.id = :receiverId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
-    Slice<SkillExchangeDetailQuery> findAllByReceiverIdWithRequester(@Param("receiverId") Long receiver,
-                                                                     @Param("cursorId") Long cursorId,
-                                                                     Pageable pageable);
+    Slice<ReceivedDetailQuery> findAllByReceiverIdWithRequester(@Param("receiverId") Long receiver,
+                                                                @Param("cursorId") Long cursorId,
+                                                                Pageable pageable);
 
     /**
      *  보낸 요청 알림 읽음 처리
