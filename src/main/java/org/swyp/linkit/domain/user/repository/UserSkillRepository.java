@@ -121,10 +121,11 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     // 특정 사용자의 노출 중인 스킬 목록 조회 (교환 요청용)
     @Query("SELECT us FROM UserSkill us " +
             "JOIN FETCH us.userProfile up " +
+            "JOIN FETCH us.skillCategory sc " +
             "WHERE up.user.id = :userId " +
             "AND us.isVisible = true " +
             "ORDER BY us.createdAt")
-    List<UserSkill> findVisibleSkillsByUserId(@Param("userId") Long userId);
+    List<UserSkill> findVisibleSkillsAndSkillCategoryByUserId(@Param("userId") Long userId);
 
     // 특정 사용자의 모든 스킬 목록 조회 (스킬 평점 포함)
     @Query("SELECT us FROM UserSkill us " +

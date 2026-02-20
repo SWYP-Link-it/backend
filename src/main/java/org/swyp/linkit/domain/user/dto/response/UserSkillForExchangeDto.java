@@ -5,6 +5,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.swyp.linkit.domain.user.entity.SkillCategoryType;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 
 @Getter
@@ -25,12 +26,16 @@ public class UserSkillForExchangeDto {
     @Schema(description = "크레딧 가격 (30분당 1크레딧)", example = "2")
     private Integer creditPrice;
 
+    @Schema(description = "스킬 카테고리 타입", example = "DEVELOPMENT")
+    private SkillCategoryType skillCategoryType;
+
     public static UserSkillForExchangeDto from(UserSkill userSkill) {
         return UserSkillForExchangeDto.builder()
                 .skillId(userSkill.getId())
                 .skillName(userSkill.getSkillName())
                 .exchangeDuration(userSkill.getExchangeDuration())
                 .creditPrice(calculateCreditPrice(userSkill.getExchangeDuration()))
+                .skillCategoryType(userSkill.getSkillCategory().getCategoryType())
                 .build();
     }
 
