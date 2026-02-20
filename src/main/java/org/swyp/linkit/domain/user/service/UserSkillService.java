@@ -139,7 +139,7 @@ public class UserSkillService {
 
     // 특정 사용자의 교환용 스킬 목록 조회
     public List<UserSkillForExchangeDto> getSkillsForExchange(Long userId) {
-        List<UserSkill> skills = userSkillRepository.findVisibleSkillsByUserId(userId);
+        List<UserSkill> skills = userSkillRepository.findVisibleSkillsAndSkillCategoryByUserId(userId);
 
         log.info("교환용 스킬 목록 조회: userId={}, count={}", userId, skills.size());
 
