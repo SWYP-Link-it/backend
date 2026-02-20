@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -51,7 +52,7 @@ public class ReviewController {
             @AuthenticationPrincipal CustomOAuth2User auth2User,
 
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "리뷰 생성 정보")
-            @RequestBody ReviewRequestDto requestDto) {
+            @RequestBody @Validated ReviewRequestDto requestDto) {
 
         ReviewResponseDto responseDto =
                 reviewService.createReview(ReviewDto.ofCreate(auth2User.getUserId(), requestDto));
@@ -77,7 +78,7 @@ public class ReviewController {
             @PathVariable Long reviewId,
 
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "리뷰 수정 정보")
-            @RequestBody ReviewUpdateRequestDto requestDto) {
+            @RequestBody @Validated ReviewUpdateRequestDto requestDto) {
 
         ReviewResponseDto responseDto =
                 reviewService.updateReview(ReviewDto.ofUpdate(auth2User.getUserId(),reviewId, requestDto));
