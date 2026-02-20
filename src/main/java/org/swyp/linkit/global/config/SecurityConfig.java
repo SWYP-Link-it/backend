@@ -48,8 +48,8 @@ public class SecurityConfig {
 
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
-                        // (GET/reviews/{skillId}, 정규식으로 숫자만 허용)
-                        .requestMatchers(HttpMethod.GET, "/reviews/{skillId:[\\d]+}").permitAll()
+                        // (GET/reviews/skills/{skillId}, 정규식으로 숫자만 허용)
+                        .requestMatchers(HttpMethod.GET, "/reviews/skills/{skillId:[\\d]+}").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         .requestMatchers(
