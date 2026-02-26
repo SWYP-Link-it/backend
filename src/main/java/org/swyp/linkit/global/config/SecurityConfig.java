@@ -70,6 +70,7 @@ public class SecurityConfig {
                                 "/auth/logout",
                                 "/market/skills",
                                 "/market/skills/**",
+                                "/market/sitemap",
                                 "/search/**"
                         ).permitAll()
 
