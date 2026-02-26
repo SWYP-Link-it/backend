@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillCardResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
+import org.swyp.linkit.domain.market.dto.response.SkillSitemapResponseDto;
 import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.service.UserRatingStatService;
@@ -114,6 +115,14 @@ public class SkillMarketService {
 				// 4. 응답 DTO 변환
 				return SkillCardPageResponseDto.of(slice);
 		}
+
+    // 사이트맵용 스킬 목록 조회 (skillId + modifiedAt)
+    @Transactional(readOnly = true)
+    public List<SkillSitemapResponseDto> getSkillsForSitemap() {
+        return userSkillRepository.findAllVisibleSkills().stream()
+                .map(SkillSitemapResponseDto::from)
+                .toList();
+    }
 
     // 스킬 ID로 상세 정보 조회 (스킬 + 프로필 전체 + 평점)
     @Transactional(readOnly = true)
