@@ -44,7 +44,13 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
             "WHERE us.id = :id")
     Optional<UserSkill> findByIdWithProfileAndUserAndLock(@Param("id") Long id);
 
-		// 노출 중인 스킬 목록 조회 (최신순)
+    // 사이트맵용 노출 중인 스킬 조회
+    @Query("SELECT us FROM UserSkill us " +
+			"WHERE us.isVisible = true " +
+			"ORDER BY us.createdAt DESC")
+    List<UserSkill> findVisibleSkillsForSitemap();
+
+	// 노출 중인 스킬 목록 조회 (최신순)
     @Query("SELECT us FROM UserSkill us " +
             "JOIN FETCH us.userProfile up " +
             "JOIN FETCH up.user u " +

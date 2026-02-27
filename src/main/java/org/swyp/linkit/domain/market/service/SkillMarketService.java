@@ -71,7 +71,7 @@ public class SkillMarketService {
     // 사이트맵용 스킬 목록 조회 (skillId + modifiedAt)
     @Transactional(readOnly = true)
     public List<SkillSitemapResponseDto> getSkillsForSitemap() {
-        return userSkillRepository.findAllVisibleSkills().stream()
+        return userSkillRepository.findVisibleSkillsForSitemap().stream()
                 .map(SkillSitemapResponseDto::from)
                 .toList();
     }
