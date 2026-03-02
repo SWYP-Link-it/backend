@@ -87,4 +87,5 @@ volumes:
 
 networks:
   link-it-network:
+    name: link-it-network
     driver: bridge
