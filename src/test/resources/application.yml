@@ -89,7 +89,7 @@ app:
   cookie:
     secure: true
     same-site: None
-    domain: ${COOKIE_DOMAIN:test-domain}
+    domain: test-domain
 
 frontend:
   url: http://localhost:3000
