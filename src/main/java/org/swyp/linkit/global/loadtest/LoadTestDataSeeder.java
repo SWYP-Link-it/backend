@@ -730,6 +730,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
     }
 
 
+
     /**
      * 평점 분포: 5점 40%, 4점 35%, 3점 15%, 2점 5%, 1점 5%
      */
