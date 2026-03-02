@@ -52,6 +52,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/reviews/skills/{skillId:[\\d]+}").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // 부하테스트 엔드포인트
+                        .requestMatchers("/load-test/**").permitAll()
+
                         .requestMatchers(
                                 "/",
                                 "/error",
