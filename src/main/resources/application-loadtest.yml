@@ -12,7 +12,7 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:linkit_test}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/linkit_loadtest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:test}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -21,11 +21,15 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: create
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+        jdbc:
+          batch_size: 500
+        order_inserts: true
+        order_updates: true
 
   # Redis
   data:
@@ -97,10 +101,9 @@ backend:
   url: ${BACKEND_URL:http://localhost:8080}
   prod-url: ${BACKEND_PROD_URL:https://your-production-backend.com}
 
-# Scheduler
-schedules:
-  cancel-cron: "0 0 0 * * *"
-  settle-cron: "0 0,30 * * * *"
+# Scheduler — 부하테스트 중 비활성화 (측정값 오염 방지)
+scheduler:
+  enabled: false
 
 # NCP Object Storage
 ncp:
@@ -112,3 +115,8 @@ ncp:
     bucket-name: ${NCP_BUCKET_NAME:link-it-dummy}
     skill-image-path: skill-images/
     chat-image-path: chat-images/
+
+loadtest:
+  seeder:
+    enabled: true
+
