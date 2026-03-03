@@ -88,6 +88,7 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:true}
     same-site: ${COOKIE_SAME_SITE:None}
+    domain: ${COOKIE_DOMAIN:test-domain}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
@@ -111,3 +112,4 @@ ncp:
     secret-key: ${NCP_SECRET_KEY:dummy}
     bucket-name: ${NCP_BUCKET_NAME:link-it-dummy}
     skill-image-path: skill-images/
+    chat-image-path: chat-images/

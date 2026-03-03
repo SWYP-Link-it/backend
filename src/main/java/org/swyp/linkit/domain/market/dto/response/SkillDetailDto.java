@@ -1,10 +1,15 @@
 package org.swyp.linkit.domain.market.dto.response;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.user.dto.response.AvailableScheduleResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
@@ -15,13 +20,11 @@ import org.swyp.linkit.domain.user.entity.UserProfile;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.entity.Weekday;
 
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 
 @Getter
 @Builder
@@ -62,6 +65,13 @@ public class SkillDetailDto {
     @Schema(description = "세부 위치", example = "강남역 부근")
     private String detailedLocation;
 
+		// 평점 정보
+		@Schema(description = "유저 평균 평점", example = "4.2")
+    private double userAvgRating;
+
+		@Schema(description = "스킬별 평점 정보")
+		private SkillRatingResponseDto skillRating;
+
     // 스케줄 정보
     @Schema(description = "교환 가능 시간대 목록")
     private List<AvailableScheduleResponseDto> availableSchedules;
@@ -70,7 +80,7 @@ public class SkillDetailDto {
     @Schema(description = "해당 사용자의 모든 스킬 목록 (등록 오래된 순)")
     private List<SkillSummaryDto> skills;
 
-    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills) {
+    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills, UserRatingStatDto userRatingStat, UserSkillRatingStatDto skillRatingStat) {
         UserProfile profile = userSkill.getUserProfile();
         User user = profile.getUser();
 
@@ -90,6 +100,10 @@ public class SkillDetailDto {
                 .exchangeType(profile.getExchangeType())
                 .preferredRegion(profile.getPreferredRegion())
                 .detailedLocation(profile.getDetailedLocation())
+
+								// 평점 정보
+								.userAvgRating(userRatingStat.getAvgRating())
+								.skillRating(SkillRatingResponseDto.from(skillRatingStat))
 
                 // 스케줄 정보 (병합된 버전)
                 .availableSchedules(mergeConsecutiveSchedules(user.getAvailableSchedules()))

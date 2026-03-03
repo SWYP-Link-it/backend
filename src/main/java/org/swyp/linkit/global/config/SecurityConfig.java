@@ -48,7 +48,12 @@ public class SecurityConfig {
 
                 // 요청 권한 설정
                 .authorizeHttpRequests(auth -> auth
+                        // (GET/reviews/skills/{skillId}, 정규식으로 숫자만 허용)
+                        .requestMatchers(HttpMethod.GET, "/reviews/skills/{skillId:[\\d]+}").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // 부하테스트 엔드포인트
+                        .requestMatchers("/load-test/**").permitAll()
 
                         .requestMatchers(
                                 "/",
@@ -68,6 +73,7 @@ public class SecurityConfig {
                                 "/auth/logout",
                                 "/market/skills",
                                 "/market/skills/**",
+                                "/market/sitemap",
                                 "/search/**"
                         ).permitAll()
 

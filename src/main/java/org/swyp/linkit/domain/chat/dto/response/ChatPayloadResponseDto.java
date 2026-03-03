@@ -28,6 +28,12 @@ public class ChatPayloadResponseDto {
     @Schema(description = "메시지 내용", example = "안녕하세요!")
     private String text;
 
+    @Schema(description = "메시지 타입 (TEXT, IMAGE)", example = "TEXT")
+    private String messageType;
+
+    @Schema(description = "이미지 URL (IMAGE 타입일 때)", example = "https://kr.object.ncloudstorage.com/bucket/chat-images/1/uuid.png")
+    private String imageUrl;
+
     @Schema(description = "메시지 전송 시간 (epoch milliseconds)", example = "1705651200000")
     private Long sentAtEpochMs;
 

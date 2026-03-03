@@ -10,7 +10,7 @@ import org.swyp.linkit.domain.review.entity.Review;
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Schema(description = "리뷰 작성 응답")
+@Schema(description = "리뷰 응답")
 public class ReviewResponseDto {
 
     @Schema(description = "스킬 거래 리뷰 ID", example = "1")

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    image: link-it-registry.kr.ncr.ntruss.com/link-it-backend:latest
+    container_name: link-it-backend-loadtest
+    restart: "no"
+    ports:
+      - "8081:8080"
+    environment:
+      TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: loadtest
+      DB_HOST: link-it-mysql
+      DB_PORT: 3306
+      DB_NAME: linkit_loadtest
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: link-it-redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_EXPIRATION: ${JWT_ACCESS_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+      JWT_TEMP_EXPIRATION: ${JWT_TEMP_EXPIRATION}
+      DEFAULT_PROFILE_IMAGE_URL: ${DEFAULT_PROFILE_IMAGE_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_PROD_URL: ${FRONTEND_PROD_URL}
+      BACKEND_URL: ${BACKEND_URL}
+      BACKEND_PROD_URL: ${BACKEND_PROD_URL}
+      COOKIE_SECURE: ${COOKIE_SECURE}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN}
+      NCP_ACCESS_KEY: ${NCP_ACCESS_KEY}
+      NCP_SECRET_KEY: ${NCP_SECRET_KEY}
+      NCP_BUCKET_NAME: ${NCP_BUCKET_NAME}
+    networks:
+      - link-it-network
+
+networks:
+  link-it-network:
+    external: true
+    name: link-it_link-it-network

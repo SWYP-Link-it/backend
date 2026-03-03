@@ -2,6 +2,8 @@ package org.swyp.linkit.domain.exchange.service;
 
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 
 import java.time.LocalDate;
@@ -28,11 +30,11 @@ public interface SkillExchangeService {
     /**
      *  스킬 거래 요청 조회 - 보낸 요청
      */
-    SkillExchangeDetailsResponseDto getSentRequests(Long userId, Long cursorId, int size);
+    SentExchangeDetailsResponseDto getSentRequests(Long userId, Long cursorId, int size);
     /**
      *  스킬 거래 요청 조회 - 받은 요청
      */
-    SkillExchangeDetailsResponseDto getReceivedRequests(Long userId, Long cursorId, int size);
+    ReceivedExchangeDetailsResponseDto getReceivedRequests(Long userId, Long cursorId, int size);
     /**
      *  스킬 거래 수락
      */

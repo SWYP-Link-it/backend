@@ -89,6 +89,7 @@ app:
   cookie:
     secure: true
     same-site: None
+    domain: test-domain
 
 frontend:
   url: http://localhost:3000
@@ -112,3 +113,4 @@ ncp:
     secret-key: dummy
     bucket-name: link-it-dummy
     skill-image-path: skill-images/
+    chat-image-path: chat-images/

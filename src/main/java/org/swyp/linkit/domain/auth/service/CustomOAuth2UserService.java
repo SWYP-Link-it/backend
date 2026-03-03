@@ -1,10 +1,10 @@
 package org.swyp.linkit.domain.auth.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,12 +19,12 @@ import org.swyp.linkit.global.auth.oauth.KakaoOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.NaverOAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.OAuth2UserInfo;
 import org.swyp.linkit.global.auth.oauth.PendingOAuth2UserInfo;
-import org.swyp.linkit.global.error.exception.InvalidUserStatusException;
 import org.swyp.linkit.global.error.exception.UnsupportedOAuthProviderException;
 
 import java.util.Map;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
@@ -35,7 +35,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     @Override
     @Transactional
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-
         // 1. OAuth2 제공자로부터 사용자 정보 가져오기
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
@@ -49,7 +48,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // OAuth2 사용자 정보 처리
     private OAuth2User processOAuth2User(OAuthProvider provider, OAuth2User oAuth2User) {
-
         // 1. OAuth 제공자별 사용자 정보 추출
         OAuth2UserInfo oAuth2UserInfo = getOAuth2UserInfo(provider, oAuth2User.getAttributes());
 
@@ -64,16 +62,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
 
+            // 탈퇴한 사용자는 신규 회원처럼 처리
             if (user.getUserStatus() == UserStatus.WITHDRAWN) {
-                throw new OAuth2AuthenticationException(
-                        new OAuth2Error("WITHDRAWN_USER", "탈퇴한 사용자입니다", null)
-                );
+                log.info("탈퇴한 사용자의 재가입 시도: userId={}, oauthProvider={}, oauthId={}",
+                        user.getId(), provider, oauthId);
+
+                return createPendingUser(provider, oauthId, email, name, profileImageUrl, oAuth2User);
             }
 
             return CustomOAuth2User.from(user, oAuth2User.getAttributes());
         }
 
-        // 3. 신규 회원은 Redis에 임시 저장
+        return createPendingUser(provider, oauthId, email, name, profileImageUrl, oAuth2User);
+    }
+
+    // 임시 사용자 정보 생성 및 저장
+    private PendingOAuth2UserInfo createPendingUser(
+            OAuthProvider provider,
+            String oauthId,
+            String email,
+            String name,
+            String profileImageUrl,
+            OAuth2User oAuth2User) {
+
+        // 1. 신규 회원은 Redis에 임시 저장
         PendingUserInfoDto pendingUserInfo = PendingUserInfoDto.builder()
                 .oauthProvider(provider)
                 .oauthId(oauthId)
@@ -82,10 +94,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .profileImageUrl(profileImageUrl)
                 .build();
 
-        // 4. Redis에 JSON으로 저장하고 sessionId 받기
+        // 2. Redis에 JSON으로 저장하고 sessionId 받기
         String sessionId = pendingUserStorage.savePendingUser(pendingUserInfo.toJson());
 
-        // 5. PendingOAuth2UserInfo 반환
+        // 3. PendingOAuth2UserInfo 반환
         return new PendingOAuth2UserInfo(sessionId, pendingUserInfo, oAuth2User.getAttributes());
     }
 
