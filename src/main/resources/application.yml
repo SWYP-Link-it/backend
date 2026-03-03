@@ -88,6 +88,7 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:true}
     same-site: ${COOKIE_SAME_SITE:None}
+    domain: ${COOKIE_DOMAIN:test-domain}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
