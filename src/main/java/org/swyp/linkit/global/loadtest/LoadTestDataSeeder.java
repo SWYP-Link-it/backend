@@ -44,7 +44,7 @@ import java.util.stream.Collectors;
  * general  28,998명   | 인덱스·마켓 bulk 데이터
  *
  * 전체 데이터:
- * User 30,000 | UserSkill 50,000 | Exchange 22,00
+ * User 30,000 | UserSkill 50,000 | Exchange ~63,100
  * Settlement 19,000 | Review 9,000 | CreditHistory ~86,000
  */
 @Slf4j
@@ -83,7 +83,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
     // == 스킬 거래 규모 ==
     private static final int ACCEPTED_COUNT = 10_000;
-    private static final int COMPLETED_PER_PAGING = 30;     // paging_user 1명당 30건
+    private static final int COMPLETED_PER_PAGING = 167;    // paging_user 1명당 167건 → 총 50,100건
     private static final int PENDING_COUNT = 1_500;
     private static final int REJECTED_COUNT = 1_000;
     private static final int CANCELED_COUNT = 500;
