@@ -28,6 +28,7 @@ import java.util.Map;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/load-test")
 public class LoadTestTokenController {
 
     private final UserRepository userRepository;
