@@ -38,6 +38,35 @@ public class LoadTestSettlementController {
     }
 
     /**
+     * 시나리오2 부하 테스트 전 슬롯 초기화.
+     * mentor* 닉네임 유저가 receiver인 PENDING 거래를 CANCELED로 변경 → 슬롯 해제.
+     * requester* 닉네임 유저의 크레딧 잔액을 200으로 초기화 → 크레딧 고갈 방지.
+     *
+     * Response: { "canceledExchanges": N, "creditReset": M }
+     */
+    @PostMapping("/exchange/reset")
+    public ResponseEntity<Map<String, Object>> resetExchangeSlots() {
+        // PENDING → CANCELED (booked 슬롯 해제)
+        int canceled = jdbcTemplate.update(
+                "UPDATE skill_exchange se " +
+                "JOIN users u ON se.receiver_id = u.id " +
+                "SET se.exchange_status = 'CANCELED' " +
+                "WHERE se.exchange_status = 'PENDING' " +
+                "AND u.nickname LIKE 'mentor%'");
+
+        // requester 크레딧 잔액 초기화
+        int creditReset = jdbcTemplate.update(
+                "UPDATE credit c " +
+                "JOIN users u ON c.user_id = u.id " +
+                "SET c.balance = 200 " +
+                "WHERE u.nickname LIKE 'requester%'");
+
+        return ResponseEntity.ok(Map.of(
+                "canceledExchanges", canceled,
+                "creditReset", creditReset));
+    }
+
+    /**
      * process 실행 후 Before/After 재측정을 위해 PENDING 상태로 되돌린다.
      *
      * 초기화 범위:

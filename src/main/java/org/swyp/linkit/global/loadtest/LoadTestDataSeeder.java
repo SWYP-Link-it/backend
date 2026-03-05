@@ -71,7 +71,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
     // 총 user 수 = 30,000
     // == 그룹 규모 ==
-    private static final int MENTOR_COUNT = 2;
+    private static final int MENTOR_COUNT = 5;
     // 스킬 거래 요청 rqeuester
     private static final int REQUESTER_COUNT = 200;
     // 스킬 거래 요청 receiver
@@ -232,10 +232,10 @@ public class LoadTestDataSeeder implements CommandLineRunner {
             profile.addUserSkill(skill2);
             userSkillRepository.save(skill2);
 
-            // AvailableSchedule: MON ~ FRI 09:00 ~ 18:00
+            // AvailableSchedule: MON ~ FRI 01:00 ~ 23:00 (부하 테스트 슬롯 최대화)
             for (Weekday day : new Weekday[]{Weekday.MON, Weekday.TUE, Weekday.WED, Weekday.THU, Weekday.FRI}) {
                 availableScheduleRepository.save(
-                        AvailableSchedule.create(user, day, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                        AvailableSchedule.create(user, day, LocalTime.of(1, 0), LocalTime.of(23, 0)));
             }
 
             creditRepository.save(Credit.create(user, INITIAL_CREDIT));
