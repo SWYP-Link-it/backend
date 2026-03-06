@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  * Settlement 19,000 | Review 9,000 | CreditHistory ~86,000
  */
 @Slf4j
-@Component
+//@Component
 @ConditionalOnProperty(name = "loadtest.seeder.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class LoadTestDataSeeder implements CommandLineRunner {
@@ -510,6 +510,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
         int total = PAGING_USER_COUNT * COMPLETED_PER_PAGING; // 9,000
         long baseId = queryMaxExchangeId();
+        log.info("[Seeder] COMPLETED 거래 생성 시작 — 목표 {}건 (paging_user {}명 × {}건)", total, PAGING_USER_COUNT, COMPLETED_PER_PAGING);
 
         List<Object[]> exchangeBatch = new ArrayList<>(total);
         List<Object[]> settlementBatch = new ArrayList<>(total);
@@ -523,6 +524,9 @@ public class LoadTestDataSeeder implements CommandLineRunner {
         int globalIdx = 0;
         for (int i = 0; i < PAGING_USER_COUNT; i++) {
             Long requesterId = pagingUserIds.get(i);
+            if (i % 50 == 0) {
+                log.info("[Seeder] COMPLETED 배치 구성 중... {}/{} paging_user 처리 완료 ({}건)", i, PAGING_USER_COUNT, globalIdx);
+            }
             for (int j = 0; j < COMPLETED_PER_PAGING; j++) {
                 int cpIdx = (i + j) % COUNTERPART_COUNT;
                 Long receiverId = counterpartUserIds.get(cpIdx);
@@ -581,9 +585,15 @@ public class LoadTestDataSeeder implements CommandLineRunner {
             }
         }
 
+        log.info("[Seeder] COMPLETED 배치 구성 완료 — exchange {}건, settlement {}건, creditHistory {}건, review {}건",
+                exchangeBatch.size(), settlementBatch.size(), creditHistoryBatch.size(), reviewBatch.size());
+        log.info("[Seeder] COMPLETED exchange INSERT 시작...");
         batchInsert(EXCHANGE_SQL, exchangeBatch);
+        log.info("[Seeder] COMPLETED settlement INSERT 시작...");
         batchInsert(SETTLEMENT_SQL, settlementBatch);
+        log.info("[Seeder] COMPLETED creditHistory INSERT 시작...");
         batchInsert(CREDIT_HISTORY_SQL, creditHistoryBatch);
+        log.info("[Seeder] COMPLETED review INSERT 시작...");
         batchInsert(REVIEW_SQL, reviewBatch);
 
         // UserRatingStat 삽입
