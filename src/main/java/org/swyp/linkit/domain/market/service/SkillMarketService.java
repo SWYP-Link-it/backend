@@ -56,8 +56,7 @@ public class SkillMarketService {
         }
 
         // 3. 커서 기반 페이징 조회
-        int clampedSize = Math.min(Math.max(size, 1), 12);
-        Pageable pageable = PageRequest.of(0, clampedSize);
+        Pageable pageable = PageRequest.of(0, size);
         Slice<UserSkill> slice = userSkillRepository
                 .findVisibleSkillsWithCursor(category, trimmedKeyword, cursorId, pageable);
 
