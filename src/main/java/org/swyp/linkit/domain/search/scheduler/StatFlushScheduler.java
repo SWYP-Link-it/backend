@@ -14,11 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class StatFlushScheduler {
 
-    private final StringRedisTemplate stringRedisTemplate;
-    private final StatFlushService statFlushService;
-
     private static final String SKILL_VIEW_KEY_PATTERN = "stat:skill:view:*";
     private static final String SEARCH_KEYWORD_KEY_PATTERN = "stat:search:keyword:*";
+
+    private final StringRedisTemplate stringRedisTemplate;
+    private final StatFlushService statFlushService;
 
     // 스킬 조회수 Redis → DB flush
     @Scheduled(fixedDelayString = "${schedules.stat-flush-delay}")
@@ -30,7 +30,12 @@ public class StatFlushScheduler {
                 ScanOptions.scanOptions().match(SKILL_VIEW_KEY_PATTERN).count(100).build())) {
 
             while (cursor.hasNext()) {
-                totalFlushed += statFlushService.flushSkillViewKey(cursor.next());
+                String key = cursor.next();
+                try {
+                    totalFlushed += statFlushService.flushSkillViewKey(key);
+                } catch (Exception e) {
+                    log.warn("스킬 조회수 flush 실패 (유실 허용): key={}, error={}", key, e.getMessage());
+                }
             }
         } catch (Exception e) {
             log.warn("스킬 조회수 flush 중 오류 발생: error={}", e.getMessage());
@@ -49,7 +54,12 @@ public class StatFlushScheduler {
                 ScanOptions.scanOptions().match(SEARCH_KEYWORD_KEY_PATTERN).count(100).build())) {
 
             while (cursor.hasNext()) {
-                totalFlushed += statFlushService.flushSearchKeywordKey(cursor.next());
+                String key = cursor.next();
+                try {
+                    totalFlushed += statFlushService.flushSearchKeywordKey(key);
+                } catch (Exception e) {
+                    log.warn("검색어 카운트 flush 실패 (유실 허용): key={}, error={}", key, e.getMessage());
+                }
             }
         } catch (Exception e) {
             log.warn("검색어 카운트 flush 중 오류 발생: error={}", e.getMessage());
