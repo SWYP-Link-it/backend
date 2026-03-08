@@ -18,6 +18,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class StatFlushService {
 
+    private static final String SKILL_VIEW_KEY_PREFIX = "stat:skill:view:";
+    private static final String SEARCH_KEYWORD_KEY_PREFIX = "stat:search:keyword:";
+
     private final StringRedisTemplate stringRedisTemplate;
     private final SkillViewStatRepository skillViewStatRepository;
     private final SearchKeywordStatRepository searchKeywordStatRepository;
@@ -33,7 +36,7 @@ public class StatFlushService {
     @Transactional
     public int flushSkillViewKey(String key) {
         // 날짜 파싱: stat:skill:view:{yyyy-MM-dd}
-        String datePart = key.substring("stat:skill:view:".length());
+        String datePart = key.substring(SKILL_VIEW_KEY_PREFIX.length());
         LocalDate statDate = LocalDate.parse(datePart);
 
         List<String> data = stringRedisTemplate.execute(DRAIN_HASH_SCRIPT, List.of(key));
@@ -55,7 +58,7 @@ public class StatFlushService {
     @Transactional
     public int flushSearchKeywordKey(String key) {
         // 날짜 파싱: stat:search:keyword:{yyyy-MM-dd}
-        String datePart = key.substring("stat:search:keyword:".length());
+        String datePart = key.substring(SEARCH_KEYWORD_KEY_PREFIX.length());
         LocalDate statDate = LocalDate.parse(datePart);
 
         List<String> data = stringRedisTemplate.execute(DRAIN_HASH_SCRIPT, List.of(key));
