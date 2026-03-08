@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.search.repository.SearchKeywordStatRepository;
 import org.swyp.linkit.domain.search.repository.SkillViewStatRepository;
 
@@ -26,6 +27,7 @@ public class StatFlushScheduler {
     private static final String SEARCH_KEYWORD_KEY_PATTERN = "stat:search:keyword:*";
 
     // 스킬 조회수 Redis → DB flush
+    @Transactional
     @Scheduled(fixedDelayString = "${schedules.stat-flush-delay}")
     public void flushSkillViewStats() {
         log.info("== 스킬 조회수 flush 시작 ==");
@@ -45,6 +47,7 @@ public class StatFlushScheduler {
     }
 
     // 검색어 카운트 Redis → DB flush
+    @Transactional
     @Scheduled(fixedDelayString = "${schedules.stat-flush-delay}")
     public void flushSearchKeywordStats() {
         log.info("== 검색어 카운트 flush 시작 ==");
@@ -90,7 +93,7 @@ public class StatFlushScheduler {
         }
     }
 
-        private int flushSearchKeywordKey(String key) {
+    private int flushSearchKeywordKey(String key) {
         try {
             // 날짜 파싱: stat:search:keyword:{yyyy-MM-dd}
             String datePart = key.substring("stat:search:keyword:".length());
