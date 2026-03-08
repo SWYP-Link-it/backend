@@ -22,6 +22,8 @@ import org.swyp.linkit.global.swagger.docs.SkillMarketExceptionDocs;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +56,7 @@ public class SkillMarketController {
             @RequestParam(required = false) Long cursorId,
             
             @Parameter(description = "페이지 사이즈, 첫 요청 11 / 이후 요청 12", example = "11")
-            @RequestParam(required = false, defaultValue = "11") int size) {
+            @Min(1) @Max(12) @RequestParam(required = false, defaultValue = "11") int size) {
         log.info("[SkillMarket] GET /market/skills : category={}, searchKeyword={}, cursorId={}, size={}",
                 category, searchKeyword, cursorId, size);
 
