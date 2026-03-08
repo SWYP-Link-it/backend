@@ -16,9 +16,6 @@ spring:
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:test}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 50
-      minimum-idle: 10
 
   # JPA
   jpa:
