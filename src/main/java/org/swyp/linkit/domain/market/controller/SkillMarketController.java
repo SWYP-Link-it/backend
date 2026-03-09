@@ -56,7 +56,7 @@ public class SkillMarketController {
             @RequestParam(required = false) Long cursorId,
             
             @Parameter(description = "페이지 사이즈, 첫 요청 11 / 이후 요청 12", example = "11")
-            @Min(1) @Max(12) @RequestParam(required = false, defaultValue = "11") int size) {
+            @Min(1) @Max(20) @RequestParam(required = false, defaultValue = "11") int size) {
         log.info("[SkillMarket] GET /market/skills : category={}, searchKeyword={}, cursorId={}, size={}",
                 category, searchKeyword, cursorId, size);
 
