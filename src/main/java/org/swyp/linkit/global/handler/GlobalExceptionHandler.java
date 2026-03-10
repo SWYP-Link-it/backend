@@ -1,22 +1,24 @@
 package org.swyp.linkit.global.handler;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
 import org.swyp.linkit.global.error.ErrorCode;
 import org.swyp.linkit.global.error.dto.ValidationError;
 import org.swyp.linkit.global.error.exception.base.BusinessException;
 
-import java.util.List;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 
 @RestControllerAdvice
 @Slf4j
@@ -34,7 +36,7 @@ public class GlobalExceptionHandler {
                 .body(ApiResponseDto.fail(errorCode.getCode(), e.getMessage()));
     }
 
-    // 2. HTTP Method 가 다를때 예외 처리
+    // 2. HTTP Method 가 다를 때 예외 처리
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     protected ResponseEntity<ApiResponseDto<Void>> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException e) {
         log.error("HttpRequestMethodNotSupportedException: {}", e.getMessage());
@@ -54,7 +56,7 @@ public class GlobalExceptionHandler {
                         ErrorCode.HTTP_MESSAGE_NOT_READABLE.getMessage()));
     }
 
-    // 2. DTO 검증 실패 시 예외 처리
+    // 4. DTO 검증 실패 시 예외 처리
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseDto<List<ValidationError>>> handleValidationException(MethodArgumentNotValidException e) {
         log.error("handleValidationException: {}", e.getMessage());
@@ -63,9 +65,9 @@ public class GlobalExceptionHandler {
                 .getFieldErrors()
                 .stream()
                 .map(error -> new ValidationError(
-                        error.getField(),
-                        error.getDefaultMessage(),
-                        String.valueOf(error.getRejectedValue()))
+                error.getField(),
+                error.getDefaultMessage(),
+                String.valueOf(error.getRejectedValue()))
                 )
                 .toList();
 
@@ -73,7 +75,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(responseDto);
     }
 
-    // 3. @PathVariable이나 @RequestParam의 타입이 일치하지 않는 경우 예외 처리
+    // 5. @PathVariable이나 @RequestParam의 타입이 일치하지 않는 경우 예외 처리
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     protected ResponseEntity<ApiResponseDto<Void>> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
         log.error("MethodArgumentTypeMismatchException: {}", e.getMessage());
@@ -83,7 +85,7 @@ public class GlobalExceptionHandler {
                         e.getName() + "의 타입이 잘못되었습니다."));
     }
 
-    // 4. @RequestParam이 누락된 경우 예외 처리
+    // 6. @RequestParam이 누락된 경우 예외 처리
     @ExceptionHandler(MissingServletRequestParameterException.class)
     protected ResponseEntity<ApiResponseDto<Void>> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
         log.error("MissingServletRequestParameterException: {}", e.getMessage());
@@ -93,7 +95,7 @@ public class GlobalExceptionHandler {
                         e.getParameterName() + " 파라미터가 누락되었습니다."));
     }
 
-    // 4. 존재하지 않는 경로(URL)으로 인한 예외 처리
+    // 7. 존재하지 않는 경로(URL)으로 인한 예외 처리
     @ExceptionHandler(NoResourceFoundException.class)
     protected ResponseEntity<ApiResponseDto<Void>> handleNoResourceFoundException(NoResourceFoundException e) {
         log.error("NoResourceFoundException: {}", e.getMessage());
@@ -103,11 +105,21 @@ public class GlobalExceptionHandler {
                         ErrorCode.NOT_FOUND.getMessage()));
     }
 
-    // 5. 그 외 예상치 못한 모든 예외 처리
+    // 8. @RequestParam/@PathVariable Bean Validation 실패 예외 처리
+    @ExceptionHandler(ConstraintViolationException.class)
+    protected ResponseEntity<ApiResponseDto<Void>> handleConstraintViolationException(ConstraintViolationException e) {
+        log.error("ConstraintViolationException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
+                .body(ApiResponseDto.fail(
+                        ErrorCode.INVALID_INPUT_VALUE.getCode(),
+                        ErrorCode.INVALID_INPUT_VALUE.getMessage()));
+    }
+
+    // 9. 그 외 예상치 못한 모든 예외 처리
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ApiResponseDto<?>> handleException(Exception e) {
-        log.error("handleException: {}", e.getMessage());
-
+        log.error("handleException [{}]: {}", e.getClass().getName(), e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponseDto.fail(

@@ -30,22 +30,22 @@ import java.util.stream.Collectors;
 
 /**
  * 부하 테스트용 더미 데이터 시더 (30,000명 규모)
- * <p>
  * 성능 개선 3가지 수치 측정을 위한 데이터:
- * #1  POST /exchange/request — 비관적 락 범위 축소 (k6 VU 20)
- * #2  GET  /credits/histories — 인덱스 + DTO Projection (k6 VU 30)
- * #3  processAutoSettlement() — 2N→N 쿼리 (P6spy)
- *
+ * #1  POST /exchange/request          — 비관적 락 범위 축소 (k6 scenario1, VU 10/20/50)
+ * #2  GET  /exchange/request/sent     — 복합 인덱스 + LEFT JOIN 전환 (k6 scenario2, VU 100)
+ * GET  /exchange/request/received — 복합 인덱스 (k6 scenario2, VU 100)
+ * #3  processAutoSettlement()         — 2N→N 쿼리 통합 (k6 scenario3, P6spy)
+ * <p>
  * 유저 그룹:
- * mentor      2명     | 날짜·슬롯 조회 전용
- * requester 200명     | k6 동시성 VU
- * counterpart 500명   | 거래 수신자 풀
- * paging_user 300명   | 크레딧 내역 페이징 테스트
+ * mentor        5명   | k6 scenario1 락 경합 대상
+ * requester   200명   | k6 scenario1 VU
+ * counterpart 500명   | 거래 수신자·요청자 풀
+ * paging_user 300명   | 거래 내역 페이징 테스트 (sent 84건 + received 83건 = 167건/명)
  * general  28,998명   | 인덱스·마켓 bulk 데이터
- *
+ * <p>
  * 전체 데이터:
- * User 30,000 | UserSkill 50,000 | Exchange ~63,100
- * Settlement 19,000 | Review 9,000 | CreditHistory ~86,000
+ * User 30,000 | UserSkill ~50,000 | Exchange ~63,100
+ * Settlement ~60,100 | Review 25,200 | CreditHistory ~86,000
  */
 @Slf4j
 @Component
@@ -71,7 +71,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
     // 총 user 수 = 30,000
     // == 그룹 규모 ==
-    private static final int MENTOR_COUNT = 2;
+    private static final int MENTOR_COUNT = 5;
     // 스킬 거래 요청 rqeuester
     private static final int REQUESTER_COUNT = 200;
     // 스킬 거래 요청 receiver
@@ -83,7 +83,8 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
     // == 스킬 거래 규모 ==
     private static final int ACCEPTED_COUNT = 10_000;
-    private static final int COMPLETED_PER_PAGING = 167;    // paging_user 1명당 167건 → 총 50,100건
+    private static final int SENT_PER_PAGING = 84;       // paging_user 1명당 sent 84건 → 총 25,200건
+    private static final int RECEIVED_PER_PAGING = 83;   // paging_user 1명당 received 83건 → 총 24,900건
     private static final int PENDING_COUNT = 1_500;
     private static final int REJECTED_COUNT = 1_000;
     private static final int CANCELED_COUNT = 500;
@@ -154,10 +155,16 @@ public class LoadTestDataSeeder implements CommandLineRunner {
         List<SkillCategory> categories = createCategories();
 
         // 2. mentor 2명 (스킬 2개/명, AvailableSchedule MON~FRI)
-        transactionTemplate.execute(s -> { createMentors(categories); return null; });
+        transactionTemplate.execute(s -> {
+            createMentors(categories);
+            return null;
+        });
 
         // 3. requester 200명 (스킬 없음, k6 VU)
-        transactionTemplate.execute(s -> { createRequesters(); return null; });
+        transactionTemplate.execute(s -> {
+            createRequesters();
+            return null;
+        });
 
         // 4. counterpart 500명 (스킬 2개/명, AvailableSchedule 있음)
         List<Long> counterpartUserIds = new ArrayList<>(COUNTERPART_COUNT);
@@ -172,17 +179,23 @@ public class LoadTestDataSeeder implements CommandLineRunner {
 
         // 5. paging_user 300명 (스킬 2개/명, COMPLETED 거래 페이징 테스트)
         List<Long> pagingUserIds = new ArrayList<>(PAGING_USER_COUNT);
-        transactionTemplate.execute(s -> { createPagingUsers(categories, pagingUserIds); return null; });
+        transactionTemplate.execute(s -> {
+            createPagingUsers(categories, pagingUserIds);
+            return null;
+        });
 
         // 6. 28,998명 (24,198명 스킬 2개 보유)
         List<Long> generalUserIds = new ArrayList<>(GENERAL_COUNT);
-        transactionTemplate.execute(s -> { createGeneralUsers(categories, generalUserIds); return null; });
+        transactionTemplate.execute(s -> {
+            createGeneralUsers(categories, generalUserIds);
+            return null;
+        });
 
         // 7. ACCEPTED 거래 10,000건 → Settlement PENDING + CreditHistory USE
         createAcceptedExchanges(generalUserIds, counterpartUserIds,
                 counterpartMainSkillIds, counterpartSkillNames, counterpartSkillDurations);
 
-        // 8. COMPLETED 거래 9,000건 → Settlement COMPLETED + CreditHistory + Review + RatingStat
+        // 8. COMPLETED 거래 50,100건 (SENT 25,200 + RECEIVED 24,900) → Settlement + CreditHistory + Review(SENT only) + RatingStat
         createCompletedExchanges(pagingUserIds, counterpartUserIds,
                 counterpartMainSkillIds, counterpartSkillNames, counterpartSkillDurations);
 
@@ -232,10 +245,10 @@ public class LoadTestDataSeeder implements CommandLineRunner {
             profile.addUserSkill(skill2);
             userSkillRepository.save(skill2);
 
-            // AvailableSchedule: MON ~ FRI 09:00 ~ 18:00
+            // AvailableSchedule: MON ~ FRI 01:00 ~ 23:00 (부하 테스트 슬롯 최대화)
             for (Weekday day : new Weekday[]{Weekday.MON, Weekday.TUE, Weekday.WED, Weekday.THU, Weekday.FRI}) {
                 availableScheduleRepository.save(
-                        AvailableSchedule.create(user, day, LocalTime.of(9, 0), LocalTime.of(18, 0)));
+                        AvailableSchedule.create(user, day, LocalTime.of(1, 0), LocalTime.of(23, 0)));
             }
 
             creditRepository.save(Credit.create(user, INITIAL_CREDIT));
@@ -339,7 +352,8 @@ public class LoadTestDataSeeder implements CommandLineRunner {
         for (int i = 1; i <= PAGING_USER_COUNT; i++) {
             User user = userRepository.save(User.create(
                     OAuthProvider.KAKAO, "pu_oauth_" + i,
-                    "paging" + i + "@test.com", "페이징유저" + i, null, "paging_user" + i));
+                    "paging" + i + "@test.com", "페이징유저" + i, null,
+                    "paging_user" + i));
             UserProfile profile = userProfileRepository.save(
                     UserProfile.create(user, "페이징 테스트 유저", ExchangeType.BOTH,
                             regions[i % regions.length], null));
@@ -494,13 +508,15 @@ public class LoadTestDataSeeder implements CommandLineRunner {
     }
 
     /**
-     * COMPLETED 거래 9,000건
-     * requester: paging_user 300명 × 30건
-     * receiver:  counterpart 500명 (순환)
-     * → Settlement COMPLETED 9,000건
-     * → CreditHistory USE(requester) + ADD(receiver) 각 9,000건
-     * → Review 9,000건
-     * → UserRatingStat / UserSkillRatingStat 집계
+     * COMPLETED 거래 50,100건 (SENT 25,200 + RECEIVED 24,900)
+     * <p>
+     * SENT (paging_user = requester, counterpart = receiver):
+     * paging_user 300명 × 84건 = 25,200건
+     * → Settlement COMPLETED + CreditHistory USE/ADD + Review + RatingStat
+     * <p>
+     * RECEIVED (counterpart = requester, paging_user = receiver):
+     * paging_user 300명 × 83건 = 24,900건
+     * → Settlement COMPLETED + CreditHistory USE/ADD (Review 없음)
      */
     private void createCompletedExchanges(List<Long> pagingUserIds,
                                           List<Long> counterpartUserIds,
@@ -508,22 +524,29 @@ public class LoadTestDataSeeder implements CommandLineRunner {
                                           List<String> cpSkillNames,
                                           List<Integer> cpSkillDurations) {
 
-        int total = PAGING_USER_COUNT * COMPLETED_PER_PAGING; // 9,000
+        int totalSent = PAGING_USER_COUNT * SENT_PER_PAGING;     // 25,200
+        int totalReceived = PAGING_USER_COUNT * RECEIVED_PER_PAGING;  // 24,900
         long baseId = queryMaxExchangeId();
+        log.info("[Seeder] COMPLETED 거래 생성 시작 — sent {}건 + received {}건 (paging_user {}명)",
+                totalSent, totalReceived, PAGING_USER_COUNT);
 
-        List<Object[]> exchangeBatch = new ArrayList<>(total);
-        List<Object[]> settlementBatch = new ArrayList<>(total);
-        List<Object[]> reviewBatch = new ArrayList<>(total);
-        List<Object[]> creditHistoryBatch = new ArrayList<>(total * 2);
+        List<Object[]> exchangeBatch = new ArrayList<>(totalSent + totalReceived);
+        List<Object[]> settlementBatch = new ArrayList<>(totalSent + totalReceived);
+        List<Object[]> reviewBatch = new ArrayList<>(totalSent);
+        List<Object[]> creditHistoryBatch = new ArrayList<>((totalSent + totalReceived) * 2);
 
         // receiver별 평점 통계: [ratingSum, ratingCount, star1, star2, star3, star4, star5]
         Map<Long, int[]> receiverRatingStat = new LinkedHashMap<>();
         Map<Long, int[]> skillRatingStat = new LinkedHashMap<>();
 
-        int globalIdx = 0;
+        // ── SENT: paging_user = requester ────────────────────────────────────
+        int sentIdx = 0;
         for (int i = 0; i < PAGING_USER_COUNT; i++) {
             Long requesterId = pagingUserIds.get(i);
-            for (int j = 0; j < COMPLETED_PER_PAGING; j++) {
+            if (i % 50 == 0) {
+                log.info("[Seeder] SENT 배치 구성 중... {}/{} paging_user 처리 완료 ({}건)", i, PAGING_USER_COUNT, sentIdx);
+            }
+            for (int j = 0; j < SENT_PER_PAGING; j++) {
                 int cpIdx = (i + j) % COUNTERPART_COUNT;
                 Long receiverId = counterpartUserIds.get(cpIdx);
                 Long skillId = cpSkillIds.get(cpIdx);
@@ -531,7 +554,7 @@ public class LoadTestDataSeeder implements CommandLineRunner {
                 int duration = cpSkillDurations.get(cpIdx); // 30
                 int creditPrice = duration / 30;               // 1
 
-                LocalDate date = COMPLETED_DATE_BASE.plusDays(globalIdx % 210);
+                LocalDate date = COMPLETED_DATE_BASE.plusDays(sentIdx % 210);
                 LocalDateTime deadline = date.atStartOfDay();
                 Timestamp settledAt = Timestamp.valueOf(date.plusDays(1).atTime(10, 0));
 
@@ -545,29 +568,24 @@ public class LoadTestDataSeeder implements CommandLineRunner {
                         creditPrice, "COMPLETED"
                 });
 
-                long exchangeId = baseId + globalIdx + 1;
+                long exchangeId = baseId + sentIdx + 1;
 
-                // Settlement COMPLETED
                 settlementBatch.add(new Object[]{exchangeId, receiverId, creditPrice, "COMPLETED", settledAt});
 
-                // CreditHistory: requester USE
                 creditHistoryBatch.add(new Object[]{
                         requesterId, receiverId, exchangeId,
                         "EXCHANGE_REQUEST", "USE", creditPrice,
                         INITIAL_CREDIT - creditPrice, skillName
                 });
-                // CreditHistory: receiver ADD
                 creditHistoryBatch.add(new Object[]{
                         receiverId, requesterId, exchangeId,
                         "EXCHANGE_SETTLED", "ADD", creditPrice,
                         INITIAL_CREDIT + creditPrice, skillName
                 });
 
-                // Review (평점 분포: 5점 40%, 4점 35%, 3점 15%, 2점 5%, 1점 5%)
-                int rating = resolveRating(globalIdx);
+                int rating = resolveRating(sentIdx);
                 reviewBatch.add(new Object[]{exchangeId, skillId, requesterId, receiverId, null, rating});
 
-                // 통계 집계 (receiverId, skillId 기준)
                 int[] rs = receiverRatingStat.computeIfAbsent(receiverId, k -> new int[7]);
                 int[] ss = skillRatingStat.computeIfAbsent(skillId, k -> new int[7]);
                 rs[0] += rating;
@@ -577,13 +595,67 @@ public class LoadTestDataSeeder implements CommandLineRunner {
                 ss[1]++;
                 ss[rating + 1]++;
 
-                globalIdx++;
+                sentIdx++;
             }
         }
 
+        // ── RECEIVED: paging_user = receiver ─────────────────────────────────
+        int receivedIdx = 0;
+        for (int i = 0; i < PAGING_USER_COUNT; i++) {
+            Long receiverId = pagingUserIds.get(i);
+            if (i % 50 == 0) {
+                log.info("[Seeder] RECEIVED 배치 구성 중... {}/{} paging_user 처리 완료 ({}건)", i, PAGING_USER_COUNT, receivedIdx);
+            }
+            for (int j = 0; j < RECEIVED_PER_PAGING; j++) {
+                int cpIdx = (i * RECEIVED_PER_PAGING + j) % COUNTERPART_COUNT;
+                Long requesterId = counterpartUserIds.get(cpIdx);
+                Long skillId = cpSkillIds.get(cpIdx);
+                String skillName = cpSkillNames.get(cpIdx);
+                int duration = cpSkillDurations.get(cpIdx);
+                int creditPrice = duration / 30;
+
+                LocalDate date = COMPLETED_DATE_BASE.plusDays(receivedIdx % 210);
+                LocalDateTime deadline = date.atStartOfDay();
+                Timestamp settledAt = Timestamp.valueOf(date.plusDays(1).atTime(10, 0));
+
+                exchangeBatch.add(new Object[]{
+                        requesterId, receiverId, skillId,
+                        skillName, duration,
+                        java.sql.Date.valueOf(date),
+                        java.sql.Time.valueOf(EXCHANGE_START),
+                        java.sql.Time.valueOf(EXCHANGE_END),
+                        Timestamp.valueOf(deadline),
+                        creditPrice, "COMPLETED"
+                });
+
+                long exchangeId = baseId + totalSent + receivedIdx + 1;
+
+                settlementBatch.add(new Object[]{exchangeId, receiverId, creditPrice, "COMPLETED", settledAt});
+
+                creditHistoryBatch.add(new Object[]{
+                        requesterId, receiverId, exchangeId,
+                        "EXCHANGE_REQUEST", "USE", creditPrice,
+                        INITIAL_CREDIT - creditPrice, skillName
+                });
+                creditHistoryBatch.add(new Object[]{
+                        receiverId, requesterId, exchangeId,
+                        "EXCHANGE_SETTLED", "ADD", creditPrice,
+                        INITIAL_CREDIT + creditPrice, skillName
+                });
+
+                receivedIdx++;
+            }
+        }
+
+        log.info("[Seeder] COMPLETED 배치 구성 완료 — exchange {}건, settlement {}건, creditHistory {}건, review {}건",
+                exchangeBatch.size(), settlementBatch.size(), creditHistoryBatch.size(), reviewBatch.size());
+        log.info("[Seeder] COMPLETED exchange INSERT 시작...");
         batchInsert(EXCHANGE_SQL, exchangeBatch);
+        log.info("[Seeder] COMPLETED settlement INSERT 시작...");
         batchInsert(SETTLEMENT_SQL, settlementBatch);
+        log.info("[Seeder] COMPLETED creditHistory INSERT 시작...");
         batchInsert(CREDIT_HISTORY_SQL, creditHistoryBatch);
+        log.info("[Seeder] COMPLETED review INSERT 시작...");
         batchInsert(REVIEW_SQL, reviewBatch);
 
         // UserRatingStat 삽입
@@ -601,8 +673,8 @@ public class LoadTestDataSeeder implements CommandLineRunner {
                 .collect(Collectors.toList());
         batchInsert(USER_SKILL_RATING_STAT_SQL, skillStatBatch);
 
-        log.info("[Seeder] COMPLETED 거래 {}건 | Review {}건 | RatingStat {}건 | SkillRatingStat {}건",
-                globalIdx, reviewBatch.size(), ratingStatBatch.size(), skillStatBatch.size());
+        log.info("[Seeder] COMPLETED sent {}건 + received {}건 | Review {}건 | RatingStat {}건 | SkillRatingStat {}건",
+                sentIdx, receivedIdx, reviewBatch.size(), ratingStatBatch.size(), skillStatBatch.size());
     }
 
     /**
@@ -728,7 +800,6 @@ public class LoadTestDataSeeder implements CommandLineRunner {
         batchInsert(CREDIT_HISTORY_SQL, canCreditBatch);
         log.info("[Seeder] CANCELED 거래 {}건 | CreditHistory {}건", CANCELED_COUNT, canCreditBatch.size());
     }
-
 
 
     /**
