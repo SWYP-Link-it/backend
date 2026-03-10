@@ -17,6 +17,10 @@ import java.time.LocalTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Table(name = "skill_exchange", indexes = {
+        @Index(name = "idx_skill_exchange_requester_id", columnList = "requester_id, skill_exchange_id DESC"),
+        @Index(name = "idx_skill_exchange_receiver_id",  columnList = "receiver_id, skill_exchange_id DESC")
+})
 public class SkillExchange extends BaseTimeEntity {
 
     public static final int CREDIT_EXCHANGE_RATE_MINUTES = 30;
