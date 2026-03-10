@@ -12,7 +12,7 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/linkit_loadtest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/linkit_loadtest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&rewriteBatchedStatements=true
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:test}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -119,5 +119,5 @@ ncp:
 
 loadtest:
   seeder:
-    enabled: true
+    enabled: ${SEEDER_ENABLED:false}
 
