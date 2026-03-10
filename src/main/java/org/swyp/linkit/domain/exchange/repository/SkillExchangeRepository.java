@@ -10,7 +10,6 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery;
 import org.swyp.linkit.domain.exchange.repository.projection.SentDetailQuery;
-import org.swyp.linkit.domain.exchange.repository.projection.SkillExchangeDetailQuery;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,15 +34,16 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      *  requesterId, cursor 기반 페이징
      */
     @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.SentDetailQuery" +
-            "(se.id, se.requester.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
+            "(se.id, se.requester.id, r.id, se.receiverSkillId, " +
+            "CASE WHEN cr1.id IS NOT NULL THEN cr1.id ELSE cr2.id END, " +
+            "r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
-            "se.exchangeDuration, se.isRequesterRead, " +
-            "(SELECT rv.id FROM Review rv WHERE rv.skillExchangeId = se.id AND rv.reviewerId = se.requester.id)) " +
+            "se.exchangeDuration, se.isRequesterRead, rv.id) " +
             "FROM SkillExchange se " +
             "JOIN se.receiver r " +
-            "LEFT JOIN ChatRoom cr ON " +
-            "  (cr.mentor.id = r.id AND cr.mentee.id = se.requester.id) OR " +
-            "  (cr.mentor.id = se.requester.id AND cr.mentee.id = r.id) " +
+            "LEFT JOIN ChatRoom cr1 ON cr1.mentor.id = r.id AND cr1.mentee.id = se.requester.id " +
+            "LEFT JOIN ChatRoom cr2 ON cr2.mentor.id = se.requester.id AND cr2.mentee.id = r.id " +
+            "LEFT JOIN Review rv ON rv.skillExchangeId = se.id AND rv.reviewerId = se.requester.id " +
             "WHERE se.requester.id = :requesterId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
@@ -57,14 +57,15 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
      *  receiverId, cursor 기반 페이징
      */
     @Query("SELECT new org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery" +
-            "(se.id, se.receiver.id, r.id, se.receiverSkillId, cr.id, r.profileImageUrl, r.nickname, se.skillName, " +
+            "(se.id, se.receiver.id, r.id, se.receiverSkillId, " +
+            "CASE WHEN cr1.id IS NOT NULL THEN cr1.id ELSE cr2.id END, " +
+            "r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
             "se.exchangeDuration, se.isReceiverRead) " +
             "FROM SkillExchange se " +
             "JOIN se.requester r " +
-            "LEFT JOIN ChatRoom cr ON " +
-            "  (cr.mentor.id = r.id AND cr.mentee.id = se.receiver.id) OR " +
-            "  (cr.mentor.id = se.receiver.id AND cr.mentee.id = r.id) " +
+            "LEFT JOIN ChatRoom cr1 ON cr1.mentor.id = r.id AND cr1.mentee.id = se.receiver.id " +
+            "LEFT JOIN ChatRoom cr2 ON cr2.mentor.id = se.receiver.id AND cr2.mentee.id = r.id " +
             "WHERE se.receiver.id = :receiverId " +
             "AND (:cursorId IS NULL OR se.id < :cursorId) " +
             "ORDER BY se.id DESC")
