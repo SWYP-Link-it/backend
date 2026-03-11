@@ -45,14 +45,8 @@ public class ChatRoomResponseDto {
     @Schema(description = "마지막 메시지 시간 (epoch milliseconds)", example = "1705651200000")
     private Long lastMessageAtEpochMs;
 
-    @Schema(description = "현재 사용자 기준 읽지 않은 메시지 수", example = "3")
-    private Integer unreadCount;
-
-    @Schema(description = "멘토가 읽지 않은 메시지 수", example = "2")
-    private Integer unreadMentorCount;
-
-    @Schema(description = "멘티가 읽지 않은 메시지 수", example = "1")
-    private Integer unreadMenteeCount;
+    @Schema(description = "현재 사용자 기준 읽지 않은 메시지 수 (Notification 테이블 기반 집계)", example = "3")
+    private long unreadCount;
 
     @Schema(description = "채팅방 생성 시간 (epoch milliseconds)", example = "1705564800000")
     private Long createdAtEpochMs;
@@ -73,8 +67,6 @@ public class ChatRoomResponseDto {
                 .lastMessageContent(dto.getLastMessageContent())
                 .lastMessageAtEpochMs(dto.getLastMessageAtEpochMs())
                 .unreadCount(dto.getUnreadCount())
-                .unreadMentorCount(dto.getUnreadMentorCount())
-                .unreadMenteeCount(dto.getUnreadMenteeCount())
                 .createdAtEpochMs(dto.getCreatedAtEpochMs())
                 .modifiedAtEpochMs(dto.getModifiedAtEpochMs())
                 .build();
