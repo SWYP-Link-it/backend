@@ -35,7 +35,6 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.swyp.linkit.domain.exchange.entity.SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +49,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final SettlementService settlementService;
     private final SkillExchangeExpireProcessor exchangeExpireProcessor;
     private final SkillExchangeRequestProcessor exchangeRequestProcessor;
+    private final SkillExchangePreValidator exchangePreValidator;
 
     /**
      *  멘토의 거래 가능 스킬 목록 조회
@@ -196,57 +196,18 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
      * 스킬 거래 요청
      *
      * 락 범위 축소를 위해 두 단계로 분리:
-     * 1. 락 없이 선행 검증 + 멘토 운영 슬롯 조회
-     * 2. 락 구간: 예약 충돌 확인 + 저장 + 크레딧 차감
-     *
-     * @Transactional 미적용: 각 단계가 독립적인 트랜잭션으로 처리됨
+     *   1. preValidate() — readOnly TX 1회: 유저/스킬 검증, 크레딧 확인, 운영 슬롯 조회
+     *   2. executeWithLock() — write TX 1회: 예약 충돌 확인 + 저장 + 크레딧 차감
      */
     @Override
     public SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto) {
 
-        // 1. 락 없는 선행 검증
-        // - 유저/스킬 기본 검증, 크레딧 잔액 확인
-        Set<LocalTime> operatingSlots = preValidate(requesterId, dto);
+        // 1. 단일 readOnly 트랜잭션 — 선행 검증 + 운영 슬롯 조회
+        Set<LocalTime> operatingSlots = exchangePreValidator.preValidate(requesterId, dto);
 
-        // 2. 락 구간 (SkillExchangeRequestProcessor)
+        // [2단계] 락 구간 (SkillExchangeRequestProcessor)
         // - 비관적 락 획득 → 예약 현황 재조회 → 슬롯 충돌 확인 → 저장 → 크레딧 차감
         return exchangeRequestProcessor.executeWithLock(requesterId, dto, operatingSlots);
-    }
-
-    /**
-     * 락 없이 실행하는 선행 검증
-     */
-    private Set<LocalTime> preValidate(Long requesterId, SkillExchangeDto dto) {
-
-        // 1. 멘티, 멘토 조회 및 검증 → UserNotFoundException
-        userService.getUserById(requesterId);
-        User mentor = userService.getUserById(dto.getReceiverId());
-
-        // 2. 멘토 스킬 조회 (락 없이) → UserSkillNotFoundException
-        UserSkill mentorSkill = userSkillService.getUserSkillWithProfileAndUser(dto.getReceiverSkillId());
-
-        // 3. 스킬 소유자 검증 → SkillMentorMissMatchException
-        if (!mentorSkill.getUserProfile().getUser().getId().equals(mentor.getId())) {
-            throw new SkillMentorMissMatchException();
-        }
-
-        // 4. 스킬 공개 여부 검증 → SkillNotAvailableException
-        if (!mentorSkill.getIsVisible()) {
-            throw new SkillNotAvailableException();
-        }
-
-        // 5. 본인 신청 방지 → SelfExchangeNotAllowedException
-        if (requesterId.equals(dto.getReceiverId())) {
-            throw new SelfExchangeNotAllowedException();
-        }
-
-        // 6. 크레딧 잔액 검증 → NotFoundCreditException, NotEnoughCreditException
-        int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
-        creditService.validateAvailableBalance(requesterId, amount);
-
-        // 7. 멘토 운영 슬롯 조회
-        // -> getExpandedSchedules(): today+2 ~ today+3months 기간의 날짜를 생성하는 91일 루프
-        return getOperatingSlots(dto.getReceiverId(), dto.getRequestedDate());
     }
 
     /**
