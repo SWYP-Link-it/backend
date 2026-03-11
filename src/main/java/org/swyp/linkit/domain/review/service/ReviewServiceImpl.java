@@ -1,8 +1,6 @@
 package org.swyp.linkit.domain.review.service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,12 +11,14 @@ import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.domain.review.dto.ReviewDto;
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
 import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.review.dto.response.ReceivedReviewRatingInfoResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewDetailsResponseDto;
 import org.swyp.linkit.domain.review.dto.response.ReviewResponseDto;
 import org.swyp.linkit.domain.review.dto.response.SkillRatingInfoDto;
 import org.swyp.linkit.domain.review.entity.Review;
+import org.swyp.linkit.domain.review.entity.UserSkillRatingStat;
 import org.swyp.linkit.domain.review.repository.ReviewRepository;
 import org.swyp.linkit.domain.review.repository.projection.ReviewDetailQuery;
 import org.swyp.linkit.domain.user.entity.User;
@@ -78,7 +78,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰, 평점 수정
+     *  리뷰, 평점 수정
      */
     @Transactional
     @Override
@@ -94,7 +94,7 @@ public class ReviewServiceImpl implements ReviewService {
         validateUpdateAuthority(review, reviewerId);
 
         // 3. 평점 수정된 경우 집계 테이블 update
-        if (!review.getRating().equals(dto.getRating())) {
+        if(!review.getRating().equals(dto.getRating())){
             changeRatingStatistics(review, dto.getRating());
         }
 
@@ -106,7 +106,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰 삭제
+     *  리뷰 삭제
      */
     @Transactional
     @Override
@@ -127,7 +127,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰 단건 조회
+     *  리뷰 단건 조회
      */
     @Transactional(readOnly = true)
     @Override
@@ -147,9 +147,14 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     @Override
     public ReviewDetailsResponseDto getReceivedReviews(Long userId, Long skillId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
-        Slice<ReviewDetailQuery> slice = reviewRepository
-                .findAllByRevieweeId(userId, skillId, cursorId, pageable);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllByRevieweeId(userId, skillId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice);
     }
 
@@ -159,9 +164,14 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     @Override
     public ReviewDetailsResponseDto getWrittenReviews(Long userId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
-        Slice<ReviewDetailQuery> slice = reviewRepository
-                .findAllByReviewerId(userId, cursorId, pageable);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllByReviewerId(userId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice);
     }
 
@@ -171,76 +181,44 @@ public class ReviewServiceImpl implements ReviewService {
     @Transactional(readOnly = true)
     @Override
     public ReviewDetailsResponseDto getSkillReviews(Long skillId, Long cursorId, int size) {
+        // 1. Pageable 객체 생성
         Pageable pageable = PageRequest.of(0, size);
-        Slice<ReviewDetailQuery> slice = reviewRepository
-                .findAllBySkillId(skillId, cursorId, pageable);
+
+        // 2. 받은 리뷰 커서 기반 페이징 조회
+        Slice<ReviewDetailQuery> slice = reviewRepository.
+                findAllBySkillId(skillId, cursorId, pageable);
+
+        // 3. 응답 Dto 변환
         return ReviewDetailsResponseDto.from(slice);
     }
 
     /**
      * 받은 리뷰 페이지 - 유저 전체 평점 및 스킬별 평점 탭 목록 조회
-     * 집계 테이블 없이 Review 테이블에서 직접 계산
      */
     @Transactional(readOnly = true)
     @Override
     public ReceivedReviewRatingInfoResponseDto getReceivedReviewRatingInfo(Long userId) {
-        // 1. 유저 전체 평균 평점 직접 집계 (소수점 한 자리)
-        double userAvgRating = truncate(reviewRepository.findAvgRatingByRevieweeId(userId));
+        // 1. 유저 전체 평점 조회
+        UserRatingStatDto userRatingStat = userRatingService.getUserRating(userId);
 
-        // 2. 유저의 모든 스킬 목록 조회 (노출 여부 무관)
+        // 2. 유저의 모든 스킬 목록 조회 (노출 여부 무관, 스킬 평점 포함)
         List<UserSkill> skills = userSkillRepository.findAllSkillsByUserId(userId);
 
-        // 3. 스킬별 평균 평점 + 별점 분포 직접 집계 후 DTO 변환
+        // 3. 스킬별 평점 조회 후 DTO 변환
         List<SkillRatingInfoDto> skillRatingInfos = skills.stream()
                 .map(skill -> {
-                    double skillAvgRating = truncate(reviewRepository.findAvgRatingBySkillId(skill.getId()));
-
-                    // 별점 분포 조회 → Map<별점(1~5), 개수> 변환 (없는 별점은 0)
-                    Map<Integer, Long> starDist = reviewRepository
-                            .findStarDistributionBySkillId(skill.getId())
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    row -> (Integer) row[0],
-                                    row -> (Long) row[1]
-                            ));
-
-                    long totalCount = starDist.values().stream().mapToLong(Long::longValue).sum();
-
-                    // 별점별 퍼센티지 계산 (소수점 반올림 정수, 리뷰 없으면 0)
-                    int star1 = calcPercent(starDist.getOrDefault(1, 0L), totalCount);
-                    int star2 = calcPercent(starDist.getOrDefault(2, 0L), totalCount);
-                    int star3 = calcPercent(starDist.getOrDefault(3, 0L), totalCount);
-                    int star4 = calcPercent(starDist.getOrDefault(4, 0L), totalCount);
-                    int star5 = calcPercent(starDist.getOrDefault(5, 0L), totalCount);
-
-                    return SkillRatingInfoDto.of(skill, new UserSkillRatingStatDto(
-                            skill.getId(),
-                            null,
-                            skillAvgRating,
-                            star1, star2, star3, star4, star5
-                    ));
+                    UserSkillRatingStat ratingStat = skill.getUserSkillRatingStat();
+                    UserSkillRatingStatDto skillRatingStat = (ratingStat != null)
+                            ? UserSkillRatingStatDto.from(ratingStat)
+                            : UserSkillRatingStatDto.empty(skill.getId());
+                    return SkillRatingInfoDto.of(skill, skillRatingStat);
                 })
                 .toList();
 
-        return ReceivedReviewRatingInfoResponseDto.of(userAvgRating, skillRatingInfos);
+        return ReceivedReviewRatingInfoResponseDto.of(userRatingStat.getAvgRating(), skillRatingInfos);
     }
 
     // == private Methods ==
-
-    /**
-     * 소수점 한 자리로 반올림
-     */
-    private double truncate(double value) {
-        return Math.round(value * 10) / 10.0;
-    }
-
-    /**
-     * 별점 퍼센티지 계산 (totalCount = 0이면 0 반환)
-     */
-    private int calcPercent(long starCount, long totalCount) {
-        if (totalCount == 0) return 0;
-        return (int) Math.round((double) starCount / totalCount * 100);
-    }
 
     /**
      * 평점 통계 업데이트 (기존 평점 취소 후 새 평점 반영)
@@ -250,12 +228,13 @@ public class ReviewServiceImpl implements ReviewService {
         Long revieweeId = review.getRevieweeId();
         Long revieweeSkillId = review.getRevieweeSkillId();
 
+        // 평점 수정 처리
         userRatingService.changeUserRating(revieweeId, oldRating, newRating);
         userSkillRatingService.changeUserSkillRating(revieweeSkillId, oldRating, newRating);
     }
 
     /**
-     * 리뷰 생성 및 저장
+     *  리뷰 생성 및 저장
      */
     private Review createReviewAndSave(ReviewDto dto, Long skillExchangeId, Long reviewerId) {
         Review review = Review.create(
@@ -270,7 +249,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰 중복 작성 검증
+     *  리뷰 중복 작성 검증
      */
     private void validateReviewDuplication(Long skillExchangeId, Long reviewerId) {
         if (reviewRepository.existsBySkillExchangeIdAndReviewerId(skillExchangeId, reviewerId)) {
@@ -280,7 +259,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 스킬 거래 상태(COMPLETED) 검증
+     *  스킬 거래 상태(COMPLETED) 검증
      */
     private void validateReviewableStatus(ExchangeStatus exchangeStatus, Long reviewerId, Long skillExchangeId) {
         if (exchangeStatus != ExchangeStatus.COMPLETED) {
@@ -290,7 +269,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰 작성 권한 검증
+     *  리뷰 작성 권한 검증
      */
     private void validateReviewAuthority(User requester, Long reviewerId, Long skillExchangeId) {
         if (!requester.getId().equals(reviewerId)) {
@@ -300,7 +279,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /**
-     * 리뷰 수정/삭제 권한 검증
+     * 리뷰 수정 권한 검증
      */
     private void validateUpdateAuthority(Review review, Long reviewerId) {
         if (!review.getReviewerId().equals(reviewerId)) {
