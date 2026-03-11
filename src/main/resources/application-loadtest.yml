@@ -122,4 +122,6 @@ loadtest:
     enabled: ${SEEDER_ENABLED:false}
   review-seeder:
     enabled: ${REVIEW_SEEDER_ENABLED:false}
+  review-stat-seeder:
+    enabled: ${REVIEW_STAT_SEEDER_ENABLED:false}
 
