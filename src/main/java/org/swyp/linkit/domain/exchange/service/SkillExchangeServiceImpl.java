@@ -624,11 +624,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 totalOperatingSlots.add(start);
                 start = start.plusMinutes(30);
             }
-
-//            while (start.isBefore(end)) {
-//                totalOperatingSlots.add(start);
-//                start = start.plusMinutes(30);
-//            }
         }
         return totalOperatingSlots;
     }

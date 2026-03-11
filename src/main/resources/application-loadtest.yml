@@ -12,13 +12,10 @@ spring:
 
   # Database
   datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/linkit_loadtest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/linkit_loadtest?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8&rewriteBatchedStatements=true
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:test}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      maximum-pool-size: 50
-      minimum-idle: 10
 
   # JPA
   jpa:
@@ -95,6 +92,7 @@ app:
   cookie:
     secure: ${COOKIE_SECURE:true}
     same-site: ${COOKIE_SAME_SITE:None}
+    domain: ${COOKIE_DOMAIN:test-domain}
 
 frontend:
   url: ${FRONTEND_URL:http://localhost:3000}
@@ -104,9 +102,9 @@ backend:
   url: ${BACKEND_URL:http://localhost:8080}
   prod-url: ${BACKEND_PROD_URL:https://your-production-backend.com}
 
-# Scheduler — 부하테스트 중 비활성화 (측정값 오염 방지)
+# Scheduler — 기본 비활성화, 필요 시 SCHEDULER_ENABLED=true 환경변수로 활성화
 scheduler:
-  enabled: false
+  enabled: ${SCHEDULER_ENABLED:false}
 
 # NCP Object Storage
 ncp:
@@ -121,5 +119,5 @@ ncp:
 
 loadtest:
   seeder:
-    enabled: true
+    enabled: ${SEEDER_ENABLED:false}
 

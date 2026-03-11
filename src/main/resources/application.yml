@@ -102,6 +102,7 @@ backend:
 schedules:
   cancel-cron: "0 0 0 * * *"
   settle-cron: "0 0,30 * * * *"
+  stat-flush-delay: 300000
 
 # NCP Object Storage
 ncp:

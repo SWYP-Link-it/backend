@@ -19,6 +19,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
 
   redis:
     image: redis:7-alpine
@@ -33,6 +38,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   app:
     image: link-it-registry.kr.ncr.ntruss.com/link-it-backend:latest
@@ -77,6 +87,11 @@ services:
         condition: service_healthy
     networks:
       - link-it-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
 
 volumes:
   mysql-data:
