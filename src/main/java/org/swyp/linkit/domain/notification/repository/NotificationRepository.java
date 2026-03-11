@@ -103,4 +103,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("UPDATE Notification n SET n.isRead = true WHERE n.receiver.id = :userId AND n.isRead = false")
     int markAllAsReadByUserId(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자의 채팅방별 미읽음 CHAT_MESSAGE 알림 개수 일괄 조회
+     * 반환: [chatRoomId, count] 형태의 Object[] 리스트
+     */
+    @Query("SELECT n.refId, COUNT(n) FROM Notification n WHERE n.receiver.id = :userId AND n.isRead = false " +
+            "AND n.notificationType = 'CHAT_MESSAGE' GROUP BY n.refId")
+    List<Object[]> countUnreadChatGroupByRoomId(@Param("userId") Long userId);
 }

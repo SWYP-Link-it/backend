@@ -6,6 +6,8 @@ import org.swyp.linkit.domain.notification.dto.response.NotificationListResponse
 import org.swyp.linkit.domain.notification.dto.response.UnreadCountResponseDto;
 import org.swyp.linkit.domain.notification.entity.NotificationType;
 
+import java.util.Map;
+
 public interface NotificationService {
 
     // ===== 알림 생성 =====
@@ -35,6 +37,12 @@ public interface NotificationService {
      * 특정 채팅방의 미읽음 알림 개수 조회
      */
     ChatRoomUnreadCountResponseDto getChatRoomUnreadCount(Long userId, Long chatRoomId);
+
+    /**
+     * 채팅방별 미읽음 CHAT_MESSAGE 알림 개수 일괄 조회
+     * key: chatRoomId, value: 미읽음 수
+     */
+    Map<Long, Long> getUnreadChatCountsPerRoom(Long userId);
 
     // ===== 알림 목록 조회 =====
 

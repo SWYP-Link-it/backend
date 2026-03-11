@@ -12,9 +12,12 @@ import org.swyp.linkit.domain.chat.entity.ChatRoomStatus;
 import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.*;
+
+import java.util.Map;
 
 import java.util.List;
 import java.util.Set;
@@ -30,6 +33,7 @@ public class ChatRoomService {
     private final ChatRoomDeleteRepository chatRoomDeleteRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * 1:1 채팅방 생성 또는 조회 (멘토-멘티)
@@ -42,7 +46,8 @@ public class ChatRoomService {
         return chatRoomRepository.findByMentorIdAndMenteeId(mentorId, menteeId)
                 .map(room -> {
                     log.info("기존 채팅방 조회: roomId={}, mentorId={}, menteeId={}", room.getId(), mentorId, menteeId);
-                    return ChatRoomDto.fromWithCurrentUser(room, currentUserId, null);
+                    long unreadCount = notificationService.getChatRoomUnreadCount(currentUserId, room.getId()).getUnreadCount();
+                    return ChatRoomDto.fromWithCurrentUser(room, currentUserId, null, unreadCount);
                 })
                 .orElseGet(() -> {
                     // User 엔티티 조회 후 연관관계로 주입
@@ -52,7 +57,7 @@ public class ChatRoomService {
                     ChatRoom newRoom = ChatRoom.create(mentor, mentee);
                     chatRoomRepository.save(newRoom);
                     log.info("새로운 채팅방 생성: roomId={}, mentorId={}, menteeId={}", newRoom.getId(), mentorId, menteeId);
-                    return ChatRoomDto.fromWithCurrentUser(newRoom, currentUserId, null);
+                    return ChatRoomDto.fromWithCurrentUser(newRoom, currentUserId, null, 0L);
                 });
     }
 
@@ -67,6 +72,9 @@ public class ChatRoomService {
         // fetch join으로 한 번에 조회 (N+1 해결)
         // 결과: [ChatRoom(with mentor, mentee), ChatMessage(lastMessage)]
         List<Object[]> results = chatRoomRepository.findAllByUserIdWithDetails(userId);
+
+        // 채팅방별 미읽음 수를 한 번에 조회 (N+1 방지)
+        Map<Long, Long> unreadCountsMap = notificationService.getUnreadChatCountsPerRoom(userId);
 
         return results.stream()
                 .filter(row -> {
@@ -86,7 +94,10 @@ public class ChatRoomService {
                     String partnerNickname = partner != null ? partner.getNickname() : "알 수 없음";
                     String partnerProfileImageUrl = partner != null ? partner.getProfileImageUrl() : null;
 
-                    return ChatRoomDto.fromWithPartner(room, userId, partnerNickname, partnerProfileImageUrl, lastMessageContent);
+                    long unreadCount = unreadCountsMap.getOrDefault(room.getId(), 0L);
+
+                    return ChatRoomDto.fromWithPartner(room, userId, partnerNickname, partnerProfileImageUrl,
+                            lastMessageContent, unreadCount);
                 })
                 .collect(Collectors.toList());
     }
@@ -113,7 +124,8 @@ public class ChatRoomService {
                     .orElse(null);
         }
 
-        return ChatRoomDto.fromWithCurrentUser(room, currentUserId, lastMessageContent);
+        long unreadCount = notificationService.getChatRoomUnreadCount(currentUserId, roomId).getUnreadCount();
+        return ChatRoomDto.fromWithCurrentUser(room, currentUserId, lastMessageContent, unreadCount);
     }
 
     /**
