@@ -48,4 +48,9 @@ public interface ReviewService {
      */
     ReceivedReviewRatingInfoResponseDto getReceivedReviewRatingInfo(Long userId);
 
+    /**
+     * 받은 리뷰 페이지 - 유저 전체 평점 및 스킬별 평점 탭 목록 조회
+     */
+//    ReceivedReviewRatingInfoResponseDto getReceivedReviewRatingInfoBefore(Long userId);
+
 }
