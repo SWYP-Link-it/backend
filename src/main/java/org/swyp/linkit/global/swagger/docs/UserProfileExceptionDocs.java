@@ -82,6 +82,13 @@ public class UserProfileExceptionDocs {
                 return ErrorCode.SKILL_CATEGORY_NOT_FOUND;
             }
         }
+
+        public static class SkillImageUploadFailedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_IMAGE_UPLOAD_FAILED;
+            }
+        }
     }
 
     /**
@@ -155,6 +162,13 @@ public class UserProfileExceptionDocs {
             @Override
             public BaseErrorCode getErrorCode() {
                 return ErrorCode.AVAILABLE_SCHEDULE_NOT_FOUND;
+            }
+        }
+
+        public static class SkillImageUploadFailedException implements SwaggerExampleExceptions {
+            @Override
+            public BaseErrorCode getErrorCode() {
+                return ErrorCode.SKILL_IMAGE_UPLOAD_FAILED;
             }
         }
     }
