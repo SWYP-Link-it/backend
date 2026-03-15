@@ -124,38 +124,11 @@ public class UserProfileService {
                 // DB에 즉시 반영
                 userProfileRepository.flush();
 
-                // 이미지 업로드 및 저장
-                if (skillImages != null && skillImages.containsKey(i)) {
-                    List<MultipartFile> images = skillImages.get(i);
+                // 방금 생성한 스킬 조회
+                UserSkill createdSkill = savedProfile.getUserSkills().get(i);
 
-                    // 방금 생성한 스킬 조회
-                    UserSkill createdSkill = savedProfile.getUserSkills().get(i);
-
-                    // 각 이미지 업로드 및 저장
-                    for (int imageIndex = 0; imageIndex < images.size(); imageIndex++) {
-                        MultipartFile imageFile = images.get(imageIndex);
-
-                        // NCP에 업로드
-                        String imageUrl = userSkillImageUploadService.uploadSkillImage(
-                                imageFile,
-                                userId,
-                                createdSkill.getId()
-                        );
-
-                        // 업로드 성공 시 DB에 저장
-                        if (imageUrl != null) {
-                            allUploadedUrls.add(imageUrl);
-                            UserSkillImage skillImage = UserSkillImage.create(
-                                    createdSkill,
-                                    imageUrl,
-                                    imageIndex + 1,
-                                    imageFile.getOriginalFilename(),
-                                    imageFile.getSize()
-                            );
-                            createdSkill.addImage(skillImage);
-                        }
-                    }
-                }
+                // 이미지 업로드
+                allUploadedUrls.addAll(uploadSkillImages(createdSkill, skillImages, i, userId));
             }
         } catch (Exception e) {
             allUploadedUrls.forEach(url -> userSkillImageUploadService.deleteImage(url));
@@ -393,89 +366,93 @@ public class UserProfileService {
         });
 
         // 2. 추가/수정
-        for (int i = 0; i < newSkills.size(); i++) {
-            UserSkillDto skillDto = newSkills.get(i);
+        List<String> allUploadedUrls = new ArrayList<>();
 
-            if (skillDto.getId() == null) {
-                // 신규 생성
-                userSkillService.createUserSkill(userProfile.getId(), skillDto);
+        try {
+            for (int i = 0; i < newSkills.size(); i++) {
+                UserSkillDto skillDto = newSkills.get(i);
 
-                // DB에 즉시 반영
-                userProfileRepository.flush();
+                if (skillDto.getId() == null) {
+                    // 신규 생성
+                    userSkillService.createUserSkill(userProfile.getId(), skillDto);
 
-                // 새로 생성한 스킬 조회
-                UserSkill createdSkill = userProfile.getUserSkills()
-                        .get(userProfile.getUserSkills().size() - 1);
+                    // DB에 즉시 반영
+                    userProfileRepository.flush();
 
-                // 이미지 업로드
-                uploadSkillImages(createdSkill, skillImages, i, userId);
+                    // 새로 생성한 스킬 조회
+                    UserSkill createdSkill = userProfile.getUserSkills()
+                            .get(userProfile.getUserSkills().size() - 1);
 
-            } else {
-                // 기존 수정
-                userSkillService.updateUserSkill(userProfile.getId(), skillDto.getId(), skillDto);
+                    // 이미지 업로드
+                    allUploadedUrls.addAll(uploadSkillImages(createdSkill, skillImages, i, userId));
 
-                // 기존 스킬 조회
-                UserSkill existingSkill = existingSkillMap.get(skillDto.getId());
+                } else {
+                    // 기존 수정
+                    userSkillService.updateUserSkill(userProfile.getId(), skillDto.getId(), skillDto);
 
-                if (existingSkill != null) {
-                    // 새 파일이 전달된 경우에만 이미지 교체
-                    if (skillImages != null && skillImages.containsKey(i)) {
-                        // 기존 이미지 삭제
-                        existingSkill.getImages().forEach(image ->
-                                userSkillImageUploadService.deleteImage(image.getImageUrl()));
-                        existingSkill.clearImages();
+                    // 기존 스킬 조회
+                    UserSkill existingSkill = existingSkillMap.get(skillDto.getId());
 
-                        // 새 이미지 업로드
-                        uploadSkillImages(existingSkill, skillImages, i, userId);
+                    if (existingSkill != null) {
+                        // 새 파일이 전달된 경우에만 이미지 교체
+                        if (skillImages != null && skillImages.containsKey(i)) {
+                            // 기존 이미지 삭제
+                            existingSkill.getImages().forEach(image ->
+                                    userSkillImageUploadService.deleteImage(image.getImageUrl()));
+                            existingSkill.clearImages();
+
+                            // 새 이미지 업로드
+                            allUploadedUrls.addAll(uploadSkillImages(existingSkill, skillImages, i, userId));
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            allUploadedUrls.forEach(url -> userSkillImageUploadService.deleteImage(url));
+            throw e;
         }
     }
 
-    // 스킬 이미지 업로드
-    private void uploadSkillImages(
+    // 스킬 이미지 업로드 (업로드된 URL 리스트 반환)
+    private List<String> uploadSkillImages(
             UserSkill userSkill,
             Map<Integer, List<MultipartFile>> skillImages,
             int skillIndex,
             Long userId) {
 
         if (skillImages == null || !skillImages.containsKey(skillIndex)) {
-            return;
+            return List.of();
         }
 
         List<MultipartFile> images = skillImages.get(skillIndex);
         List<String> uploadedUrls = new ArrayList<>();
 
-        try {
-            // 각 이미지 업로드
-            for (int imageIndex = 0; imageIndex < images.size(); imageIndex++) {
-                MultipartFile imageFile = images.get(imageIndex);
+        // 각 이미지 업로드
+        for (int imageIndex = 0; imageIndex < images.size(); imageIndex++) {
+            MultipartFile imageFile = images.get(imageIndex);
 
-                // NCP에 업로드
-                String imageUrl = userSkillImageUploadService.uploadSkillImage(
-                        imageFile,
-                        userId,
-                        userSkill.getId()
+            // NCP에 업로드
+            String imageUrl = userSkillImageUploadService.uploadSkillImage(
+                    imageFile,
+                    userId,
+                    userSkill.getId()
+            );
+
+            // 업로드 성공 시 DB에 저장
+            if (imageUrl != null) {
+                uploadedUrls.add(imageUrl);
+                UserSkillImage skillImage = UserSkillImage.create(
+                        userSkill,
+                        imageUrl,
+                        imageIndex + 1,
+                        imageFile.getOriginalFilename(),
+                        imageFile.getSize()
                 );
-
-                // 업로드 성공 시 DB에 저장
-                if (imageUrl != null) {
-                    uploadedUrls.add(imageUrl);
-                    UserSkillImage skillImage = UserSkillImage.create(
-                            userSkill,
-                            imageUrl,
-                            imageIndex + 1,
-                            imageFile.getOriginalFilename(),
-                            imageFile.getSize()
-                    );
-                    userSkill.addImage(skillImage);
-                }
+                userSkill.addImage(skillImage);
             }
-        } catch (Exception e) {
-            uploadedUrls.forEach(url -> userSkillImageUploadService.deleteImage(url));
-            throw e;
         }
+
+        return uploadedUrls;
     }
 
     // 스케줄 차이 계산 및 반영
