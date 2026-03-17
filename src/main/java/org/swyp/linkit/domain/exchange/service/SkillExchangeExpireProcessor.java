@@ -9,6 +9,8 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.global.error.exception.ExchangeNotFoundException;
 
 @Component
@@ -18,6 +20,7 @@ public class SkillExchangeExpireProcessor {
 
     private final SkillExchangeRepository skillExchangeRepository;
     private final CreditService creditService;
+    private final NotificationService notificationService;
 
     // 새로운 트랜잭션 적용
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -30,12 +33,16 @@ public class SkillExchangeExpireProcessor {
 
         // pending -> expired 변경
         skillExchange.expire();
-        // 확인 안함 처리(requester, receiver)
-        skillExchange.updateReceiverReadToFalse();
-        skillExchange.updateRequesterReadToFalse();
 
         // 크레딧 환불 처리
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_EXPIRED);
+
+        // requester(멘티), receiver(멘토) 모두에게 상태 변경 알림
+        notificationService.createSystemNotification(skillExchange.getRequester().getId(),
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+        notificationService.createSystemNotification(skillExchange.getReceiver().getId(),
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+
         log.debug("거래 만료 처리 완료. skillExchangeId: {}", skillExchange.getId());
     }
 }
