@@ -44,6 +44,18 @@ public interface NotificationService {
      */
     Map<Long, Long> getUnreadChatCountsPerRoom(Long userId);
 
+    /**
+     * 보낸 요청 탭 - 미읽음 알림이 있는 skillExchangeId 일괄 조회
+     * (REQUEST_SENT + REQUEST_STATUS_CHANGED)
+     */
+    java.util.Set<Long> getUnreadSentRequestRefIds(Long userId);
+
+    /**
+     * 받은 요청 탭 - 미읽음 알림이 있는 skillExchangeId 일괄 조회
+     * (REQUEST_RECEIVED + REQUEST_STATUS_CHANGED)
+     */
+    java.util.Set<Long> getUnreadReceivedRequestRefIds(Long userId);
+
     // ===== 알림 목록 조회 =====
 
     /**

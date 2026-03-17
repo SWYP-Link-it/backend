@@ -111,4 +111,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("SELECT n.refId, COUNT(n) FROM Notification n WHERE n.receiver.id = :userId AND n.isRead = false " +
             "AND n.notificationType = 'CHAT_MESSAGE' GROUP BY n.refId")
     List<Object[]> countUnreadChatGroupByRoomId(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자의 미읽음 요청 알림 refId(skillExchangeId) 일괄 조회
+     */
+    @Query("SELECT DISTINCT n.refId FROM Notification n WHERE n.receiver.id = :userId AND n.isRead = false " +
+            "AND n.notificationType IN :types")
+    java.util.Set<Long> findUnreadRefIdsByUserIdAndTypes(@Param("userId") Long userId, @Param("types") List<NotificationType> types);
 }
