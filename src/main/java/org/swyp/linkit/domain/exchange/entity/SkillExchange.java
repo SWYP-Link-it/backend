@@ -181,26 +181,6 @@ public class SkillExchange extends BaseTimeEntity {
         this.exchangeStatus = ExchangeStatus.CANCELED;
     }
 
-    // == isRequesterRead false 처리 --
-    public void updateRequesterReadToFalse(){
-        this.isRequesterRead = false;
-    }
-
-    // == isReceiverRead false 처리 --
-    public void updateReceiverReadToFalse(){
-        this.isReceiverRead = false;
-    }
-
-    // == isRequesterRead true 처리 --
-    public void updateRequesterReadToTrue(){
-        this.isRequesterRead = true;
-    }
-
-    // == isReceiverRead true 처리 --
-    public void updateReceiverReadToTrue(){
-        this.isReceiverRead = true;
-    }
-
     // == ExchangeStatus 변경 메서드 ==
     public void updateExchangeStatus(ExchangeStatus exchangeStatus) {
         this.exchangeStatus = exchangeStatus;
