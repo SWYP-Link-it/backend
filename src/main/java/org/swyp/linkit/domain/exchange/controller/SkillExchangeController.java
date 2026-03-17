@@ -12,9 +12,12 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.request.SkillExchangeRequestDto;
-import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.ReceiverSkillsResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
 import org.swyp.linkit.domain.exchange.service.SkillExchangeService;
 import org.swyp.linkit.global.auth.oauth.CustomOAuth2User;
 import org.swyp.linkit.global.common.dto.ApiResponseDto;
@@ -113,21 +116,6 @@ public class SkillExchangeController {
 
         SkillExchangeResponseDto responseDto = exchangeService
                 .requestSkillExchange(auth2User.getUserId(), SkillExchangeDto.from(requestDto));
-        return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
-    }
-
-    /**
-     *  네비바 요청 관리 알림 및 요청 관리 진입 시 "받은 요청", "보낸 요청" 알림 용
-     */
-    @Operation(
-            summary = "네비바 요청 관리 알림 및 요청 관리 진입 시 \"받은 요청\", \"보낸 요청\" 알림 조회",
-            description = "네비바 요청 관리 알림 및 요청 관리 페이지 진입 시 구분되는 탭에 거래 상태가 변경되었는지 조회합니다."
-    )
-    @GetMapping("/request/notification")
-    public ResponseEntity<ApiResponseDto<SkillExchangeNotificationResponseDto>> getNotification(
-            @AuthenticationPrincipal CustomOAuth2User auth2User){
-
-        SkillExchangeNotificationResponseDto responseDto = exchangeService.getNotification(auth2User.getUserId());
         return ResponseEntity.ok(ApiResponseDto.success("요청이 정상적으로 처리되었습니다.", responseDto));
     }
 

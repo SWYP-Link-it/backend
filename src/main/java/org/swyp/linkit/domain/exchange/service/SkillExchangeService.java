@@ -1,7 +1,12 @@
 package org.swyp.linkit.domain.exchange.service;
 
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
-import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.ReceiverSkillsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
@@ -47,10 +52,6 @@ public interface SkillExchangeService {
      *  스킬 거래 취소
      */
     SkillExchangeResponseDto cancelSkillExchange(Long userId, Long skillExchangeId);
-    /**
-     *  요청 관리 네비바, 탭에 사용할 신규 알림 표시
-     */
-    SkillExchangeNotificationResponseDto getNotification(Long userId);
     /**
      *  거래 날짜 전날까지 수락되지 않은 요청 거절 처리(expired)
      */
