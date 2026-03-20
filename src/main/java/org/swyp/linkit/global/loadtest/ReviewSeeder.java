@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "loadtest.review-seeder.enabled", havingValue = "true")
+@ConditionalOnProperty(name = "loadtest.review.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class ReviewSeeder implements CommandLineRunner {
 

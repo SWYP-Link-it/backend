@@ -105,7 +105,7 @@ public class LoadTestTokenController {
      */
     @GetMapping("/skill-detail-skill-ids")
     public ResponseEntity<List<Long>> getSkillDetailSkillIds(
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "1000") int limit) {
 
         List<User> receivers = userRepository.findByNicknameStartingWithOrderByIdAsc(
                 "skill_detail_receiver", PageRequest.of(0, limit));
