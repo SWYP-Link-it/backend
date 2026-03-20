@@ -10,8 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
 import org.swyp.linkit.domain.market.dto.response.SkillSitemapResponseDto;
-import org.swyp.linkit.domain.market.dto.response.SkillRatingResponseDto;
-import org.swyp.linkit.domain.review.repository.ReviewRepository;
+import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
+import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
+import org.swyp.linkit.domain.review.service.UserRatingStatService;
+import org.swyp.linkit.domain.review.service.UserSkillRatingStatService;
 import org.swyp.linkit.domain.search.service.SearchKeywordRecorder;
 import org.swyp.linkit.domain.search.service.SkillViewRecorder;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
@@ -28,20 +30,21 @@ import lombok.extern.slf4j.Slf4j;
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
-    private final ReviewRepository reviewRepository;
+    private final UserRatingStatService userRatingStatService;
+    private final UserSkillRatingStatService userSkillRatingStatService;
     private final SearchKeywordRecorder searchKeywordRecorder;
     private final SkillViewRecorder skillViewRecorder;
 
     /**
-	 * 스킬 장터 목록 커서 기반 페이징 조회
-	 * - category, keyword 는 선택적 필터
-	 * - cursorId : null 이면 첫 페이지, 값이 있으면 해당 id 미만 조회
-	 * - 첫 페이지 size = 11 (배너 영역 고려), 이후 size = 12
-	 * - 검색어 집계는 SearchKeywordRecorder 에 위임 (Redis INCR)
-	 */
+     * 스킬 장터 목록 커서 기반 페이징 조회
+     * - category, keyword 는 선택적 필터
+     * - cursorId : null 이면 첫 페이지, 값이 있으면 해당 id 미만 조회
+     * - 첫 페이지 size = 11 (배너 영역 고려), 이후 size = 12
+     * - 검색어 집계는 SearchKeywordRecorder 에 위임 (Redis INCR)
+     */
     @Transactional(readOnly = true)
     public SkillCardPageResponseDto getVisibleSkills(SkillCategoryType category, String searchKeyword,
-            Long cursorId, int size) {
+                                                     Long cursorId, int size) {
         // 1. keyword trim 처리
         String trimmedKeyword = (searchKeyword != null && !searchKeyword.isBlank())
                 ? searchKeyword.trim()
@@ -87,42 +90,16 @@ public class SkillMarketService {
         Long userId = mainSkill.getOwnerId();
         List<UserSkill> allUserSkills = userSkillRepository.findVisibleSkillsWithImagesByUserId(userId);
 
-        // 4. 유저 평점 조회 (review 테이블 직접 집계)
-        double userAvgRating = Math.round(reviewRepository.findAvgRatingByRevieweeId(userId) * 10) / 10.0;
+        // 4. 유저 평점 조회
+        UserRatingStatDto userRating = userRatingStatService.getUserRating(userId);
 
-        // 5. 스킬 평균 평점 + 별점 분포 조회
-        double skillAvgRating = Math.round(reviewRepository.findAvgRatingBySkillId(skillId) * 10) / 10.0;
-        List<Object[]> dist = reviewRepository.findStarDistributionBySkillId(skillId);
-        SkillRatingResponseDto skillRating = buildSkillRating(skillAvgRating, dist);
+        // 5. 스킬별 평점 조회
+        UserSkillRatingStatDto skillRating = userSkillRatingStatService.getUserSkillRating(skillId);
 
         log.info("스킬 상세 정보 조회: skillId={}, userId={}, totalSkillsCount={}",
                 skillId, userId, allUserSkills.size());
 
         // 6. DTO 변환
-        return SkillDetailDto.from(mainSkill, allUserSkills, userAvgRating, skillRating);
-    }
-
-    private SkillRatingResponseDto buildSkillRating(double skillAvgRating, List<Object[]> dist) {
-        long[] starCounts = new long[6]; // 인덱스 1~5 사용
-        long total = 0;
-        for (Object[] row : dist) {
-            int rating = (Integer) row[0];
-            long count = (Long) row[1];
-            if (rating >= 1 && rating <= 5) {
-                starCounts[rating] = count;
-                total += count;
-            }
-        }
-        if (total == 0) {
-            return SkillRatingResponseDto.of(skillAvgRating, 0, 0, 0, 0, 0);
-        }
-        return SkillRatingResponseDto.of(
-                skillAvgRating,
-                (int) Math.round(starCounts[1] * 100.0 / total),
-                (int) Math.round(starCounts[2] * 100.0 / total),
-                (int) Math.round(starCounts[3] * 100.0 / total),
-                (int) Math.round(starCounts[4] * 100.0 / total),
-                (int) Math.round(starCounts[5] * 100.0 / total)
-        );
+        return SkillDetailDto.from(mainSkill, allUserSkills, userRating, skillRating);
     }
 }
