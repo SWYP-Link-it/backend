@@ -98,4 +98,26 @@ public class LoadTestTokenController {
 
         return ResponseEntity.ok(skillIds);
     }
+
+    /**
+     * skill_detail_receiver 그룹의 skillId 목록 반환.
+     * k6 scenario5 setup() 에서 스킬 상세 조회 대상 skillId 풀 구성에 사용.
+     */
+    @GetMapping("/skill-detail-skill-ids")
+    public ResponseEntity<List<Long>> getSkillDetailSkillIds(
+            @RequestParam(defaultValue = "500") int limit) {
+
+        List<User> receivers = userRepository.findByNicknameStartingWithOrderByIdAsc(
+                "skill_detail_receiver", PageRequest.of(0, limit));
+
+        List<Long> skillIds = receivers.stream()
+                .map(user -> {
+                    List<UserSkill> skills = userSkillRepository.findAllSkillsByUserId(user.getId());
+                    return skills.isEmpty() ? null : skills.get(0).getId();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(skillIds);
+    }
 }
