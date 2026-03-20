@@ -35,9 +35,9 @@ public class ReviewStatSeeder implements CommandLineRunner {
     @PersistenceContext
     private EntityManager em;
 
-    private static final int RECEIVER_COUNT = 500;
+    private static final int RECEIVER_COUNT = 1_000;
     private static final int REVIEWER_COUNT = 200;
-    private static final int REVIEW_PER_SKILL = 200;  // 500 × 200 = 100,000건
+    private static final int REVIEW_PER_SKILL = 200;  // 1,000 × 200 = 200,000건
 
     private static final int BATCH_SIZE = 1_000;
     private static final int FLUSH_EVERY = 100;
