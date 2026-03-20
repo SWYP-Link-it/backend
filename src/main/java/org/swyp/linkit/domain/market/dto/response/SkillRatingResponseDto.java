@@ -42,4 +42,15 @@ public class SkillRatingResponseDto {
                 .star5Percentage(dto.getStar5Percentage())
                 .build();
     }
+
+    public static SkillRatingResponseDto of(double avgRating, int star1, int star2, int star3, int star4, int star5) {
+        return SkillRatingResponseDto.builder()
+                .avgRating(avgRating)
+                .star1Percentage(star1)
+                .star2Percentage(star2)
+                .star3Percentage(star3)
+                .star4Percentage(star4)
+                .star5Percentage(star5)
+                .build();
+    }
 }

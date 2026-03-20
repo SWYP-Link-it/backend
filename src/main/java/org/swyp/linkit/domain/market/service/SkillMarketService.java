@@ -10,10 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.market.dto.response.SkillCardPageResponseDto;
 import org.swyp.linkit.domain.market.dto.response.SkillDetailDto;
 import org.swyp.linkit.domain.market.dto.response.SkillSitemapResponseDto;
-import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
-import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
-import org.swyp.linkit.domain.review.service.UserRatingStatService;
-import org.swyp.linkit.domain.review.service.UserSkillRatingStatService;
+import org.swyp.linkit.domain.market.dto.response.SkillRatingResponseDto;
+import org.swyp.linkit.domain.review.repository.ReviewRepository;
 import org.swyp.linkit.domain.search.service.SearchKeywordRecorder;
 import org.swyp.linkit.domain.search.service.SkillViewRecorder;
 import org.swyp.linkit.domain.user.entity.SkillCategoryType;
@@ -30,8 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SkillMarketService {
 
     private final UserSkillRepository userSkillRepository;
-    private final UserRatingStatService userRatingStatService;
-    private final UserSkillRatingStatService userSkillRatingStatService;
+    private final ReviewRepository reviewRepository;
     private final SearchKeywordRecorder searchKeywordRecorder;
     private final SkillViewRecorder skillViewRecorder;
 
@@ -90,16 +87,42 @@ public class SkillMarketService {
         Long userId = mainSkill.getOwnerId();
         List<UserSkill> allUserSkills = userSkillRepository.findVisibleSkillsWithImagesByUserId(userId);
 
-        // 4. 유저 평점 조회
-        UserRatingStatDto userRating = userRatingStatService.getUserRating(userId);
+        // 4. 유저 평점 조회 (review 테이블 직접 집계)
+        double userAvgRating = Math.round(reviewRepository.findAvgRatingByRevieweeId(userId) * 10) / 10.0;
 
-        // 5. 스킬별 평점 조회
-        UserSkillRatingStatDto skillRating = userSkillRatingStatService.getUserSkillRating(skillId);
+        // 5. 스킬 평균 평점 + 별점 분포 조회
+        double skillAvgRating = Math.round(reviewRepository.findAvgRatingBySkillId(skillId) * 10) / 10.0;
+        List<Object[]> dist = reviewRepository.findStarDistributionBySkillId(skillId);
+        SkillRatingResponseDto skillRating = buildSkillRating(skillAvgRating, dist);
 
         log.info("스킬 상세 정보 조회: skillId={}, userId={}, totalSkillsCount={}",
                 skillId, userId, allUserSkills.size());
 
         // 6. DTO 변환
-        return SkillDetailDto.from(mainSkill, allUserSkills, userRating, skillRating);
+        return SkillDetailDto.from(mainSkill, allUserSkills, userAvgRating, skillRating);
+    }
+
+    private SkillRatingResponseDto buildSkillRating(double skillAvgRating, List<Object[]> dist) {
+        long[] starCounts = new long[6]; // 인덱스 1~5 사용
+        long total = 0;
+        for (Object[] row : dist) {
+            int rating = (Integer) row[0];
+            long count = (Long) row[1];
+            if (rating >= 1 && rating <= 5) {
+                starCounts[rating] = count;
+                total += count;
+            }
+        }
+        if (total == 0) {
+            return SkillRatingResponseDto.of(skillAvgRating, 0, 0, 0, 0, 0);
+        }
+        return SkillRatingResponseDto.of(
+                skillAvgRating,
+                (int) Math.round(starCounts[1] * 100.0 / total),
+                (int) Math.round(starCounts[2] * 100.0 / total),
+                (int) Math.round(starCounts[3] * 100.0 / total),
+                (int) Math.round(starCounts[4] * 100.0 / total),
+                (int) Math.round(starCounts[5] * 100.0 / total)
+        );
     }
 }

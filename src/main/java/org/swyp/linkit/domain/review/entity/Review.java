@@ -17,7 +17,7 @@ public class Review extends BaseTimeEntity {
     @Column(name = "skill_exchange_review_id")
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = false)
     private Long skillExchangeId;
 
     @Column(nullable = false)
