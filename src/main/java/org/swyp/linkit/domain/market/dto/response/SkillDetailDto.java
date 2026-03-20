@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.swyp.linkit.domain.review.dto.UserRatingStatDto;
-import org.swyp.linkit.domain.review.dto.UserSkillRatingStatDto;
 import org.swyp.linkit.domain.user.dto.response.AvailableScheduleResponseDto;
 import org.swyp.linkit.domain.user.dto.response.UserSkillResponseDto;
 import org.swyp.linkit.domain.user.entity.AvailableSchedule;
@@ -80,7 +78,7 @@ public class SkillDetailDto {
     @Schema(description = "해당 사용자의 모든 스킬 목록 (등록 오래된 순)")
     private List<SkillSummaryDto> skills;
 
-    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills, UserRatingStatDto userRatingStat, UserSkillRatingStatDto skillRatingStat) {
+    public static SkillDetailDto from(UserSkill userSkill, List<UserSkill> allUserSkills, double userAvgRating, SkillRatingResponseDto skillRating) {
         UserProfile profile = userSkill.getUserProfile();
         User user = profile.getUser();
 
@@ -102,8 +100,8 @@ public class SkillDetailDto {
                 .detailedLocation(profile.getDetailedLocation())
 
 								// 평점 정보
-								.userAvgRating(userRatingStat.getAvgRating())
-								.skillRating(SkillRatingResponseDto.from(skillRatingStat))
+								.userAvgRating(userAvgRating)
+								.skillRating(skillRating)
 
                 // 스케줄 정보 (병합된 버전)
                 .availableSchedules(mergeConsecutiveSchedules(user.getAvailableSchedules()))
