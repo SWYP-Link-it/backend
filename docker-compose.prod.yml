@@ -5,8 +5,6 @@ services:
     image: mysql:8.0
     container_name: link-it-mysql
     restart: always
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_NAME}
