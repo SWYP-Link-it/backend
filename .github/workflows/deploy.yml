@@ -103,6 +103,9 @@ jobs:
             COOKIE_SECURE=${{ secrets.COOKIE_SECURE }}
             COOKIE_SAME_SITE=${{ secrets.COOKIE_SAME_SITE }}
             COOKIE_DOMAIN=${{ secrets.COOKIE_DOMAIN }}
+            NCP_ACCESS_KEY=${{ secrets.NCP_ACCESS_KEY }}
+            NCP_SECRET_KEY=${{ secrets.NCP_SECRET_KEY }}
+            NCP_BUCKET_NAME=${{ secrets.NCP_BUCKET_NAME }}
             EOF
 
             # 서버 내부 Docker Registry 로그인
