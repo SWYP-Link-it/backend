@@ -24,6 +24,7 @@ import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -141,14 +142,15 @@ public class NotificationServiceImpl implements NotificationService {
                 .map(Notification::getSenderId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
-        Map<Long, String> nicknameMap = userRepository.findAllById(senderIds).stream()
-                .collect(Collectors.toMap(User::getId, User::getNickname));
+        Map<Long, String> nicknameMap = senderIds.isEmpty()
+                ? Collections.emptyMap()
+                : userRepository.findAllById(senderIds).stream()
+                        .collect(Collectors.toMap(User::getId,
+                                u -> u.getNickname() != null ? u.getNickname() : "시스템"));
 
         List<NotificationDto> notificationDtos = combinedNotifications.stream()
                 .map(n -> {
-                    String senderNickname = n.getSenderId() != null
-                            ? nicknameMap.getOrDefault(n.getSenderId(), "시스템")
-                            : "시스템";
+                    String senderNickname = nicknameMap.getOrDefault(n.getSenderId(), "시스템");
                     String message = generateNotificationMessage(n.getNotificationType(), senderNickname);
                     return NotificationDto.from(n, message);
                 })
