@@ -25,6 +25,9 @@ import org.swyp.linkit.global.error.exception.UserNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -70,7 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
         publishNotificationToRedis(savedNotification, senderNickname, message);
 
         log.info("알림 생성 및 발송: receiverId={}, type={}, refId={}", receiverId, type, refId);
-        return NotificationDto.from(savedNotification);
+        return NotificationDto.from(savedNotification, message);
     }
 
     @Override
@@ -86,7 +89,7 @@ public class NotificationServiceImpl implements NotificationService {
         publishNotificationToRedis(savedNotification, "시스템", message);
 
         log.info("시스템 알림 생성 및 발송: receiverId={}, type={}, refId={}", receiverId, type, refId);
-        return NotificationDto.from(savedNotification);
+        return NotificationDto.from(savedNotification, message);
     }
 
     // ===== 미읽음 개수 조회 =====
@@ -133,8 +136,22 @@ public class NotificationServiceImpl implements NotificationService {
         combinedNotifications.addAll(unreadNotifications);
         combinedNotifications.addAll(readNotifications);
 
+        // sender nickname 배치 조회
+        Set<Long> senderIds = combinedNotifications.stream()
+                .map(Notification::getSenderId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> nicknameMap = userRepository.findAllById(senderIds).stream()
+                .collect(Collectors.toMap(User::getId, User::getNickname));
+
         List<NotificationDto> notificationDtos = combinedNotifications.stream()
-                .map(NotificationDto::from)
+                .map(n -> {
+                    String senderNickname = n.getSenderId() != null
+                            ? nicknameMap.getOrDefault(n.getSenderId(), "시스템")
+                            : "시스템";
+                    String message = generateNotificationMessage(n.getNotificationType(), senderNickname);
+                    return NotificationDto.from(n, message);
+                })
                 .collect(Collectors.toList());
 
         return NotificationListResponseDto.of(notificationDtos, unreadNotifications.size());
