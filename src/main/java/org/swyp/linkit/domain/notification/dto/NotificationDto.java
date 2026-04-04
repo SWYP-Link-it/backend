@@ -21,8 +21,9 @@ public class NotificationDto {
     private Long refId;
     private boolean isRead;
     private LocalDateTime createdAt;
+    private String message;
 
-    public static NotificationDto from(Notification notification) {
+    public static NotificationDto from(Notification notification, String message) {
         return NotificationDto.builder()
                 .id(notification.getId())
                 .receiverId(notification.getReceiver().getId())
@@ -31,6 +32,7 @@ public class NotificationDto {
                 .refId(notification.getRefId())
                 .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
+                .message(message)
                 .build();
     }
 }
