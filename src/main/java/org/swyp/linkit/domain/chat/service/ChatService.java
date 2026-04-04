@@ -14,6 +14,8 @@ import org.swyp.linkit.domain.chat.repository.ChatMessageDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatReadRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.*;
@@ -34,6 +36,7 @@ public class ChatService {
     private final ChatMessageDeleteRepository chatMessageDeleteRepository;
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String CHAT_CHANNEL_PREFIX = "chat:room:";
@@ -82,11 +85,9 @@ public class ChatService {
 
         room.updateLastMessage(saved.getId(), saved.getCreatedAt());
 
-        if (senderRole == SenderRole.MENTOR) {
-            room.incrementUnreadMenteeCount();
-        } else {
-            room.incrementUnreadMentorCount();
-        }
+        // 수신자에게 CHAT_MESSAGE 알림 생성 (Notification 기반 미읽음 카운트 관리)
+        Long receiverId = senderRole == SenderRole.MENTOR ? room.getMenteeId() : room.getMentorId();
+        notificationService.createNotification(receiverId, senderId, NotificationType.CHAT_MESSAGE, roomId);
 
         log.info("메시지 저장: roomId={}, senderId={}, messageId={}, type={}", roomId, senderId, saved.getId(), messageType);
         return saved;
@@ -150,13 +151,8 @@ public class ChatService {
         chatRead.updateLastReadMessage(lastMessage.getId());
         chatReadRepository.save(chatRead);
 
-        // 읽지 않은 메시지 수 초기화
-        boolean isMentor = room.getMentorId().equals(userId);
-        if (isMentor) {
-            room.resetUnreadMentorCount();
-        } else {
-            room.resetUnreadMenteeCount();
-        }
+        // Notification 기반 미읽음 알림 읽음 처리
+        notificationService.markChatRoomAsRead(userId, roomId);
 
         log.info("메시지 읽음 처리: roomId={}, userId={}, lastReadMessageId={}", roomId, userId, lastMessage.getId());
     }

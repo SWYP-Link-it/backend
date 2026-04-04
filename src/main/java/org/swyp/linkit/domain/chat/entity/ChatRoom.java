@@ -99,31 +99,4 @@ public class ChatRoom extends BaseTimeEntity {
         this.status = status;
     }
 
-    /**
-     * 멘토의 읽지 않은 메시지 수 증가
-     */
-    public void incrementUnreadMentorCount() {
-        this.unreadMentorCount++;
-    }
-
-    /**
-     * 멘티의 읽지 않은 메시지 수 증가
-     */
-    public void incrementUnreadMenteeCount() {
-        this.unreadMenteeCount++;
-    }
-
-    /**
-     * 멘토의 읽지 않은 메시지 수 초기화
-     */
-    public void resetUnreadMentorCount() {
-        this.unreadMentorCount = 0;
-    }
-
-    /**
-     * 멘티의 읽지 않은 메시지 수 초기화
-     */
-    public void resetUnreadMenteeCount() {
-        this.unreadMenteeCount = 0;
-    }
 }

@@ -35,7 +35,7 @@ public class ChatController {
 
     // ==================== 채팅방 API ====================
 
-    @Operation(summary = "채팅방 생성/조회", description = "1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다. 멘토와 멘티 간의 채팅방이 이미 존재하면 해당 채팅방을 반환합니다.")
+    @Operation(summary = "채팅방 생성/조회", description = "1:1 채팅방을 생성하거나 기존 채팅방을 조회합니다. 멘토와 멘티 간의 채팅방이 이미 존재하면 해당 채팅방을 반환합니다. unreadCount는 Notification 기반으로 집계됩니다.")
     @ApiErrorExceptionsExample(ChatExceptionDocs.class)
     @PostMapping("/rooms")
     public ApiResponseDto<ChatRoomResponseDto> createOrGetRoom(
@@ -53,7 +53,7 @@ public class ChatController {
         return ApiResponseDto.success("채팅방 조회/생성 완료", ChatRoomResponseDto.from(roomDto));
     }
 
-    @Operation(summary = "내 채팅방 목록 조회", description = "현재 사용자의 채팅방 목록을 조회합니다. 삭제된 채팅방은 제외되며, 마지막 메시지 기준 최신순으로 정렬됩니다.")
+    @Operation(summary = "내 채팅방 목록 조회", description = "현재 사용자의 채팅방 목록을 조회합니다. 삭제된 채팅방은 제외되며, 마지막 메시지 기준 최신순으로 정렬됩니다. 각 채팅방의 unreadCount는 Notification 테이블 기반으로 단일 배치 쿼리로 집계됩니다.")
     @ApiErrorExceptionsExample(ChatExceptionDocs.class)
     @GetMapping("/rooms")
     public ApiResponseDto<List<ChatRoomResponseDto>> getMyRooms(
@@ -129,7 +129,7 @@ public class ChatController {
         return ApiResponseDto.success("메시지 목록 조회 완료", messages);
     }
 
-    @Operation(summary = "메시지 읽음 처리", description = "채팅방의 모든 메시지를 읽음 처리합니다.")
+    @Operation(summary = "메시지 읽음 처리", description = "채팅방의 모든 메시지를 읽음 처리합니다. ChatRead 갱신과 함께 해당 채팅방의 CHAT_MESSAGE 알림도 일괄 읽음 처리됩니다. WebSocket 입장(/enter) 시에도 자동으로 호출됩니다.")
     @ApiErrorExceptionsExample(ChatExceptionDocs.class)
     @PostMapping("/rooms/{roomId}/read")
     public ApiResponseDto<Void> markAsRead(
