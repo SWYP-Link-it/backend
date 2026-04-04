@@ -19,6 +19,7 @@ import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatReadRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
 import org.swyp.linkit.domain.user.entity.User;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
 import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
@@ -59,6 +60,9 @@ class ChatServiceTest {
 
     @Mock
     private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private NotificationService notificationService;
 
     private ChatRoom chatRoom;
     private Long mentorId;

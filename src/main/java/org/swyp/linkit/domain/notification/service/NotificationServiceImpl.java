@@ -117,6 +117,15 @@ public class NotificationServiceImpl implements NotificationService {
         return ChatRoomUnreadCountResponseDto.of(chatRoomId, unreadCount);
     }
 
+    @Override
+    public Map<Long, Long> getUnreadChatCountsPerRoom(Long userId) {
+        return notificationRepository.countUnreadChatGroupByRoomId(userId).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
     // ===== 알림 목록 조회 =====
 
     @Override
@@ -258,7 +267,7 @@ public class NotificationServiceImpl implements NotificationService {
             case REQUEST_RECEIVED -> senderNickname + "님이 스킬 교환을 요청했습니다.";
             case REQUEST_SENT -> senderNickname + "님에게 스킬 교환 요청을 보냈습니다.";
             case REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다.";
-            case CHAT_MESSAGE -> senderNickname + "님이 메시지를 보냈습니다.";
+            case CHAT_MESSAGE -> senderNickname + "님에게 메시지 요청이 왔습니다.";
         };
     }
 }

@@ -1,4 +1,4 @@
-name: Deploy to NCP
+name: Deploy to GCP
 
 on:
   push:
@@ -9,11 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 코드 체크아웃
       - name: Checkout
         uses: actions/checkout@v4
 
-      # JDK 21 설치
+      # 1. JDK 설치 및 빌드
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -21,46 +20,64 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # Gradle wrapper 실행 권한 부여
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Gradle로 프로젝트 빌드 (테스트 제외)
       - name: Build with Gradle (skip tests)
         run: ./gradlew clean build -x test
 
-      # NCR(Naver Container Registry) 로그인
-      - name: Login to NCR
-        run: |
-          echo ${{ secrets.NCP_SECRET_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \
-            -u ${{ secrets.NCP_ACCESS_KEY }} \
-            --password-stdin
+      # 2. GCP 인증 및 Docker 설정
+      - name: Google Auth
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
 
-      # Docker 이미지 빌드 및 NCR에 푸시
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Docker Auth'
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      # 3. Docker 이미지 빌드 및 Artifact Registry 푸시
       - name: Build and Push Docker Image
         run: |
+          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY }}"
+          IMAGE_NAME="link-it-backend"
           SHA=${{ github.sha }}
-          IMAGE_SHA_TAG=${{ secrets.NCR_REGISTRY }}/link-it-backend:${SHA}
-          IMAGE_LATEST_TAG=${{ secrets.NCR_REGISTRY }}/link-it-backend:latest
+          
+          docker build -t $REGISTRY/$IMAGE_NAME:$SHA -t $REGISTRY/$IMAGE_NAME:latest .
+          docker push $REGISTRY/$IMAGE_NAME:$SHA
+          docker push $REGISTRY/$IMAGE_NAME:latest
 
-          docker build -t $IMAGE_SHA_TAG .
-          docker push $IMAGE_SHA_TAG
+      # 4. GCE 서버로 docker-compose.prod.yml 파일 전송
+      - name: Copy docker-compose to GCE
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_SSH_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          source: "docker-compose.prod.yml"
+          target: "/opt/link-it"
+          overwrite: true
 
-          docker tag $IMAGE_SHA_TAG $IMAGE_LATEST_TAG
-          docker push $IMAGE_LATEST_TAG
-
-      # 서버에서 Docker 컨테이너 배포
-      - name: Deploy on NCP
+      # 5. GCE 서버에서 배포 실행
+      - name: Deploy on GCP Compute Engine
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.NCP_HOST }}
-          username: ${{ secrets.NCP_SSH_USER }}
-          key: ${{ secrets.NCP_SSH_KEY }}
-          command_timeout: 30m
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_SSH_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
           script: |
+            # 디렉토리 생성 및 권한 설정
+            sudo mkdir -p /opt/link-it
+            sudo chown -R ${{ secrets.GCP_SSH_USER }}:${{ secrets.GCP_SSH_USER }} /opt/link-it
             cd /opt/link-it
 
+            # .env 파일 생성
             cat > .env << 'EOF'
+            GCP_REGION=${{ secrets.GCP_REGION }}
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            GCP_REPOSITORY=${{ secrets.GCP_REPOSITORY }}
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}
             DB_NAME=${{ secrets.DB_NAME }}
@@ -91,11 +108,13 @@ jobs:
             NCP_BUCKET_NAME=${{ secrets.NCP_BUCKET_NAME }}
             EOF
 
-            echo ${{ secrets.NCP_SECRET_KEY }} | docker login ${{ secrets.NCR_REGISTRY }} \
-              -u ${{ secrets.NCP_ACCESS_KEY }} \
-              --password-stdin
+            # 서버 내부 Docker Registry 로그인
+            echo '${{ secrets.GCP_SA_KEY }}' | docker login -u _json_key --password-stdin https://${{ secrets.GCP_REGION }}-docker.pkg.dev  
 
+            # 컨테이너 갱신 및 실행
             docker compose -f docker-compose.prod.yml down || true
-            docker pull ${{ secrets.NCR_REGISTRY }}/link-it-backend:latest
+            docker pull ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY }}/link-it-backend:latest
             docker compose -f docker-compose.prod.yml up -d
+            
+            # 미사용 이미지 정리
             docker image prune -f
