@@ -8,7 +8,10 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.swyp.linkit.domain.chat.dto.request.ChatSendRequestDto;
 import org.swyp.linkit.domain.chat.entity.ChatMessage;
+import org.swyp.linkit.domain.chat.entity.ChatRoom;
 import org.swyp.linkit.domain.chat.service.ChatService;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 
 import java.security.Principal;
 
@@ -24,6 +27,7 @@ import java.security.Principal;
 public class ChatStompController {
 
     private final ChatService chatService;
+    private final NotificationService notificationService;
 
     /**
      * 메시지 전송
@@ -45,6 +49,11 @@ public class ChatStompController {
                 dto.getMessageType(), dto.getImageUrl());
 
         chatService.publishToRedis(saved);
+
+        // 상대방에게 채팅 알림 발송
+        ChatRoom room = saved.getChatRoom();
+        Long receiverId = room.getMentorId().equals(senderId) ? room.getMenteeId() : room.getMentorId();
+        notificationService.createNotification(receiverId, senderId, NotificationType.CHAT_MESSAGE, roomId);
     }
 
     /**
