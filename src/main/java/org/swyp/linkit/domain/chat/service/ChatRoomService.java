@@ -9,6 +9,7 @@ import org.swyp.linkit.domain.chat.entity.ChatMessage;
 import org.swyp.linkit.domain.chat.entity.ChatRoom;
 import org.swyp.linkit.domain.chat.entity.ChatRoomDelete;
 import org.swyp.linkit.domain.chat.entity.ChatRoomStatus;
+import org.swyp.linkit.domain.chat.entity.MessageType;
 import org.swyp.linkit.domain.chat.repository.ChatMessageRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomDeleteRepository;
 import org.swyp.linkit.domain.chat.repository.ChatRoomRepository;
@@ -86,7 +87,7 @@ public class ChatRoomService {
                     ChatMessage lastMessage = (ChatMessage) row[1];
 
                     // 마지막 메시지 내용
-                    String lastMessageContent = lastMessage != null ? lastMessage.getContent() : null;
+                    String lastMessageContent = lastMessage != null ? resolveLastMessageContent(lastMessage) : null;
 
                     // 상대방 정보 (연관관계로 바로 접근)
                     boolean isMentor = room.getMentorId().equals(userId);
@@ -120,7 +121,7 @@ public class ChatRoomService {
         String lastMessageContent = null;
         if (room.getLastMessageId() != null) {
             lastMessageContent = chatMessageRepository.findById(room.getLastMessageId())
-                    .map(ChatMessage::getContent)
+                    .map(this::resolveLastMessageContent)
                     .orElse(null);
         }
 
@@ -179,6 +180,13 @@ public class ChatRoomService {
     }
 
     // === Private Helper Methods ===
+
+    private String resolveLastMessageContent(ChatMessage message) {
+        if (message.getMessageType() == MessageType.IMAGE) {
+            return "[이미지]";
+        }
+        return message.getContent();
+    }
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
