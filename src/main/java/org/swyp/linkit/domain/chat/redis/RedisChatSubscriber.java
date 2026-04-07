@@ -15,7 +15,7 @@ import org.swyp.linkit.domain.chat.dto.response.ChatPayloadResponseDto;
 public class RedisChatSubscriber implements MessageListener {
 
     private final SimpMessagingTemplate messagingTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {

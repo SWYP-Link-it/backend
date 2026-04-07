@@ -37,7 +37,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final NotificationService notificationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     private static final String CHAT_CHANNEL_PREFIX = "chat:room:";
 
