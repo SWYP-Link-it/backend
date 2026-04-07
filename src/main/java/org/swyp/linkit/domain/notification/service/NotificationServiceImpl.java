@@ -22,6 +22,7 @@ import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.NotificationAccessDeniedException;
 import org.swyp.linkit.global.error.exception.NotificationAlreadyReadException;
 import org.swyp.linkit.global.error.exception.NotificationNotFoundException;
+import org.swyp.linkit.global.error.exception.NotificationPublishFailedException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDateTime;
@@ -286,7 +287,9 @@ public class NotificationServiceImpl implements NotificationService {
             redisTemplate.convertAndSend(channel, json);
             log.info("Redis 알림 발행: channel={}, notificationId={}", channel, notificationId);
         } catch (JsonProcessingException e) {
-            log.error("알림 직렬화 실패: notificationId={}", notificationId, e);
+            // afterCommit() 내부에서는 예외를 throw해도 Spring이 억제하므로 로그로 대체
+            NotificationPublishFailedException ex = new NotificationPublishFailedException(notificationId);
+            log.error("[{}] {}", ex.getErrorCode().getCode(), ex.getMessage(), e);
         }
     }
 
