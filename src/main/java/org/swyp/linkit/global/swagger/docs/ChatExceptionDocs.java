@@ -59,4 +59,11 @@ public class ChatExceptionDocs {
             return ErrorCode.CHAT_SAME_USER;
         }
     }
+
+    public static class ChatPublishFailedException implements SwaggerExampleExceptions {
+        @Override
+        public BaseErrorCode getErrorCode() {
+            return ErrorCode.CHAT_PUBLISH_FAILED;
+        }
+    }
 }
