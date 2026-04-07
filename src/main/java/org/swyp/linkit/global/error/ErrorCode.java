@@ -135,6 +135,9 @@ public enum ErrorCode implements BaseErrorCode {
     @ExplainError("멘토와 멘티가 동일한 사용자인 경우 발생합니다.")
     CHAT_SAME_USER(HttpStatus.BAD_REQUEST, "CH006", "멘토와 멘티는 서로 다른 사용자여야 합니다."),
 
+    @ExplainError("Redis Pub/Sub을 통한 채팅 메시지 발행에 실패한 경우 발생합니다.")
+    CHAT_PUBLISH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "CH007", "채팅 메시지 발행에 실패했습니다."),
+
     // 크레딧
     @ExplainError("사용자의 크레딧 정보가 존재하지 않는 경우 발생합니다.")
     NOT_FOUND_CREDIT(HttpStatus.NOT_FOUND, "CR001", "크레딧 정보를 찾을 수 없습니다."),
@@ -215,6 +218,9 @@ public enum ErrorCode implements BaseErrorCode {
 
     @ExplainError("지원하지 않는 알림 타입을 요청한 경우 발생합니다.")
     INVALID_NOTIFICATION_TYPE(HttpStatus.BAD_REQUEST, "N004", "유효하지 않은 알림 타입입니다."),
+
+    @ExplainError("Redis Pub/Sub을 통한 알림 발행에 실패한 경우 발생합니다.")
+    NOTIFICATION_PUBLISH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "N005", "알림 발행에 실패했습니다."),
 
     // 채팅 파일 업로드
     @ExplainError("채팅 파일 크기가 10MB를 초과하는 경우 발생합니다.")
