@@ -69,7 +69,7 @@ public class NotificationServiceImpl implements NotificationService {
         Notification savedNotification = notificationRepository.save(notification);
 
         // WebSocket 실시간 알림 발송
-        String senderNickname = sender != null ? sender.getNickname() : "시스템";
+        String senderNickname = resolveNickname(sender);
         String message = generateNotificationMessage(type, senderNickname);
         publishNotificationToRedis(savedNotification, senderNickname, message);
 
@@ -154,8 +154,10 @@ public class NotificationServiceImpl implements NotificationService {
         Map<Long, String> nicknameMap = senderIds.isEmpty()
                 ? Collections.emptyMap()
                 : userRepository.findAllById(senderIds).stream()
-                        .collect(Collectors.toMap(User::getId,
-                                u -> u.getNickname() != null ? u.getNickname() : "시스템"));
+                        .collect(Collectors.toMap(
+                                User::getId,
+                                u -> hasValidNickname(u) ? u.getNickname() : "알 수 없음",
+                                (existing, replacement) -> existing));
 
         List<NotificationDto> notificationDtos = combinedNotifications.stream()
                 .map(n -> {
@@ -239,6 +241,18 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     // ===== Private Methods =====
+
+    /**
+     * sender가 null이면 "시스템", 존재하지만 닉네임이 없으면 "알 수 없음"
+     */
+    private String resolveNickname(User sender) {
+        if (sender == null) return "시스템";
+        return hasValidNickname(sender) ? sender.getNickname() : "알 수 없음";
+    }
+
+    private boolean hasValidNickname(User user) {
+        return user.getNickname() != null && !user.getNickname().isBlank();
+    }
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
