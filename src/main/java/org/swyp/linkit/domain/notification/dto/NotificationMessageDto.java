@@ -15,7 +15,7 @@ import java.time.ZoneOffset;
  * WebSocket으로 전송되는 알림 메시지 DTO
  */
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 public class NotificationMessageDto {

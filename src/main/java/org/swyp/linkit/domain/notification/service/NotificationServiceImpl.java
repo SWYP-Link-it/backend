@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.swyp.linkit.domain.notification.dto.NotificationDto;
 import org.swyp.linkit.domain.notification.dto.NotificationMessageDto;
 import org.swyp.linkit.domain.notification.dto.response.ChatRoomUnreadCountResponseDto;
@@ -20,6 +22,7 @@ import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.NotificationAccessDeniedException;
 import org.swyp.linkit.global.error.exception.NotificationAlreadyReadException;
 import org.swyp.linkit.global.error.exception.NotificationNotFoundException;
+import org.swyp.linkit.global.error.exception.NotificationPublishFailedException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDateTime;
@@ -260,18 +263,33 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     /**
-     * Redis Pub/Sub을 통해 알림 발행
+     * Redis Pub/Sub을 통해 알림 발행 (트랜잭션 커밋 이후 발행)
      */
     private void publishNotificationToRedis(Notification notification, String senderNickname, String message) {
         NotificationMessageDto payload = NotificationMessageDto.from(notification, senderNickname, message);
+        String channel = NOTIFICATION_CHANNEL_PREFIX + notification.getReceiver().getId();
 
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublish(channel, payload, notification.getId());
+                }
+            });
+        } else {
+            doPublish(channel, payload, notification.getId());
+        }
+    }
+
+    private void doPublish(String channel, NotificationMessageDto payload, Long notificationId) {
         try {
             String json = objectMapper.writeValueAsString(payload);
-            String channel = NOTIFICATION_CHANNEL_PREFIX + notification.getReceiver().getId();
             redisTemplate.convertAndSend(channel, json);
-            log.info("Redis 알림 발행: channel={}, notificationId={}", channel, notification.getId());
+            log.info("Redis 알림 발행: channel={}, notificationId={}", channel, notificationId);
         } catch (JsonProcessingException e) {
-            log.error("알림 직렬화 실패", e);
+            // afterCommit() 내부에서는 예외를 throw해도 Spring이 억제하므로 로그로 대체
+            NotificationPublishFailedException ex = new NotificationPublishFailedException(notificationId);
+            log.error("[{}] {}", ex.getErrorCode().getCode(), ex.getMessage(), e);
         }
     }
 
@@ -283,7 +301,7 @@ public class NotificationServiceImpl implements NotificationService {
             case REQUEST_RECEIVED -> senderNickname + "님이 스킬 교환을 요청했습니다.";
             case REQUEST_SENT -> senderNickname + "님에게 스킬 교환 요청을 보냈습니다.";
             case REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다.";
-            case CHAT_MESSAGE -> senderNickname + "님에게 메시지 요청이 왔습니다.";
+            case CHAT_MESSAGE -> senderNickname + "님이 메시지를 보냈습니다.";
         };
     }
 }

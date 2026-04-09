@@ -37,7 +37,7 @@ public class ChatService {
     private final UserRepository userRepository;
     private final StringRedisTemplate redisTemplate;
     private final NotificationService notificationService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     private static final String CHAT_CHANNEL_PREFIX = "chat:room:";
 
@@ -189,8 +189,9 @@ public class ChatService {
      * Redis Pub/Sub을 통해 메시지 발행
      */
     public void publishToRedis(ChatMessage message) {
+        Long roomId = message.getChatRoom().getId();
         ChatPayloadResponseDto payload = ChatPayloadResponseDto.builder()
-                .roomId(message.getChatRoom().getId())
+                .roomId(roomId)
                 .messageId(message.getId())
                 .senderId(message.getSenderId())
                 .senderRole(message.getSenderRole().name())
@@ -203,11 +204,12 @@ public class ChatService {
 
         try {
             String json = objectMapper.writeValueAsString(payload);
-            String channel = CHAT_CHANNEL_PREFIX + message.getChatRoom().getId();
+            String channel = CHAT_CHANNEL_PREFIX + roomId;
             redisTemplate.convertAndSend(channel, json);
             log.info("Redis 메시지 발행: channel={}, messageId={}", channel, message.getId());
         } catch (JsonProcessingException e) {
-            log.error("ChatPayload 직렬화 실패", e);
+            log.error("채팅 메시지 직렬화 실패: roomId={}, messageId={}", roomId, message.getId(), e);
+            throw new ChatPublishFailedException(roomId);
         }
     }
 
@@ -228,7 +230,8 @@ public class ChatService {
             redisTemplate.convertAndSend(channel, json);
             log.info("읽음 이벤트 발행: channel={}, readerId={}", channel, userId);
         } catch (JsonProcessingException e) {
-            log.error("읽음 이벤트 직렬화 실패", e);
+            log.error("읽음 이벤트 직렬화 실패: roomId={}, userId={}", roomId, userId, e);
+            throw new ChatPublishFailedException(roomId);
         }
     }
 
