@@ -11,6 +11,8 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
@@ -50,6 +52,7 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final SkillExchangeExpireProcessor exchangeExpireProcessor;
     private final SkillExchangeRequestProcessor exchangeRequestProcessor;
     private final SkillExchangePreValidator exchangePreValidator;
+    private final NotificationService notificationService;
 
     /**
      *  멘토의 거래 가능 스킬 목록 조회
@@ -228,6 +231,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
         // 4. bulkUpdate (isRequesterRead = false -> true)
         exchangeRepository.bulkUpdateRequesterReadStatus(userId);
+
+        // 5. Notification 도메인 읽음 처리 (REQUEST_SENT + REQUEST_STATUS_CHANGED)
+        notificationService.markSentRequestAsRead(userId);
+
         return responseDto;
     }
 
@@ -247,8 +254,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 응답 Dto 변환
         ReceivedExchangeDetailsResponseDto responseDto = ReceivedExchangeDetailsResponseDto.from(slice);
 
-        // 4.bulkUpdate (isReceiverRead = false -> true)
+        // 4. bulkUpdate (isReceiverRead = false -> true)
         exchangeRepository.bulkUpdateReceiverReadStatus(userId);
+
+        // 5. Notification 도메인 읽음 처리 (REQUEST_RECEIVED)
+        notificationService.markReceivedRequestAsRead(userId);
+
         return responseDto;
     }
 
@@ -271,7 +282,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
-        // 5. Settlement 생성
+        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        notificationService.createNotification(
+                skillExchange.getRequester().getId(), receiverId,
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+
+        // 6. Settlement 생성
         settlementService.createSettlement(skillExchange);
 
         // 5. 응답 Dto 변환
@@ -297,7 +313,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
-        // 5. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
+        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        notificationService.createNotification(
+                skillExchange.getRequester().getId(), receiverId,
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+
+        // 6. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_REJECTED);
 
         // 5. 응답 Dto 변환
@@ -407,6 +428,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 settlementService.cancelSettlement(skillExchange.getId());
             }
             skillExchange.updateReceiverReadToFalse();
+            // 알림 생성 (receiver에게 REQUEST_STATUS_CHANGED)
+            notificationService.createNotification(
+                    skillExchange.getReceiver().getId(), userId,
+                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
@@ -414,6 +439,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             }
             settlementService.cancelSettlement(skillExchange.getId());
             skillExchange.updateRequesterReadToFalse();
+            // 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+            notificationService.createNotification(
+                    skillExchange.getRequester().getId(), userId,
+                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
         }
     }
 

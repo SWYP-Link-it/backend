@@ -9,6 +9,8 @@ import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.entity.UserSkill;
 import org.swyp.linkit.domain.user.service.UserService;
@@ -32,6 +34,7 @@ public class SkillExchangeRequestProcessor {
     private final CreditService creditService;
     private final UserService userService;
     private final UserSkillService userSkillService;
+    private final NotificationService notificationService;
 
     /**
      * 처리 순서:
@@ -77,6 +80,14 @@ public class SkillExchangeRequestProcessor {
 
         // 6. 크레딧 차감 및 사용 내역 생성
         creditService.useCreditForExchangeRequest(saved);
+
+        // 7. 알림 생성 (멘토: REQUEST_RECEIVED, 멘티: REQUEST_SENT) — afterCommit 시 Redis 발행
+        notificationService.createNotification(
+                saved.getReceiver().getId(), saved.getRequester().getId(),
+                NotificationType.REQUEST_RECEIVED, saved.getId());
+        notificationService.createNotification(
+                saved.getRequester().getId(), saved.getReceiver().getId(),
+                NotificationType.REQUEST_SENT, saved.getId());
 
         // TX 커밋 → 락 해제
         return SkillExchangeResponseDto.from(saved);
