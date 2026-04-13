@@ -7,7 +7,6 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Controller;
 import org.swyp.linkit.domain.chat.dto.request.ChatSendRequestDto;
-import org.swyp.linkit.domain.chat.entity.ChatMessage;
 import org.swyp.linkit.domain.chat.service.ChatService;
 
 import java.security.Principal;
@@ -40,11 +39,9 @@ public class ChatStompController {
         // 권한 체크 (room 참여자 여부)
         chatService.assertParticipant(senderId, roomId);
 
-        ChatMessage saved = chatService.saveMessage(
+        chatService.saveMessage(
                 roomId, senderId, dto.getText(),
                 dto.getMessageType(), dto.getImageUrl());
-
-        chatService.publishToRedis(saved);
     }
 
     /**
@@ -94,11 +91,10 @@ public class ChatStompController {
     }
 
     /**
-     * 읽음 처리 공통 로직 (권한 체크 + 읽음 처리 + Redis 이벤트 발행)
+     * 읽음 처리 공통 로직 (권한 체크 + 읽음 처리 + Redis 이벤트 발행은 afterCommit에서 자동 처리)
      */
     private void processReadAndNotify(Long roomId, Long userId) {
         chatService.assertParticipant(userId, roomId);
         chatService.markAsRead(roomId, userId);
-        chatService.publishReadEvent(roomId, userId, null);
     }
 }
