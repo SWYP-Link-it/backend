@@ -88,6 +88,7 @@ public class ChatService {
         ChatMessage message = ChatMessage.create(room, sender, senderRole, content, messageType, fileUrl);
 
         ChatMessage saved = chatMessageRepository.save(message);
+        chatMessageRepository.flush();
 
         room.updateLastMessage(saved.getId(), saved.getCreatedAt());
 
@@ -108,12 +109,16 @@ public class ChatService {
                 .system(false)
                 .build();
         Long savedMessageId = saved.getId();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                doPublishToRedis(roomId, savedMessageId, payload);
-            }
-        });
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublishToRedis(roomId, savedMessageId, payload);
+                }
+            });
+        } else {
+            doPublishToRedis(roomId, savedMessageId, payload);
+        }
 
         log.info("메시지 저장: roomId={}, senderId={}, messageId={}, type={}", roomId, senderId, saved.getId(), messageType);
         return saved;
@@ -182,12 +187,16 @@ public class ChatService {
 
         // 트랜잭션 커밋 후 읽음 이벤트 Redis 발행 (Transactional Outbox 패턴)
         Long lastReadId = lastMessage.getId();
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                doPublishReadEvent(roomId, userId, lastReadId);
-            }
-        });
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublishReadEvent(roomId, userId, lastReadId);
+                }
+            });
+        } else {
+            doPublishReadEvent(roomId, userId, lastReadId);
+        }
 
         log.info("메시지 읽음 처리: roomId={}, userId={}, lastReadMessageId={}", roomId, userId, lastMessage.getId());
     }
