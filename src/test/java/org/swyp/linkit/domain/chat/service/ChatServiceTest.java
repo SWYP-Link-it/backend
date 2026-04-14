@@ -1,5 +1,6 @@
 package org.swyp.linkit.domain.chat.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,6 +64,9 @@ class ChatServiceTest {
 
     @Mock
     private NotificationService notificationService;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     private ChatRoom chatRoom;
     private Long mentorId;
