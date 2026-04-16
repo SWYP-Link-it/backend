@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.swyp.linkit.domain.chat.dto.ChatMessageDto;
 import org.swyp.linkit.domain.chat.dto.response.ChatPayloadResponseDto;
 import org.swyp.linkit.domain.chat.entity.*;
@@ -18,7 +20,11 @@ import org.swyp.linkit.domain.notification.entity.NotificationType;
 import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.user.entity.User;
 import org.swyp.linkit.domain.user.repository.UserRepository;
-import org.swyp.linkit.global.error.exception.*;
+import org.swyp.linkit.global.error.exception.ChatInvalidMessageException;
+import org.swyp.linkit.global.error.exception.ChatMessageNotFoundException;
+import org.swyp.linkit.global.error.exception.ChatNotParticipantException;
+import org.swyp.linkit.global.error.exception.ChatRoomNotFoundException;
+import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.ZoneOffset;
 import java.util.List;
@@ -82,12 +88,37 @@ public class ChatService {
         ChatMessage message = ChatMessage.create(room, sender, senderRole, content, messageType, fileUrl);
 
         ChatMessage saved = chatMessageRepository.save(message);
+        chatMessageRepository.flush();
 
         room.updateLastMessage(saved.getId(), saved.getCreatedAt());
 
         // 수신자에게 CHAT_MESSAGE 알림 생성 (Notification 기반 미읽음 카운트 관리)
         Long receiverId = senderRole == SenderRole.MENTOR ? room.getMenteeId() : room.getMentorId();
         notificationService.createNotification(receiverId, senderId, NotificationType.CHAT_MESSAGE, roomId);
+
+        // 트랜잭션 커밋 후 Redis 발행 (Transactional Outbox 패턴)
+        ChatPayloadResponseDto payload = ChatPayloadResponseDto.builder()
+                .roomId(roomId)
+                .messageId(saved.getId())
+                .senderId(saved.getSenderId())
+                .senderRole(saved.getSenderRole().name())
+                .text(saved.getContent())
+                .messageType(saved.getMessageType().name())
+                .imageUrl(saved.getFileUrl())
+                .sentAtEpochMs(saved.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
+                .system(false)
+                .build();
+        Long savedMessageId = saved.getId();
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublishToRedis(roomId, savedMessageId, payload);
+                }
+            });
+        } else {
+            doPublishToRedis(roomId, savedMessageId, payload);
+        }
 
         log.info("메시지 저장: roomId={}, senderId={}, messageId={}, type={}", roomId, senderId, saved.getId(), messageType);
         return saved;
@@ -154,6 +185,19 @@ public class ChatService {
         // Notification 기반 미읽음 알림 읽음 처리
         notificationService.markChatRoomAsRead(userId, roomId);
 
+        // 트랜잭션 커밋 후 읽음 이벤트 Redis 발행 (Transactional Outbox 패턴)
+        Long lastReadId = lastMessage.getId();
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublishReadEvent(roomId, userId, lastReadId);
+                }
+            });
+        } else {
+            doPublishReadEvent(roomId, userId, lastReadId);
+        }
+
         log.info("메시지 읽음 처리: roomId={}, userId={}, lastReadMessageId={}", roomId, userId, lastMessage.getId());
     }
 
@@ -185,38 +229,28 @@ public class ChatService {
         log.info("메시지 삭제: roomId={}, userId={}, count={}", roomId, userId, messageIds.size());
     }
 
-    /**
-     * Redis Pub/Sub을 통해 메시지 발행
-     */
-    public void publishToRedis(ChatMessage message) {
-        Long roomId = message.getChatRoom().getId();
-        ChatPayloadResponseDto payload = ChatPayloadResponseDto.builder()
-                .roomId(roomId)
-                .messageId(message.getId())
-                .senderId(message.getSenderId())
-                .senderRole(message.getSenderRole().name())
-                .text(message.getContent())
-                .messageType(message.getMessageType().name())
-                .imageUrl(message.getFileUrl())
-                .sentAtEpochMs(message.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli())
-                .system(false)
-                .build();
+    // === Private Helper Methods ===
 
+    /**
+     * Redis Pub/Sub 메시지 발행 (afterCommit 내부 전용)
+     * afterCommit에서 발생하는 예외는 Spring이 억제하므로 로그로 대체
+     */
+    private void doPublishToRedis(Long roomId, Long messageId, ChatPayloadResponseDto payload) {
         try {
             String json = objectMapper.writeValueAsString(payload);
             String channel = CHAT_CHANNEL_PREFIX + roomId;
             redisTemplate.convertAndSend(channel, json);
-            log.info("Redis 메시지 발행: channel={}, messageId={}", channel, message.getId());
+            log.info("Redis 메시지 발행: channel={}, messageId={}", channel, messageId);
         } catch (JsonProcessingException e) {
-            log.error("채팅 메시지 직렬화 실패: roomId={}, messageId={}", roomId, message.getId(), e);
-            throw new ChatPublishFailedException(roomId);
+            log.error("채팅 메시지 직렬화 실패: roomId={}, messageId={}", roomId, messageId, e);
         }
     }
 
     /**
-     * 읽음 처리 이벤트 Redis 발행
+     * 읽음 이벤트 Redis 발행 (afterCommit 내부 전용)
+     * afterCommit에서 발생하는 예외는 Spring이 억제하므로 로그로 대체
      */
-    public void publishReadEvent(Long roomId, Long userId, Long lastReadMessageId) {
+    private void doPublishReadEvent(Long roomId, Long userId, Long lastReadMessageId) {
         ChatPayloadResponseDto payload = ChatPayloadResponseDto.builder()
                 .roomId(roomId)
                 .readerId(userId)
@@ -231,11 +265,8 @@ public class ChatService {
             log.info("읽음 이벤트 발행: channel={}, readerId={}", channel, userId);
         } catch (JsonProcessingException e) {
             log.error("읽음 이벤트 직렬화 실패: roomId={}, userId={}", roomId, userId, e);
-            throw new ChatPublishFailedException(roomId);
         }
     }
-
-    // === Private Helper Methods ===
 
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
