@@ -22,7 +22,6 @@ public record SentDetailQuery(
         LocalDate exchangeDate,
         LocalTime exchangeTime,
         int exchangeDuration,
-        boolean isRead,
         Long reviewId
 ) {
 }

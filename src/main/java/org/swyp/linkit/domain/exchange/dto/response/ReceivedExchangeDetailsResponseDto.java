@@ -8,6 +8,7 @@ import org.springframework.data.domain.Slice;
 import org.swyp.linkit.domain.exchange.repository.projection.ReceivedDetailQuery;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -23,9 +24,9 @@ public class ReceivedExchangeDetailsResponseDto {
     @Schema(description = "받은 스킬 거래 상세 목록")
     private List<ReceivedExchangeDetailDto> contents;
 
-    public static ReceivedExchangeDetailsResponseDto from(Slice<ReceivedDetailQuery> slice){
+    public static ReceivedExchangeDetailsResponseDto from(Slice<ReceivedDetailQuery> slice, Set<Long> unreadRefIds){
         List<ReceivedExchangeDetailDto> contents = slice.stream()
-                .map(ReceivedExchangeDetailDto::from)
+                .map(q -> ReceivedExchangeDetailDto.from(q, unreadRefIds.contains(q.skillExchangeId())))
                 .toList();
         return new ReceivedExchangeDetailsResponseDto(
                 slice.hasNext(),

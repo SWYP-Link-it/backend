@@ -60,6 +60,12 @@ public class NotificationServiceImpl implements NotificationService {
             NotificationType.REQUEST_STATUS_CHANGED
     );
 
+    // 받은 요청 관련 알림 타입들 (신규 요청 + 요청자 취소 등 상태 변경)
+    private static final List<NotificationType> RECEIVED_REQUEST_TYPES = List.of(
+            NotificationType.REQUEST_RECEIVED,
+            NotificationType.REQUEST_STATUS_CHANGED
+    );
+
     // ===== 알림 생성 + WebSocket 푸시 =====
 
     @Override
@@ -128,6 +134,16 @@ public class NotificationServiceImpl implements NotificationService {
                         row -> (Long) row[0],
                         row -> (Long) row[1]
                 ));
+    }
+
+    @Override
+    public Set<Long> getUnreadSentRequestRefIds(Long userId) {
+        return notificationRepository.findUnreadRefIdsByUserIdAndTypes(userId, SENT_REQUEST_TYPES);
+    }
+
+    @Override
+    public Set<Long> getUnreadReceivedRequestRefIds(Long userId) {
+        return notificationRepository.findUnreadRefIdsByUserIdAndTypes(userId, RECEIVED_REQUEST_TYPES);
     }
 
     // ===== 알림 목록 조회 =====

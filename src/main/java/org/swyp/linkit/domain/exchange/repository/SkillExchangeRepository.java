@@ -3,7 +3,6 @@ package org.swyp.linkit.domain.exchange.repository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
@@ -38,7 +37,7 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "CASE WHEN cr1.id IS NOT NULL THEN cr1.id ELSE cr2.id END, " +
             "r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
-            "se.exchangeDuration, se.isRequesterRead, rv.id) " +
+            "se.exchangeDuration, rv.id) " +
             "FROM SkillExchange se " +
             "JOIN se.receiver r " +
             "LEFT JOIN ChatRoom cr1 ON cr1.mentor.id = r.id AND cr1.mentee.id = se.requester.id " +
@@ -61,7 +60,7 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
             "CASE WHEN cr1.id IS NOT NULL THEN cr1.id ELSE cr2.id END, " +
             "r.profileImageUrl, r.nickname, se.skillName, " +
             "se.exchangeStatus, se.creditPrice, se.message, se.createdAt, se.scheduledDate, se.startTime, " +
-            "se.exchangeDuration, se.isReceiverRead) " +
+            "se.exchangeDuration) " +
             "FROM SkillExchange se " +
             "JOIN se.requester r " +
             "LEFT JOIN ChatRoom cr1 ON cr1.mentor.id = r.id AND cr1.mentee.id = se.receiver.id " +
@@ -72,29 +71,6 @@ public interface SkillExchangeRepository extends JpaRepository<SkillExchange, Lo
     Slice<ReceivedDetailQuery> findAllByReceiverIdWithRequester(@Param("receiverId") Long receiver,
                                                                 @Param("cursorId") Long cursorId,
                                                                 Pageable pageable);
-
-    /**
-     *  보낸 요청 알림 읽음 처리
-     *  isRequesterRead 모두 true 로 update
-     */
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE SkillExchange se SET se.isRequesterRead = true " +
-            "WHERE se.requester.id = :requesterId " +
-            "AND se.isRequesterRead = false")
-    int bulkUpdateRequesterReadStatus(@Param("requesterId") Long requesterId);
-
-    /**
-     *  받은 요청 알림 읽음 처리
-     *  isReceiverRead 모두 true 로 update
-     */
-    @Modifying(clearAutomatically = true)
-    @Query("UPDATE SkillExchange se SET se.isReceiverRead = true " +
-            "WHERE se.receiver.id = :receiverId " +
-            "AND se.isReceiverRead = false")
-    int bulkUpdateReceiverReadStatus(@Param("receiverId") Long receiverId);
-
-    boolean existsByReceiver_IdAndIsReceiverReadFalse(Long receiverId);
-    boolean existsByRequester_IdAndIsRequesterReadFalse(Long requesterId);
 
     /**
      *  receiver 수락/거절

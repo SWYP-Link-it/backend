@@ -69,7 +69,7 @@ public class ReceivedExchangeDetailDto {
         return isNew;
     }
 
-    public static ReceivedExchangeDetailDto from(ReceivedDetailQuery result){
+    public static ReceivedExchangeDetailDto from(ReceivedDetailQuery result, boolean isNew){
         return ReceivedExchangeDetailDto.builder()
                 .skillExchangeId(result.skillExchangeId())
                 .targetUserId(result.targetUserId())
@@ -84,7 +84,7 @@ public class ReceivedExchangeDetailDto {
                 .requestedDate(result.createdAt().toLocalDate())
                 .exchangeDateTime(result.exchangeDate().atTime(result.exchangeTime()).truncatedTo(ChronoUnit.SECONDS))
                 .exchangeDuration(result.exchangeDuration())
-                .isNew(!result.isRead())
+                .isNew(isNew)
                 .build();
     }
 }

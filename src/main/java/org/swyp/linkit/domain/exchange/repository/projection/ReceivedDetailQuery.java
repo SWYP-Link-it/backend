@@ -21,8 +21,7 @@ public record ReceivedDetailQuery(
         LocalDateTime createdAt,
         LocalDate exchangeDate,
         LocalTime exchangeTime,
-        int exchangeDuration,
-        boolean isRead
+        int exchangeDuration
 ) {
 
 }
