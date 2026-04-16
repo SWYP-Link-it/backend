@@ -45,7 +45,7 @@ services:
         max-file: "3"
 
   app:
-    image: link-it-registry.kr.ncr.ntruss.com/link-it-backend:latest
+    image: ${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${GCP_REPOSITORY}/link-it-backend:latest
     container_name: link-it-backend
     restart: always
     ports:

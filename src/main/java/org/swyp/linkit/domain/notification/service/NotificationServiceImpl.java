@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.swyp.linkit.domain.notification.dto.NotificationDto;
 import org.swyp.linkit.domain.notification.dto.NotificationMessageDto;
 import org.swyp.linkit.domain.notification.dto.response.ChatRoomUnreadCountResponseDto;
@@ -20,11 +22,16 @@ import org.swyp.linkit.domain.user.repository.UserRepository;
 import org.swyp.linkit.global.error.exception.NotificationAccessDeniedException;
 import org.swyp.linkit.global.error.exception.NotificationAlreadyReadException;
 import org.swyp.linkit.global.error.exception.NotificationNotFoundException;
+import org.swyp.linkit.global.error.exception.NotificationPublishFailedException;
 import org.swyp.linkit.global.error.exception.UserNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -65,12 +72,12 @@ public class NotificationServiceImpl implements NotificationService {
         Notification savedNotification = notificationRepository.save(notification);
 
         // WebSocket 실시간 알림 발송
-        String senderNickname = sender != null ? sender.getNickname() : "시스템";
+        String senderNickname = resolveNickname(sender);
         String message = generateNotificationMessage(type, senderNickname);
         publishNotificationToRedis(savedNotification, senderNickname, message);
 
         log.info("알림 생성 및 발송: receiverId={}, type={}, refId={}", receiverId, type, refId);
-        return NotificationDto.from(savedNotification);
+        return NotificationDto.from(savedNotification, message);
     }
 
     @Override
@@ -86,7 +93,7 @@ public class NotificationServiceImpl implements NotificationService {
         publishNotificationToRedis(savedNotification, "시스템", message);
 
         log.info("시스템 알림 생성 및 발송: receiverId={}, type={}, refId={}", receiverId, type, refId);
-        return NotificationDto.from(savedNotification);
+        return NotificationDto.from(savedNotification, message);
     }
 
     // ===== 미읽음 개수 조회 =====
@@ -114,6 +121,15 @@ public class NotificationServiceImpl implements NotificationService {
         return ChatRoomUnreadCountResponseDto.of(chatRoomId, unreadCount);
     }
 
+    @Override
+    public Map<Long, Long> getUnreadChatCountsPerRoom(Long userId) {
+        return notificationRepository.countUnreadChatGroupByRoomId(userId).stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+    }
+
     // ===== 알림 목록 조회 =====
 
     @Override
@@ -133,8 +149,25 @@ public class NotificationServiceImpl implements NotificationService {
         combinedNotifications.addAll(unreadNotifications);
         combinedNotifications.addAll(readNotifications);
 
+        // sender nickname 배치 조회
+        Set<Long> senderIds = combinedNotifications.stream()
+                .map(Notification::getSenderId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> nicknameMap = senderIds.isEmpty()
+                ? Collections.emptyMap()
+                : userRepository.findAllById(senderIds).stream()
+                        .collect(Collectors.toMap(
+                                User::getId,
+                                u -> hasValidNickname(u) ? u.getNickname() : "알 수 없음",
+                                (existing, replacement) -> existing));
+
         List<NotificationDto> notificationDtos = combinedNotifications.stream()
-                .map(NotificationDto::from)
+                .map(n -> {
+                    String senderNickname = nicknameMap.getOrDefault(n.getSenderId(), "시스템");
+                    String message = generateNotificationMessage(n.getNotificationType(), senderNickname);
+                    return NotificationDto.from(n, message);
+                })
                 .collect(Collectors.toList());
 
         return NotificationListResponseDto.of(notificationDtos, unreadNotifications.size());
@@ -212,24 +245,51 @@ public class NotificationServiceImpl implements NotificationService {
 
     // ===== Private Methods =====
 
+    /**
+     * sender가 null이면 "시스템", 존재하지만 닉네임이 없으면 "알 수 없음"
+     */
+    private String resolveNickname(User sender) {
+        if (sender == null) return "시스템";
+        return hasValidNickname(sender) ? sender.getNickname() : "알 수 없음";
+    }
+
+    private boolean hasValidNickname(User user) {
+        return user.getNickname() != null && !user.getNickname().isBlank();
+    }
+
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
     }
 
     /**
-     * Redis Pub/Sub을 통해 알림 발행
+     * Redis Pub/Sub을 통해 알림 발행 (트랜잭션 커밋 이후 발행)
      */
     private void publishNotificationToRedis(Notification notification, String senderNickname, String message) {
         NotificationMessageDto payload = NotificationMessageDto.from(notification, senderNickname, message);
+        String channel = NOTIFICATION_CHANNEL_PREFIX + notification.getReceiver().getId();
 
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    doPublish(channel, payload, notification.getId());
+                }
+            });
+        } else {
+            doPublish(channel, payload, notification.getId());
+        }
+    }
+
+    private void doPublish(String channel, NotificationMessageDto payload, Long notificationId) {
         try {
             String json = objectMapper.writeValueAsString(payload);
-            String channel = NOTIFICATION_CHANNEL_PREFIX + notification.getReceiver().getId();
             redisTemplate.convertAndSend(channel, json);
-            log.info("Redis 알림 발행: channel={}, notificationId={}", channel, notification.getId());
+            log.info("Redis 알림 발행: channel={}, notificationId={}", channel, notificationId);
         } catch (JsonProcessingException e) {
-            log.error("알림 직렬화 실패", e);
+            // afterCommit() 내부에서는 예외를 throw해도 Spring이 억제하므로 로그로 대체
+            NotificationPublishFailedException ex = new NotificationPublishFailedException(notificationId);
+            log.error("[{}] {}", ex.getErrorCode().getCode(), ex.getMessage(), e);
         }
     }
 

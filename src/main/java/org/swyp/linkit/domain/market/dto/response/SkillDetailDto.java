@@ -65,12 +65,12 @@ public class SkillDetailDto {
     @Schema(description = "세부 위치", example = "강남역 부근")
     private String detailedLocation;
 
-		// 평점 정보
-		@Schema(description = "유저 평균 평점", example = "4.2")
+    // 평점 정보
+    @Schema(description = "유저 평균 평점", example = "4.2")
     private double userAvgRating;
 
-		@Schema(description = "스킬별 평점 정보")
-		private SkillRatingResponseDto skillRating;
+    @Schema(description = "스킬별 평점 정보")
+    private SkillRatingResponseDto skillRating;
 
     // 스케줄 정보
     @Schema(description = "교환 가능 시간대 목록")
@@ -101,9 +101,9 @@ public class SkillDetailDto {
                 .preferredRegion(profile.getPreferredRegion())
                 .detailedLocation(profile.getDetailedLocation())
 
-								// 평점 정보
-								.userAvgRating(userRatingStat.getAvgRating())
-								.skillRating(SkillRatingResponseDto.from(skillRatingStat))
+                // 평점 정보
+                .userAvgRating(userRatingStat.getAvgRating())
+                .skillRating(SkillRatingResponseDto.from(skillRatingStat))
 
                 // 스케줄 정보 (병합된 버전)
                 .availableSchedules(mergeConsecutiveSchedules(user.getAvailableSchedules()))

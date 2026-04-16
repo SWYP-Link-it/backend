@@ -68,7 +68,7 @@ public class UserRatingStatServiceImpl implements UserRatingStatService {
     @Override
     public void decreaseUserRating(Long userId, int rating) {
         // 1. userRatingStat 조회 및 감소 처리
-        userRatingStatRepository.findByUserId(userId)
+        userRatingStatRepository.findByUserSkillIdWithLock(userId)
                 .ifPresent(stat -> stat.decreaseRating(rating));
     }
 
@@ -79,7 +79,7 @@ public class UserRatingStatServiceImpl implements UserRatingStatService {
     @Override
     public void changeUserRating(Long userId, int oldRating, int newRating) {
         // 1. userRatingStat 조회 및 평점 수정 처리
-        userRatingStatRepository.findByUserId(userId)
+        userRatingStatRepository.findByUserSkillIdWithLock(userId)
                 .ifPresent(stat -> {
                     stat.decreaseRating(oldRating);
                     stat.updateRating(newRating);

@@ -45,4 +45,11 @@ public class NotificationExceptionDocs {
             return ErrorCode.INVALID_NOTIFICATION_TYPE;
         }
     }
+
+    public static class NotificationPublishFailedException implements SwaggerExampleExceptions {
+        @Override
+        public BaseErrorCode getErrorCode() {
+            return ErrorCode.NOTIFICATION_PUBLISH_FAILED;
+        }
+    }
 }

@@ -11,6 +11,8 @@ import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
 import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.notification.entity.NotificationType;
+import org.swyp.linkit.domain.notification.service.NotificationService;
 import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
@@ -35,7 +37,6 @@ import java.time.YearMonth;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.swyp.linkit.domain.exchange.entity.SkillExchange.CREDIT_EXCHANGE_RATE_MINUTES;
 
 @Service
 @RequiredArgsConstructor
@@ -49,6 +50,9 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private final CreditService creditService;
     private final SettlementService settlementService;
     private final SkillExchangeExpireProcessor exchangeExpireProcessor;
+    private final SkillExchangeRequestProcessor exchangeRequestProcessor;
+    private final SkillExchangePreValidator exchangePreValidator;
+    private final NotificationService notificationService;
 
     /**
      *  멘토의 거래 가능 스킬 목록 조회
@@ -193,66 +197,20 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
     /**
      * 스킬 거래 요청
+     *
+     * 락 범위 축소를 위해 두 단계로 분리:
+     *   1. preValidate() — readOnly TX 1회: 유저/스킬 검증, 크레딧 확인, 운영 슬롯 조회
+     *   2. executeWithLock() — write TX 1회: 예약 충돌 확인 + 저장 + 크레딧 차감
      */
-    @Transactional
     @Override
     public SkillExchangeResponseDto requestSkillExchange(Long requesterId, SkillExchangeDto dto) {
-        // 1. 멘티, 멘토 조회 및 검증
-        User mentee = userService.getUserById(requesterId);
-        User mentor = userService.getUserById(dto.getReceiverId());
 
-        // 2. 멘토의 스킬 조회 및 존재 여부 검증 -> UserSkillNotFound
-        UserSkill mentorSkill = getMentorSkillWithLockAndValidation(dto.getReceiverSkillId());
+        // 1. 단일 readOnly 트랜잭션 — 선행 검증 + 운영 슬롯 조회
+        Set<LocalTime> operatingSlots = exchangePreValidator.preValidate(requesterId, dto);
 
-        // 3. 멘토의 스킬과 멘토 정보가 일치하는지 검증 -> SkillMentorMissMatchException
-        if (!mentorSkill.getUserProfile().getUser().getId().equals(mentor.getId())) {
-            throw new SkillMentorMissMatchException();
-        }
-
-        // 4. 공개된 skill인지 검증
-        if (!mentorSkill.getIsVisible()) {
-            throw new SkillNotAvailableException();
-        }
-
-        // 5. 본인 신청 방지
-        if (requesterId.equals(dto.getReceiverId())) {
-            throw new SelfExchangeNotAllowedException();
-        }
-
-        // 6.멘티의 크레딧 잔액이 요청 금액보다 부족한지 검증 -> NotFoundCreditException
-        int amount = mentorSkill.getExchangeDuration() / CREDIT_EXCHANGE_RATE_MINUTES;
-        creditService.validateAvailableBalance(requesterId, amount);
-
-        // 7. 시작 시간, 종료 시간 계산
-        LocalTime startTime = dto.getStartTime();
-        LocalTime endTime = startTime.plusMinutes(mentorSkill.getExchangeDuration());
-
-        // 8. 신청한 시간(startTime ~ endTime)이 가능한지 검증
-        // 멘토의 가능 시간 조회 및 date로 필터링, 30분 단위로 변환
-        Set<LocalTime> operatingSlots = getOperatingSlots(dto.getReceiverId(), dto.getRequestedDate());
-        // date 기준 멘토의 예약 조회 및 30분 단위로 변환
-        Set<LocalTime> bookedSlots = getBookedSlots(dto.getReceiverId(), dto.getRequestedDate());
-
-        // 9. 신청한 시간대(startTime ~ endTime)가 유효한지 검증
-        validateTimeSlotAvailability(startTime, endTime, operatingSlots, bookedSlots, mentorSkill.getExchangeDuration());
-
-        // 10. SkillExchange 생성 및 save
-        SkillExchange skillExchange = SkillExchange.create(
-                mentee,
-                mentor,
-                mentorSkill,
-                dto.getRequestedDate(),
-                startTime,
-                endTime,
-                dto.getMessage()
-        );
-        SkillExchange savedSkillExchange = exchangeRepository.save(skillExchange);
-
-        // 11. 멘티의 크레딧 차감 및 크레딧 사용 내역 생성
-        creditService.useCreditForExchangeRequest(savedSkillExchange);
-
-        // 12. 응답 Dto 변환 및 return
-        return SkillExchangeResponseDto.from(savedSkillExchange);
+        // [2단계] 락 구간 (SkillExchangeRequestProcessor)
+        // - 비관적 락 획득 → 예약 현황 재조회 → 슬롯 충돌 확인 → 저장 → 크레딧 차감
+        return exchangeRequestProcessor.executeWithLock(requesterId, dto, operatingSlots);
     }
 
     /**
@@ -273,6 +231,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
 
         // 4. bulkUpdate (isRequesterRead = false -> true)
         exchangeRepository.bulkUpdateRequesterReadStatus(userId);
+
+        // 5. Notification 도메인 읽음 처리 (REQUEST_SENT + REQUEST_STATUS_CHANGED)
+        notificationService.markSentRequestAsRead(userId);
+
         return responseDto;
     }
 
@@ -292,8 +254,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 응답 Dto 변환
         ReceivedExchangeDetailsResponseDto responseDto = ReceivedExchangeDetailsResponseDto.from(slice);
 
-        // 4.bulkUpdate (isReceiverRead = false -> true)
+        // 4. bulkUpdate (isReceiverRead = false -> true)
         exchangeRepository.bulkUpdateReceiverReadStatus(userId);
+
+        // 5. Notification 도메인 읽음 처리 (REQUEST_RECEIVED)
+        notificationService.markReceivedRequestAsRead(userId);
+
         return responseDto;
     }
 
@@ -316,7 +282,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
-        // 5. Settlement 생성
+        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        notificationService.createNotification(
+                skillExchange.getRequester().getId(), receiverId,
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+
+        // 6. Settlement 생성
         settlementService.createSettlement(skillExchange);
 
         // 5. 응답 Dto 변환
@@ -342,7 +313,12 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 4. requester 에게 변경 사항 표시
         skillExchange.updateRequesterReadToFalse();
 
-        // 5. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
+        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        notificationService.createNotification(
+                skillExchange.getRequester().getId(), receiverId,
+                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+
+        // 6. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_REJECTED);
 
         // 5. 응답 Dto 변환
@@ -452,6 +428,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
                 settlementService.cancelSettlement(skillExchange.getId());
             }
             skillExchange.updateReceiverReadToFalse();
+            // 알림 생성 (receiver에게 REQUEST_STATUS_CHANGED)
+            notificationService.createNotification(
+                    skillExchange.getReceiver().getId(), userId,
+                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
@@ -459,6 +439,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             }
             settlementService.cancelSettlement(skillExchange.getId());
             skillExchange.updateRequesterReadToFalse();
+            // 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+            notificationService.createNotification(
+                    skillExchange.getRequester().getId(), userId,
+                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
         }
     }
 
@@ -516,43 +500,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     private SkillExchange getSkillExchangeWithRequester(Long skillExchangeId) {
         return exchangeRepository.findByIdWithRequester(skillExchangeId)
                 .orElseThrow(ExchangeNotFoundException::new);
-    }
-
-    /**
-     * 신청한 시간대(startTime ~ endTime)가 유효한지 검증
-     */
-    private void validateTimeSlotAvailability(LocalTime start, LocalTime end, Set<LocalTime> operating,
-                                              Set<LocalTime> booked, int exchangeDuration) {
-        // 스킬 교환은 선택한 날짜의 자정까지 완료되어야한다.
-        if (start.isAfter(end) && !end.equals(LocalTime.MIDNIGHT)) {
-            throw new OverExchangeDurationMidnightException();
-        }
-
-        // 30분 단위로 쪼개서 가능한 슬릇 확인
-        int slotsNeeded = exchangeDuration / 30;
-        LocalTime checkSlot = start;
-
-        for (int i = 0; i < slotsNeeded; i++) {
-            // 멘토가 설정한 가능한 시간 충족 여부 검증
-            if (!operating.contains(checkSlot)) {
-                throw new UnavailableExchangeTimeException();
-            }
-            // 이미 예약된 시간 여부 검증
-            if (booked.contains(checkSlot)) {
-                throw new AlreadyBookedExchangeTimeException();
-            }
-            checkSlot = checkSlot.plusMinutes(30);
-        }
-    }
-
-    /**
-     * 멘토의 스킬 존재 여부 검증
-     * 비관적 락 적용
-     */
-    private UserSkill getMentorSkillWithLockAndValidation(Long receiverSkillId) {
-        // 멘토의 스킬 조회 및 검증 -> UserSkillNotFoundException
-        // 비관적 락 적용
-        return userSkillService.getUserSkillWithProfileAndUserAndLock(receiverSkillId);
     }
 
     /**
