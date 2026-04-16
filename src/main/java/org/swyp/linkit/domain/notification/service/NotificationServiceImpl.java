@@ -60,10 +60,12 @@ public class NotificationServiceImpl implements NotificationService {
             NotificationType.REQUEST_STATUS_CHANGED
     );
 
-    // 받은 요청 관련 알림 타입들 (신규 요청 + 요청자 취소 등 상태 변경)
+    // 받은 요청 관련 알림 타입들
+    // REQUEST_STATUS_CHANGED 는 보낸 요청(SENT) 버킷에만 속함
+    // 받은 요청 탭에서 REQUEST_STATUS_CHANGED 까지 읽음 처리하면
+    // 보낸 요청 탭의 미읽음 배지가 잘못 감소하는 부작용 발생
     private static final List<NotificationType> RECEIVED_REQUEST_TYPES = List.of(
-            NotificationType.REQUEST_RECEIVED,
-            NotificationType.REQUEST_STATUS_CHANGED
+            NotificationType.REQUEST_RECEIVED
     );
 
     // ===== 알림 생성 + WebSocket 푸시 =====
@@ -110,7 +112,7 @@ public class NotificationServiceImpl implements NotificationService {
         long requestTabCount = notificationRepository.countUnreadByUserIdAndTypes(userId, REQUEST_TYPES);
 
         // 받은 요청 탭
-        long receivedRequestCount = notificationRepository.countUnreadByUserIdAndType(userId, NotificationType.REQUEST_RECEIVED);
+        long receivedRequestCount = notificationRepository.countUnreadByUserIdAndTypes(userId, RECEIVED_REQUEST_TYPES);
 
         // 보낸 요청 탭 (보낸 요청 + 상태 변경)
         long sentRequestCount = notificationRepository.countUnreadByUserIdAndTypes(userId, SENT_REQUEST_TYPES);
@@ -202,7 +204,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public int markReceivedRequestAsRead(Long userId) {
-        int count = notificationRepository.markAsReadByUserIdAndType(userId, NotificationType.REQUEST_RECEIVED);
+        int count = notificationRepository.markAsReadByUserIdAndTypes(userId, RECEIVED_REQUEST_TYPES);
         log.info("받은 요청 알림 읽음 처리: userId={}, count={}", userId, count);
         return count;
     }
