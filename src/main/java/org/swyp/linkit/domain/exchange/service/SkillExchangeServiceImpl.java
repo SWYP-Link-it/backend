@@ -279,10 +279,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 상태 변경 가능 여부 검증 및 수락 처리 -> InvalidExchangeStatus
         skillExchange.accept();
 
-        // 4. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        // 4. 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
         notificationService.createNotification(
                 skillExchange.getRequester().getId(), receiverId,
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+                NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchangeId);
 
         // 5. Settlement 생성
         settlementService.createSettlement(skillExchange);
@@ -306,10 +306,10 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 상태 변경 가능 여부 검증 및 거절 처리 -> InvalidExchangeStatus
         skillExchange.reject();
 
-        // 4. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        // 4. 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
         notificationService.createNotification(
                 skillExchange.getRequester().getId(), receiverId,
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+                NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchangeId);
 
         // 5. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_REJECTED);
@@ -407,20 +407,20 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             if (currentStatus == ExchangeStatus.ACCEPTED){
                 settlementService.cancelSettlement(skillExchange.getId());
             }
-            // 알림 생성 (receiver에게 REQUEST_STATUS_CHANGED)
+            // 알림 생성 (receiver에게 RECEIVED_REQUEST_STATUS_CHANGED — 받은 요청 탭)
             notificationService.createNotification(
                     skillExchange.getReceiver().getId(), userId,
-                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                    NotificationType.RECEIVED_REQUEST_STATUS_CHANGED, skillExchange.getId());
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
                 throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다.");
             }
             settlementService.cancelSettlement(skillExchange.getId());
-            // 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+            // 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
             notificationService.createNotification(
                     skillExchange.getRequester().getId(), userId,
-                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                    NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchange.getId());
         }
     }
 

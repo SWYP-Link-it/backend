@@ -47,25 +47,24 @@ public class NotificationServiceImpl implements NotificationService {
 
     private static final String NOTIFICATION_CHANNEL_PREFIX = "notification:user:";
 
-    // 요청 관련 알림 타입들
+    // 요청 관련 알림 타입 전체 (탭 전체 배지용)
     private static final List<NotificationType> REQUEST_TYPES = List.of(
             NotificationType.REQUEST_RECEIVED,
             NotificationType.REQUEST_SENT,
-            NotificationType.REQUEST_STATUS_CHANGED
+            NotificationType.SENT_REQUEST_STATUS_CHANGED,
+            NotificationType.RECEIVED_REQUEST_STATUS_CHANGED
     );
 
-    // 보낸 요청 관련 알림 타입들
+    // 보낸 요청 탭 — 요청자가 받는 알림: 요청 발신 확인 + 수락/거절/수신자취소
     private static final List<NotificationType> SENT_REQUEST_TYPES = List.of(
             NotificationType.REQUEST_SENT,
-            NotificationType.REQUEST_STATUS_CHANGED
+            NotificationType.SENT_REQUEST_STATUS_CHANGED
     );
 
-    // 받은 요청 관련 알림 타입들
-    // REQUEST_STATUS_CHANGED 는 보낸 요청(SENT) 버킷에만 속함
-    // 받은 요청 탭에서 REQUEST_STATUS_CHANGED 까지 읽음 처리하면
-    // 보낸 요청 탭의 미읽음 배지가 잘못 감소하는 부작용 발생
+    // 받은 요청 탭 — 수신자가 받는 알림: 신규 요청 + 요청자취소/만료
     private static final List<NotificationType> RECEIVED_REQUEST_TYPES = List.of(
-            NotificationType.REQUEST_RECEIVED
+            NotificationType.REQUEST_RECEIVED,
+            NotificationType.RECEIVED_REQUEST_STATUS_CHANGED
     );
 
     // ===== 알림 생성 + WebSocket 푸시 =====
@@ -318,7 +317,9 @@ public class NotificationServiceImpl implements NotificationService {
         return switch (type) {
             case REQUEST_RECEIVED -> senderNickname + "님이 스킬 교환을 요청했습니다.";
             case REQUEST_SENT -> senderNickname + "님에게 스킬 교환 요청을 보냈습니다.";
-            case REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다.";
+            case SENT_REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다.";
+            case RECEIVED_REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다.";
+            case REQUEST_STATUS_CHANGED -> "스킬 교환 요청 상태가 변경되었습니다."; // backward compat
             case CHAT_MESSAGE -> senderNickname + "님이 메시지를 보냈습니다.";
         };
     }
