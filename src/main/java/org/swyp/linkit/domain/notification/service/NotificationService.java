@@ -7,6 +7,7 @@ import org.swyp.linkit.domain.notification.dto.response.UnreadCountResponseDto;
 import org.swyp.linkit.domain.notification.entity.NotificationType;
 
 import java.util.Map;
+import java.util.Set;
 
 public interface NotificationService {
 
@@ -43,6 +44,18 @@ public interface NotificationService {
      * key: chatRoomId, value: 미읽음 수
      */
     Map<Long, Long> getUnreadChatCountsPerRoom(Long userId);
+
+    /**
+     * 보낸 요청 목록의 isNew per-item 계산용
+     * REQUEST_SENT + REQUEST_STATUS_CHANGED 타입 미읽음 refId 배치 조회
+     */
+    Set<Long> getUnreadSentRequestRefIds(Long userId);
+
+    /**
+     * 받은 요청 목록의 isNew per-item 계산용
+     * REQUEST_RECEIVED + REQUEST_STATUS_CHANGED 타입 미읽음 refId 배치 조회
+     */
+    Set<Long> getUnreadReceivedRequestRefIds(Long userId);
 
     // ===== 알림 목록 조회 =====
 

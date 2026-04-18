@@ -10,11 +10,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.swyp.linkit.domain.credit.entity.HistoryType;
 import org.swyp.linkit.domain.credit.service.CreditService;
 import org.swyp.linkit.domain.exchange.dto.SkillExchangeDto;
-import org.swyp.linkit.domain.exchange.dto.response.*;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableDatesResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.AvailableSlotsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.ReceiverSkillsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SkillExchangeResponseDto;
+import org.swyp.linkit.domain.exchange.dto.response.SlotDto;
 import org.swyp.linkit.domain.notification.entity.NotificationType;
 import org.swyp.linkit.domain.notification.service.NotificationService;
-import org.swyp.linkit.domain.exchange.dto.response.ReceivedExchangeDetailsResponseDto;
-import org.swyp.linkit.domain.exchange.dto.response.SentExchangeDetailsResponseDto;
 import org.swyp.linkit.domain.exchange.entity.ExchangeStatus;
 import org.swyp.linkit.domain.exchange.entity.SkillExchange;
 import org.swyp.linkit.domain.exchange.repository.SkillExchangeRepository;
@@ -226,16 +230,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         Slice<SentDetailQuery> slice =
                 exchangeRepository.findAllByRequesterIdWithReceiver(userId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        SentExchangeDetailsResponseDto responseDto = SentExchangeDetailsResponseDto.from(slice);
+        // 3. 읽음 처리 전 미읽음 refId 배치 조회 (isNew per-item 계산용)
+        Set<Long> unreadRefIds = notificationService.getUnreadSentRequestRefIds(userId);
 
-        // 4. bulkUpdate (isRequesterRead = false -> true)
-        exchangeRepository.bulkUpdateRequesterReadStatus(userId);
-
-        // 5. Notification 도메인 읽음 처리 (REQUEST_SENT + REQUEST_STATUS_CHANGED)
+        // 4. Notification 도메인 읽음 처리 (REQUEST_SENT + REQUEST_STATUS_CHANGED)
         notificationService.markSentRequestAsRead(userId);
 
-        return responseDto;
+        // 5. 응답 Dto 변환
+        return SentExchangeDetailsResponseDto.from(slice, unreadRefIds);
     }
 
     /**
@@ -251,16 +253,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         Slice<ReceivedDetailQuery> slice =
                 exchangeRepository.findAllByReceiverIdWithRequester(userId, cursorId, pageable);
 
-        // 3. 응답 Dto 변환
-        ReceivedExchangeDetailsResponseDto responseDto = ReceivedExchangeDetailsResponseDto.from(slice);
+        // 3. 읽음 처리 전 미읽음 refId 배치 조회 (isNew per-item 계산용)
+        Set<Long> unreadRefIds = notificationService.getUnreadReceivedRequestRefIds(userId);
 
-        // 4. bulkUpdate (isReceiverRead = false -> true)
-        exchangeRepository.bulkUpdateReceiverReadStatus(userId);
-
-        // 5. Notification 도메인 읽음 처리 (REQUEST_RECEIVED)
+        // 4. Notification 도메인 읽음 처리 (REQUEST_RECEIVED)
         notificationService.markReceivedRequestAsRead(userId);
 
-        return responseDto;
+        // 5. 응답 Dto 변환
+        return ReceivedExchangeDetailsResponseDto.from(slice, unreadRefIds);
     }
 
     /**
@@ -279,18 +279,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 상태 변경 가능 여부 검증 및 수락 처리 -> InvalidExchangeStatus
         skillExchange.accept();
 
-        // 4. requester 에게 변경 사항 표시
-        skillExchange.updateRequesterReadToFalse();
-
-        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        // 4. 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
         notificationService.createNotification(
                 skillExchange.getRequester().getId(), receiverId,
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+                NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchangeId);
 
-        // 6. Settlement 생성
+        // 5. Settlement 생성
         settlementService.createSettlement(skillExchange);
 
-        // 5. 응답 Dto 변환
         return SkillExchangeResponseDto.from(skillExchange);
     }
 
@@ -310,18 +306,14 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
         // 3. 상태 변경 가능 여부 검증 및 거절 처리 -> InvalidExchangeStatus
         skillExchange.reject();
 
-        // 4. requester 에게 변경 사항 표시
-        skillExchange.updateRequesterReadToFalse();
-
-        // 5. 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+        // 4. 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
         notificationService.createNotification(
                 skillExchange.getRequester().getId(), receiverId,
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchangeId);
+                NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchangeId);
 
-        // 6. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
+        // 5. requester 크레딧 환불 -> NotFoundCreditException, InvalidCreditAmountException
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_REJECTED);
 
-        // 5. 응답 Dto 변환
         return SkillExchangeResponseDto.from(skillExchange);
     }
 
@@ -382,18 +374,6 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
     }
 
     /**
-     *  요청 관리 네비바, 탭에 사용할 신규 알림 표시
-     *
-     */
-    @Transactional(readOnly = true)
-    @Override
-    public SkillExchangeNotificationResponseDto getNotification(Long userId) {
-        boolean hasUnreadSent = exchangeRepository.existsByRequester_IdAndIsRequesterReadFalse(userId);
-        boolean hasUnreadReceived = exchangeRepository.existsByReceiver_IdAndIsReceiverReadFalse(userId);
-        return SkillExchangeNotificationResponseDto.of(hasUnreadSent, hasUnreadReceived);
-    }
-
-    /**
      *  스킬 거래 조회
      */
     @Transactional(readOnly = true)
@@ -427,22 +407,20 @@ public class SkillExchangeServiceImpl implements SkillExchangeService {
             if (currentStatus == ExchangeStatus.ACCEPTED){
                 settlementService.cancelSettlement(skillExchange.getId());
             }
-            skillExchange.updateReceiverReadToFalse();
-            // 알림 생성 (receiver에게 REQUEST_STATUS_CHANGED)
+            // 알림 생성 (receiver에게 RECEIVED_REQUEST_STATUS_CHANGED — 받은 요청 탭)
             notificationService.createNotification(
                     skillExchange.getReceiver().getId(), userId,
-                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                    NotificationType.RECEIVED_REQUEST_STATUS_CHANGED, skillExchange.getId());
         } else{
             // receiver -> ACCEPTED일 때만 취소 가능
             if (currentStatus != ExchangeStatus.ACCEPTED) {
                 throw new InvalidExchangeStatusException("수락된 거래만 취소가 가능합니다.");
             }
             settlementService.cancelSettlement(skillExchange.getId());
-            skillExchange.updateRequesterReadToFalse();
-            // 알림 생성 (requester에게 REQUEST_STATUS_CHANGED)
+            // 알림 생성 (requester에게 SENT_REQUEST_STATUS_CHANGED — 보낸 요청 탭)
             notificationService.createNotification(
                     skillExchange.getRequester().getId(), userId,
-                    NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                    NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchange.getId());
         }
     }
 
