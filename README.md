@@ -25,19 +25,48 @@ Link-It는 비용 문제로 배움의 기회를 얻기 어려운 사람들을 �
 단순한 지식 공유를 넘어서 배움의 진입 장벽을 낮추고 지식의 가치를 시간 단위로 환산하며 상호 신뢰 기반의 교환 구조를 만드는 것을 목표로 합니다.
 
 ## 🎯 프로젝트 기간
-- 개발 기간 : 2025.12.29 ~ 2026.02.20 (진행 중)
+- 개발 기간 : 2025.12.29 ~ 2026.03
 
 <details>
   <summary>🎇 프로젝트 실행 방법</summary>
 
 ### 1️⃣ Git Clone
   ```bash
-  git clone 
+  git clone https://github.com/SWYP-Link-it/backend.git
 ```
 
 ### 2️⃣ .env 파일 설정
 
 ```
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_ROOT_PASSWORD=
+DB_USER=
+DB_PASSWORD=
+REDIS_HOST=
+REDIS_PORT=
+REDIS_PASSWORD=
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+NAVER_CLIENT_ID=
+NAVER_CLIENT_SECRET=
+JWT_SECRET=
+JWT_ACCESS_EXPIRATION=
+JWT_REFRESH_EXPIRATION=
+JWT_TEMP_EXPIRATION=
+DEFAULT_PROFILE_IMAGE_URL=
+FRONTEND_URL=
+FRONTEND_PROD_URL=
+BACKEND_URL=
+BACKEND_PROD_URL=
+COOKIE_SECURE=
+COOKIE_SAME_SITE=
+COOKIE_DOMAIN=
+NCP_ACCESS_KEY=
+NCP_SECRET_KEY=
+NCP_BUCKET_NAME=
+
 # MySQL
 DB_HOST={DB HOST}
 DB_NAME={DB 이름}
@@ -54,11 +83,7 @@ ENCRYPTION_SECRET_KEY={암호화 KEY값}
 SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/{데이터베이스 이름}?useSSL=false&allowPublicKeyRetrieval=true
 ```
 
-### 3️⃣ Docker 이미지 빌드
-``` bash
-```
-
-### 4️⃣ Docker Compose로 컨테이너 실행
+### 3️⃣  Docker Compose로 컨테이너 실행
 ```bash
 docker-compose up --build -d
 ```    
@@ -66,60 +91,24 @@ docker-compose up --build -d
 
 ## 🧑‍💻 팀원 소개 및 역할 분담
 
-|                                    **김민주**                                     |                               **양재영**                                |                                  **홍정화**                                   |
-|:------------------------------------------------------------------------------:|:--------------------------------------------------------------------:|:--------------------------------------------------------------------------:|
-| <img src="image/김민주.jpg" height=150 width=150> <br/> **프로젝트 팀장 & 백엔드 & Infra** | <img src="image/양재영.jpg" height=150 width=150> <br/> **백엔드 & Infra** | <img src="image/홍정화.jpg" height=150 width=150> <br/> **백엔드 & 프로젝트 백엔드 팀장** |
+|                                    **김민주**                                     |     **양재영**      |       **홍정화**        |
+|:------------------------------------------------------------------------------:|:----------------:|:--------------------:|
+| **프로젝트 팀장 & 백엔드 & Infra** |  **백엔드 & Infra** | **백엔드 & BE 팀장** |
 
 
 ## 🚀 주요 기능
 
-### 📌 사용자
-- 기능 설명 
-- 기능 설명
-- 기능 설명
+- 카카오 소셜 로그인 : 카카오 OAuth 2.0 기반 소셜 로그인 (중복 가입 방지 및 회원 탈퇴 처리 포함)
+- 프로필 설정 : 사용자 프로필 (경력/경험, 스킬, 선호 시간대, 교환 방법) 관리
+- 스킬 게시판 : 프로필 필터링 및 게시물 상세 조회
+- 랭킹 시스템 : 인기 검색어 및 인기 게시물 랭킹 조회
+- 크레딧 : 크레딧 내역 제공
+- 스킬 거래 : 스킬 거래 신청 및 내역 제공
+- 리뷰: 리뷰(평점) 작성
+- 채팅 : 멘토-멘티 간의 채팅 시스템 제공
+- 알림 : 채팅 및 스킬교환 알림 제공
 
-### 📌 스킬 등록
-- 이용자가 본인이 보유한 지식·경험을 스킬로 등록하여 스킬 장터에 노출합니다.
-- 스킬명, 스킬 소개, 경력 및 경험, 교환 방식 (1:1, 온라인 등), 가능 시간 (요일/시간대), 1회 진행 기준 시간 (예: 30분 / 60분) 입력
-- 등록된 스킬은 다른 이용자가 탐색 및 요청 가능
-
-### 📌 스킬 요청
-- 스킬 장터에 등록된 스킬을 확인한 이용자가 해당 스킬 보유자에게 스킬 요청을 전송
-- 스킬명, 희망 진행 시간, 간단한 요청 메시지
-- 스킬 보유자는 요청을 수락 또는 거절할 수 있음
-
-### 📌 스킬 교환
-- 기능 설명
-- 기능 설명
-- 기능 설명
-
-### 📌 채팅
-- 기능 설명
-- 기능 설명
-- 기능 설명
-
-### 📌알림
-- 기능 설명
-- 기능 설명
-- 기능 설명
-
-### 📌 크레딧 교환 및 정산
-- 스킬 요청이 수락되어 거래가 성사되면 진행 시간 기준으로 크레딧이 자동 정산
-- 정산 방식 (예시)
-  30분 진행 = 1 크레딧
-  스킬 요청 시: 요청자 크레딧 차감
-  매칭 성사 시: 스킬 제공자 크레딧 지급 및 거래 확정
-- 모든 크레딧 흐름은 서버에서 트랜잭션 기반으로 처리
-
-### 📌리뷰
-- 기능 설명
-- 기능 설명
-- 기능 설명
-
-### 📌 AI 리뷰 요약 (서비스 고도화)
-- 스킬 거래 후 남긴 리뷰를 AI가 요약하여 스킬 신뢰도 및 선택 효율 향상
-
---
+---
 
 ## ⚙️ 기술 스택
 - OS : Windows11, Ubuntu-22.04-base
@@ -131,8 +120,7 @@ docker-compose up --build -d
 - ETC : IntelliJ, Swagger(OpenAPI)
 
 ## 📃 API 설계서
-- [🔗 Swagger(OpenAPI) LINK ](https://223.130.129.7/swagger-ui/index.html)
-- [🔗 Postman API 설계서 LINK](https://documenter.getpostman.com/view/39655317/2sAYX2N4Lg)
+- [🔗 Swagger(OpenAPI) LINK ](https://api.desklab.kr/swagger-ui/index.html)
 
 ## 🛠 ERD
 - ![erd.drawio.png](image/erd.png)
@@ -141,132 +129,57 @@ docker-compose up --build -d
 - ![architecture.png](image/architecture.png)
 
 
-## ❓ 기술적 의사결정
-
-<details>
-<summary> 1️⃣ Java 21</summary>
-
-</details>
-
-<details>
-  <summary> 2️⃣ Spring Boot 3.5.9</summary>
-
-</details>
-
-<details>
-
-  <summary> 3️⃣ MySQL</summary>
-
-</details>
-
-<details>
-  <summary> 4️⃣ Redis</summary>
-
-</details>
-
-
-<details>
-
-  <summary> 5️⃣ GitHub Actions </summary>
-
-</details>
-
-
-## 📈 성능 개선
-
-## 🚨 트러블 슈팅
-### 1️⃣ 트러블 슈팅 1
+## 🚨 성능 개선 및 트러블 슈팅
+### 1️⃣ 유저, 스킬 평점 조회 성능 개선 - 인덱스 적용
 
 **[Issues]**
-- 이슈 설명
-- **[Before] 테스트 결과**:
-    - **TPS**: 182.85/sec
-    - **평균 요청 응답 시간**: 1.27s
+- 마켓의 스킬 상세 조회 부하 테스트 시 평균 Latency → 2.63s로 매우 느린 응답 발생
+- 쿼리 로그 분석 결과, 평점 관련 쿼리가 의심
+- 평점 집계 쿼리 3개(유저 평균 평점 AVG, 스킬 평균 평점 AVG, 스킬 별점 분포 COUNT)가 매 요청마다 실행
 
-**[Solutions]**
-1. **방법 1** : 방법 설명 1
-2. **방법 2**: 방법 설명 2
-3. **방법 3**: 방법 설명 3
+**[Solve]**
+1. EXPLAIN 분석으로 실행 계획 확인
+- 3개의 쿼리 모두 type = All로 full scan 발생
+- 별점 분포 COUNT 쿼리(GROUP BY rating)에서 Using temporary 추가 발생 → 임시 테이블 처리
+2. 인덱스 생성
+- reviewee_id 단일 인덱스 생성 → 유저 평점 AVG 조회 대상
+- (reviewee_skill_id, rating) 복합 인덱스 생성 → 스킬 평점 AVG + 별점 분포 COUNT 조회 공통 적용
 
-**[Choice] Redis Cache-Aside + Write-Through**
-- **이유 1**: 이유 설명 1
-- **이유 2**: 이유 설명 2
-- **이유 3**: 이유 설명 3
-
-**[Solve]**:
-- 해결 방법 1
-- 해결 방법 2
-- 해결 방법 3
-
-**[After] 성능 테스트 결과**
-- **TPS**: 503.35/sec (182.85/sec → 503.35/sec TPS 175% 증가)
-- **평균 요청 응답 시간**: 133.1ms (1.27s → 133.1ms 89.5% 감소)
+**[Result]**
+- VU 100 기준, TPS 25 → 91 (257% 증가), 평균 Latency 2.63s → 16ms (99% 감소)
+- 이전 대비 빠른 응답으로 사용자 경험성 향상
 ---
-### 2️⃣ 트러블 슈팅 2
+### 2️⃣ 스킬 조회·검색 API 집계 처리 병목 해결
 
 **[Issues]**
-- 이슈 설명
-- **[Before] 테스트 결과**:
-    - **TPS**: 182.85/sec
-    - **평균 요청 응답 시간**: 1.27s
+- 요청마다 집계 데이터를 DB에 즉시 write → REQUIRES_NEW 트랜잭션으로 커넥션 2개 동시 점유
+- InnoDB INSERT ... ON DUPLICATE KEY UPDATE의 X Lock + 커넥션 풀 고갈(max: 10)로 트래픽 증가 시 병목 발생
 
-**[Solutions]**
-1. **방법 1** : 방법 설명 1
-2. **방법 2**: 방법 설명 2
-3. **방법 3**: 방법 설명 3
+**[Solve]**
+- DB write 제거 → Redis HINCRBY로 카운터 누적 후 5분 주기 스케줄러로 배치 flush
+- HGETALL + DEL 사이 race condition을 Lua 스크립트로 원자적 실행하여 유실 방지
+- 키 단위 독립 트랜잭션 적용으로 flush 실패 시 해당 키만 롤백되도록 StatFlushService 분리
 
-**[Choice] Redis Cache-Aside + Write-Through**
-- **이유 1**: 이유 설명 1
-- **이유 2**: 이유 설명 2
-- **이유 3**: 이유 설명 3
-
-**[Solve]**:
-- 해결 방법 1
-- 해결 방법 2
-- 해결 방법 3
-
-**[After] 성능 테스트 결과**
-- **TPS**: 503.35/sec (182.85/sec → 503.35/sec TPS 175% 증가)
-- **평균 요청 응답 시간**: 133.1ms (1.27s → 133.1ms 89.5% 감소)
-  --
-### 3️⃣ 트러블 슈팅 3
-
-**[Issues]**
-- 이슈 설명
-- **[Before] 테스트 결과**:
-    - **TPS**: 182.85/sec
-    - **평균 요청 응답 시간**: 1.27s
-
-**[Solutions]**
-1. **방법 1** : 방법 설명 1
-2. **방법 2**: 방법 설명 2
-3. **방법 3**: 방법 설명 3
-
-**[Choice] Redis Cache-Aside + Write-Through**
-- **이유 1**: 이유 설명 1
-- **이유 2**: 이유 설명 2
-- **이유 3**: 이유 설명 3
-
-**[Solve]**:
-- 해결 방법 1
-- 해결 방법 2
-- 해결 방법 3
-
-**[After] 성능 테스트 결과**
-- **TPS**: 503.35/sec (182.85/sec → 503.35/sec TPS 175% 증가)
-- **평균 요청 응답 시간**: 133.1ms (1.27s → 133.1ms 89.5% 감소)
+**[Result]**
+- 에러율 21.12% → 0%, 타임아웃 962건 → 0건으로 커넥션 풀 고갈 문제 완전 해소
+- 총 처리량 4,554건 → 45,663건, 평균 응답시간 10.38s → 155ms로 10배 이상 개선
 
 ---
+### 3️⃣ 미읽음 카운트 동시성 이슈 해결 및 N+1 쿼리 최적화
 
-## ✅ 프로젝트 향후 개선 방안
+**[Issues]**
+- unreadCount 컬럼 업데이트하는 방식으로 메시지 송수신 시마다 Update Query 발생 → DB 부하 증가
+- 두 사용자가 동시에 메시지 전송 시 JPA Dirty Checking 기반 UPDATE 경쟁으로 Lost Update 동시성 이슈 발생
+- 알림 테이블 기반 전환 과정에서 루프 내 개별 쿼리 호출로 N+1 발생
+- 단순 카운트 컬럼 방식으로는 알림 맥락 정보가 없어 알림 탭 노출 등 기능 확장 불가
 
-### 1. AI 기반 스킬 추천
-- **[현재]**
-    - 이용자 요청/거래 이력을 기반으로 AI 추천
+**[Solve]**
+- unreadCount 컬럼을 제거하고 Notification 도메인으로 개편
+- 쓰기 시의 receiver_id, ref_id 인덱스 기반의 읽기 스캔을 선택
+- Fetch Join로 User 조회 Lazy Loading N+1 추가 제거
+- 채팅방 진입 시 미읽음 알림 N건을 쿼리 1번에 일괄 읽음 처리
 
-- **[이후]**
-    - 이후
-
-- **[기대효과]**
-    - 스킬 매칭 성공률 증가
-    - 사용자 체류 시간 증가
+**[Result]**
+- Lock 추가 없이 데이터 모델 재설계만으로 Lost Update 동시성 이슈 원천 제거, 배지 카운트와 알림 목록 간 데이터 정합성 100% 확보
+- 채팅방 목록 미읽음 수 조회 쿼리 N+1번 → 1번으로 감소
+- 알림 목록 및 배지 카운트가 Notification 테이블 하나로 자동 동기화
