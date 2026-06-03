@@ -77,7 +77,7 @@ public class SentExchangeDetailDto {
         return isNew;
     }
 
-    public static SentExchangeDetailDto from(SentDetailQuery result){
+    public static SentExchangeDetailDto from(SentDetailQuery result, boolean isNew){
         boolean canReviewStatus = result.exchangeStatus() == ExchangeStatus.COMPLETED;
 
         return SentExchangeDetailDto.builder()
@@ -96,7 +96,7 @@ public class SentExchangeDetailDto {
                 .exchangeDuration(result.exchangeDuration())
                 .canReview(canReviewStatus)
                 .reviewId(result.reviewId())
-                .isNew(!result.isRead())
+                .isNew(isNew)
                 .build();
     }
 }

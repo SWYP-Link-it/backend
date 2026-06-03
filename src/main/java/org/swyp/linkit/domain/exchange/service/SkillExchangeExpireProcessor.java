@@ -33,20 +33,17 @@ public class SkillExchangeExpireProcessor {
 
         // pending -> expired 변경
         skillExchange.expire();
-        // 확인 안함 처리(requester, receiver)
-        skillExchange.updateReceiverReadToFalse();
-        skillExchange.updateRequesterReadToFalse();
 
         // 크레딧 환불 처리
         creditService.refundCreditForExchange(skillExchange, HistoryType.EXCHANGE_EXPIRED);
 
-        // 알림 생성 (requester, receiver 모두에게 시스템 알림 — afterCommit 시 Redis 발행)
+        // 알림 생성 — requester: 보낸 요청 탭, receiver: 받은 요청 탭
         notificationService.createSystemNotification(
                 skillExchange.getRequester().getId(),
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                NotificationType.SENT_REQUEST_STATUS_CHANGED, skillExchange.getId());
         notificationService.createSystemNotification(
                 skillExchange.getReceiver().getId(),
-                NotificationType.REQUEST_STATUS_CHANGED, skillExchange.getId());
+                NotificationType.RECEIVED_REQUEST_STATUS_CHANGED, skillExchange.getId());
         log.debug("거래 만료 처리 완료. skillExchangeId: {}", skillExchange.getId());
     }
 }

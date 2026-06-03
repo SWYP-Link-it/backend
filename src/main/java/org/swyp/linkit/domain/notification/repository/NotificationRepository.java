@@ -9,6 +9,7 @@ import org.swyp.linkit.domain.notification.entity.NotificationType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
@@ -111,4 +112,11 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("SELECT n.refId, COUNT(n) FROM Notification n WHERE n.receiver.id = :userId AND n.isRead = false " +
             "AND n.notificationType = 'CHAT_MESSAGE' GROUP BY n.refId")
     List<Object[]> countUnreadChatGroupByRoomId(@Param("userId") Long userId);
+
+    /**
+     * 특정 사용자의 여러 타입 미읽음 알림의 refId 배치 조회
+     * isNew per-item 계산에 사용 (스킬 거래 요청 목록)
+     */
+    @Query("SELECT n.refId FROM Notification n WHERE n.receiver.id = :userId AND n.isRead = false AND n.notificationType IN :types")
+    Set<Long> findUnreadRefIdsByUserIdAndTypes(@Param("userId") Long userId, @Param("types") List<NotificationType> types);
 }
