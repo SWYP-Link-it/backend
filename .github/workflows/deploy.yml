@@ -26,41 +26,24 @@ jobs:
       - name: Build with Gradle (skip tests)
         run: ./gradlew clean build -x test
 
-      # 2. GCP 인증 및 Docker 설정
-      - name: Google Auth
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_SA_KEY }}'
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: 'Docker Auth'
-        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
-
-      # 3. Docker 이미지 빌드 및 Artifact Registry 푸시
-      - name: Build and Push Docker Image
+      # 2. Docker 이미지 빌드 및 tar 파일로 저장
+      - name: Build Docker Image
         run: |
-          REGISTRY="${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY }}"
-          IMAGE_NAME="link-it-backend"
-          SHA=${{ github.sha }}
-          
-          docker build -t $REGISTRY/$IMAGE_NAME:$SHA -t $REGISTRY/$IMAGE_NAME:latest .
-          docker push $REGISTRY/$IMAGE_NAME:$SHA
-          docker push $REGISTRY/$IMAGE_NAME:latest
+          docker build -t link-it-backend:latest .
+          docker save link-it-backend:latest | gzip > link-it-backend.tar.gz
 
-      # 4. GCE 서버로 docker-compose.prod.yml 파일 전송
-      - name: Copy docker-compose to GCE
+      # 3. GCE 서버로 이미지 및 docker-compose 파일 전송
+      - name: Copy files to GCE
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.GCP_VM_IP }}
           username: ${{ secrets.GCP_SSH_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
-          source: "docker-compose.prod.yml"
+          source: "docker-compose.prod.yml,link-it-backend.tar.gz"
           target: "/opt/link-it"
           overwrite: true
 
-      # 5. GCE 서버에서 배포 실행
+      # 4. GCE 서버에서 배포 실행
       - name: Deploy on GCP Compute Engine
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -68,6 +51,7 @@ jobs:
           username: ${{ secrets.GCP_SSH_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
+            set -e
             # 디렉토리 생성 및 권한 설정
             sudo mkdir -p /opt/link-it
             sudo chown -R ${{ secrets.GCP_SSH_USER }}:${{ secrets.GCP_SSH_USER }} /opt/link-it
@@ -75,9 +59,6 @@ jobs:
 
             # .env 파일 생성
             cat > .env << 'EOF'
-            GCP_REGION=${{ secrets.GCP_REGION }}
-            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
-            GCP_REPOSITORY=${{ secrets.GCP_REPOSITORY }}
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}
             DB_NAME=${{ secrets.DB_NAME }}
@@ -108,13 +89,13 @@ jobs:
             NCP_BUCKET_NAME=${{ secrets.NCP_BUCKET_NAME }}
             EOF
 
-            # 서버 내부 Docker Registry 로그인
-            echo '${{ secrets.GCP_SA_KEY }}' | docker login -u _json_key --password-stdin https://${{ secrets.GCP_REGION }}-docker.pkg.dev  
+            # 전송된 Docker 이미지 로드
+            gunzip -c link-it-backend.tar.gz | docker load
+            rm -f link-it-backend.tar.gz
 
             # 컨테이너 갱신 및 실행
             docker compose -f docker-compose.prod.yml down || true
-            docker pull ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_REPOSITORY }}/link-it-backend:latest
             docker compose -f docker-compose.prod.yml up -d
-            
+
             # 미사용 이미지 정리
             docker image prune -f
