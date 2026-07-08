@@ -38,7 +38,8 @@ jobs:
         with:
           host: ${{ secrets.GCP_VM_IP }}
           username: ${{ secrets.GCP_SSH_USER }}
-          key: ${{ secrets.GCP_SSH_KEY }}
+          password: ${{ secrets.GCP_SSH_PASSWORD }}
+          port: ${{ secrets.GCP_SSH_PORT }}
           source: "docker-compose.prod.yml,link-it-backend.tar.gz"
           target: "/opt/link-it"
           overwrite: true
@@ -49,12 +50,10 @@ jobs:
         with:
           host: ${{ secrets.GCP_VM_IP }}
           username: ${{ secrets.GCP_SSH_USER }}
-          key: ${{ secrets.GCP_SSH_KEY }}
+          password: ${{ secrets.GCP_SSH_PASSWORD }}
+          port: ${{ secrets.GCP_SSH_PORT }}
           script: |
             set -e
-            # 디렉토리 생성 및 권한 설정
-            sudo mkdir -p /opt/link-it
-            sudo chown -R ${{ secrets.GCP_SSH_USER }}:${{ secrets.GCP_SSH_USER }} /opt/link-it
             cd /opt/link-it
 
             # .env 파일 생성
