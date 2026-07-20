@@ -1,3 +1,21 @@
+# CI에서 빌드한 Docker 이미지를 GCE VM으로 직접 전송하여 배포한다.
+# (Artifact Registry를 경유하지 않으므로 GCP 서비스 계정 키가 필요 없다)
+#
+# 필요한 Secrets
+#   GCP_VM_IP        : GCE VM 외부 IP
+#   GCP_SSH_USER     : 배포 계정 (linkit_admin)
+#   GCP_SSH_PASSWORD : 배포 계정 비밀번호
+#   GCP_SSH_PORT     : SSH 포트 (22)
+#   그 외 애플리케이션 환경변수 (DB_*, REDIS_*, JWT_*, KAKAO_*, NAVER_*, NCP_* 등)
+#
+# 폐기된 Secrets (더 이상 참조하지 않음 — 삭제 가능)
+#   GCP_SA_KEY, GCP_SSH_KEY, GCP_PROJECT_ID, GCP_REGION, GCP_REPOSITORY
+#
+# 서버 사전 세팅 (1회, sudo 권한 계정으로 수행)
+#   sudo mkdir -p /opt/link-it
+#   sudo chown -R linkit_admin:linkit_admin /opt/link-it
+#   sudo usermod -aG docker linkit_admin
+#   sshd: PasswordAuthentication yes
 name: Deploy to GCP
 
 on:
