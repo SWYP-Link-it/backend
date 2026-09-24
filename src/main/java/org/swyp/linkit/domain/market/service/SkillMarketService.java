@@ -39,7 +39,7 @@ public class SkillMarketService {
      * 스킬 장터 목록 커서 기반 페이징 조회
      * - category, keyword 는 선택적 필터
      * - cursorId : null 이면 첫 페이지, 값이 있으면 해당 id 미만 조회
-     * - 첫 페이지 size = 11 (배너 영역 고려), 이후 size = 12
+     * - size : 1~48 (기본값 11, 컨트롤러에서 검증)
      * - 검색어 집계는 SearchKeywordRecorder 에 위임 (Redis INCR)
      */
     @Transactional(readOnly = true)

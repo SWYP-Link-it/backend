@@ -42,7 +42,8 @@ public class SkillMarketController {
             summary = "스킬 카드 목록 조회",
             description = "스킬 장터 메인 페이지에 표시될 노출 중인 스킬 카드 목록을 조회합니다. "
             + "카테고리 및 검색 키워드 파라미터를 통해 필터링할 수 있습니다. "
-            + "첫 요청은 cursorId 없이 size=11, 이후 요청은 응답의 nextCursorId 를 cursorId 로 전달해주세요."
+            + "첫 요청은 cursorId 없이 요청하고, 이후 요청은 응답의 nextCursorId 를 cursorId 로 전달해주세요. "
+            + "size 는 1~48 사이로 지정할 수 있습니다. (기본값 11)"
     )
     @GetMapping(value = "/skills", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseDto<SkillCardPageResponseDto>> getSkillCards(
@@ -55,8 +56,8 @@ public class SkillMarketController {
             @Parameter(description = "커서 ID, 첫 요청 시 생략", example = "10")
             @RequestParam(required = false) Long cursorId,
             
-            @Parameter(description = "페이지 사이즈, 첫 요청 11 / 이후 요청 12", example = "11")
-            @Min(1) @Max(20) @RequestParam(required = false, defaultValue = "11") int size) {
+            @Parameter(description = "페이지 사이즈 (1~48), 기본값 11", example = "11")
+            @Min(1) @Max(48) @RequestParam(required = false, defaultValue = "11") int size) {
         log.info("[SkillMarket] GET /market/skills : category={}, searchKeyword={}, cursorId={}, size={}",
                 category, searchKeyword, cursorId, size);
 
