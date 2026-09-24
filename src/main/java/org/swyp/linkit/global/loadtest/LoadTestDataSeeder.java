@@ -214,7 +214,8 @@ public class LoadTestDataSeeder implements CommandLineRunner {
      */
     private List<SkillCategory> createCategories() {
         List<SkillCategory> list = Arrays.stream(SkillCategoryType.values())
-                .map(type -> skillCategoryRepository.save(SkillCategory.create(type)))
+                .map(type -> skillCategoryRepository.findByCategoryType(type)
+                        .orElseGet(() -> skillCategoryRepository.save(SkillCategory.create(type))))
                 .collect(Collectors.toList());
         log.info("[Seeder] SkillCategory {}개", list.size());
         return list;
